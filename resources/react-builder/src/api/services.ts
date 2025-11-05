@@ -13,7 +13,7 @@ import type {
   CreateElementRequest,
   UpdateElementRequest,
   ReorderElementsRequest,
-  UploadMediaRequest,
+  // UploadMediaRequest, // TODO: Implement media upload
   PaginatedResponse,
 } from '../types';
 

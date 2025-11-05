@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { Element, Page, Breakpoint, HistoryState } from '../types';
+import type { Element, Page, Breakpoint, HistoryState } from '../types';
 
 interface BuilderStore {
   // Current page
@@ -131,7 +131,7 @@ export const useBuilderStore = create<BuilderStore>()(
         // Update element's parent and order
         const updatedElements = elements.map((el) => {
           if (el.id === elementId) {
-            return { ...el, parent_id: newParentId, order: newOrder };
+            return { ...el, parent_id: newParentId ?? undefined, order: newOrder };
           }
           // Adjust order of siblings
           if (el.parent_id === newParentId && el.order >= newOrder && el.id !== elementId) {

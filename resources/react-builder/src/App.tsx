@@ -1,7 +1,12 @@
 import { useState } from 'react';
-import { FiLayout, FiSettings, FiEye, FiSave, FiMonitor, FiTablet, FiSmartphone } from 'react-icons/fi';
+import { FiSettings, FiEye, FiSave, FiMonitor, FiTablet, FiSmartphone } from 'react-icons/fi';
 import { useBuilderStore } from './store/builderStore';
 import type { Breakpoint } from './types';
+import { DragAndDropProvider } from './components/DragAndDropProvider';
+import { DroppableCanvas } from './components/DroppableCanvas';
+import { ElementsSidebar } from './components/Sidebar/ElementsSidebar';
+import { ElementSettings } from './components/Settings/ElementSettings';
+import { pagesApi } from './api/services';
 
 function App() {
   const {
@@ -17,9 +22,31 @@ function App() {
     canRedo,
     undo,
     redo,
+    setIsSaving,
   } = useBuilderStore();
 
   const [showSettings, setShowSettings] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const handleSave = async () => {
+    if (!page) return;
+
+    setIsSaving(true);
+    setSaveError(null);
+
+    try {
+      await pagesApi.update(page.id, {
+        content: { elements },
+      });
+      // Success feedback could be shown here
+      console.log('Page saved successfully');
+    } catch (error: any) {
+      setSaveError(error.message || 'Failed to save page');
+      console.error('Save error:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const breakpoints: { value: Breakpoint; icon: typeof FiMonitor; label: string }[] = [
     { value: 'desktop', icon: FiMonitor, label: 'Desktop' },
@@ -28,9 +55,10 @@ function App() {
   ];
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Top Toolbar */}
-      <div className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-50 flex items-center justify-between px-4">
+    <DragAndDropProvider>
+      <div className="flex h-screen bg-gray-100">
+        {/* Top Toolbar */}
+        <div className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-50 flex items-center justify-between px-4">
         {/* Left */}
         <div className="flex items-center space-x-4">
           <h1 className="text-xl font-bold text-gray-800">
@@ -107,8 +135,10 @@ function App() {
 
           {/* Save Button */}
           <button
-            disabled={isSaving}
+            onClick={handleSave}
+            disabled={isSaving || !page}
             className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors disabled:opacity-50"
+            title={saveError || ''}
           >
             <FiSave size={18} />
             <span className="text-sm">{isSaving ? 'Saving...' : 'Save'}</span>
@@ -130,41 +160,7 @@ function App() {
         {/* Left Sidebar - Elements Library */}
         {!isPreviewMode && (
           <div className="w-64 bg-white border-r border-gray-200 overflow-y-auto">
-            <div className="p-4">
-              <h2 className="text-sm font-semibold text-gray-700 mb-4 flex items-center">
-                <FiLayout className="mr-2" />
-                Elements
-              </h2>
-
-              {/* Element Categories */}
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-xs font-medium text-gray-500 mb-2">Layout</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    <ElementCard type="section" label="Section" />
-                    <ElementCard type="row" label="Row" />
-                    <ElementCard type="column" label="Column" />
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-xs font-medium text-gray-500 mb-2">Content</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    <ElementCard type="text" label="Text" />
-                    <ElementCard type="heading" label="Heading" />
-                    <ElementCard type="button" label="Button" />
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-xs font-medium text-gray-500 mb-2">Media</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    <ElementCard type="image" label="Image" />
-                    <ElementCard type="video" label="Video" />
-                  </div>
-                </div>
-              </div>
-            </div>
+            <ElementsSidebar />
           </div>
         )}
 
@@ -179,19 +175,7 @@ function App() {
                 ${activeBreakpoint === 'mobile' ? 'max-w-sm' : ''}
               `}
             >
-              {/* Canvas Content */}
-              {elements.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-32 text-gray-400">
-                  <FiLayout size={64} className="mb-4" />
-                  <p className="text-lg">Start building by adding elements</p>
-                  <p className="text-sm mt-2">Drag elements from the left sidebar</p>
-                </div>
-              ) : (
-                <div className="min-h-[600px]">
-                  {/* Elements will be rendered here */}
-                  <p className="p-8 text-gray-500">Elements will appear here...</p>
-                </div>
-              )}
+              <DroppableCanvas />
             </div>
           </div>
         </div>
@@ -199,31 +183,12 @@ function App() {
         {/* Right Sidebar - Element Settings */}
         {!isPreviewMode && selectedElementId && (
           <div className="w-80 bg-white border-l border-gray-200 overflow-y-auto">
-            <div className="p-4">
-              <h2 className="text-sm font-semibold text-gray-700 mb-4">Element Settings</h2>
-              <div className="text-sm text-gray-500">
-                Settings for element #{selectedElementId}
-              </div>
-            </div>
+            <ElementSettings />
           </div>
         )}
       </div>
     </div>
-  );
-}
-
-// Element Card Component
-function ElementCard({ type, label }: { type: string; label: string }) {
-  return (
-    <div
-      className="flex flex-col items-center justify-center p-3 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 hover:border-primary-300 transition-colors"
-      draggable
-    >
-      <div className="w-8 h-8 bg-primary-100 text-primary-600 rounded flex items-center justify-center mb-2">
-        <FiLayout size={16} />
-      </div>
-      <span className="text-xs text-gray-700">{label}</span>
-    </div>
+    </DragAndDropProvider>
   );
 }
 
