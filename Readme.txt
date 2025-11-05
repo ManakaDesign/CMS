@@ -15,18 +15,21 @@ Entwicklung eines modernen, benutzerfreundlichen Content Management Systems mit 
 ## Technische Architektur
 
 ### Technology Stack
-- **Frontend/Builder**: React.js mit Next.js
-- **Backend API**: Node.js mit Express.js
-- **Datenbank**: PostgreSQL
-- **Caching**: Redis
+- **Backend Framework**: PHP 8.2+ mit Laravel 10
+- **Frontend/Builder**: React 18 (Single Page Application)
+- **Build Tool**: Vite 4
+- **Datenbank**: MySQL 8.0 / MariaDB 10.6+
+- **ORM**: Eloquent (Laravel)
+- **Caching**: Redis (optional) / File Cache
 - **File Storage**: Lokaler Server Storage
-- **Static Generation**: Custom Build-System
+- **Static Generation**: PHP-basiertes Build-System mit Blade Templates
 
 ### Deployment-Architektur
-- **Installation**: ZIP-Package mit Setup-Script
+- **Installation**: ZIP-Package mit PHP-Setup-Wizard (wie WordPress)
 - **CMS Backend**: Läuft auf Webserver (z.B. `/admin`)
 - **Generated Sites**: Werden direkt auf demselben Webserver deployed
-- **Database**: PostgreSQL lokal installiert
+- **Database**: MySQL/MariaDB lokal installiert
+- **Kompatibilität**: Shared Hosting, VPS, Dedicated Server
 
 ---
 
@@ -173,19 +176,35 @@ Entwicklung eines modernen, benutzerfreundlichen Content Management Systems mit 
 ## Installation & Setup
 
 ### Systemanforderungen
-- **Webserver**: Apache/Nginx mit PHP 8.0+
-- **Node.js**: Version 18+ für Builder-Backend
-- **Datenbank**: PostgreSQL 12+
-- **Memory**: Minimum 2GB RAM empfohlen
-- **Storage**: Abhängig von Content-Volumen
+- **Webserver**: Apache 2.4+ oder Nginx 1.18+
+- **PHP**: Version 8.2+ mit Extensions:
+  - PDO (MySQL)
+  - mbstring
+  - OpenSSL
+  - GD oder ImageMagick (für Bildbearbeitung)
+  - XML
+  - Ctype
+  - JSON
+  - Fileinfo
+- **Datenbank**: MySQL 8.0+ oder MariaDB 10.6+
+- **Memory**: Minimum 256MB PHP Memory Limit (512MB empfohlen)
+- **Storage**: Minimum 500MB (abhängig von Content-Volumen)
+- **Permissions**: Write-Access für storage/ und bootstrap/cache/
 
-### Installations-Prozess
-1. **ZIP-Upload**: CMS-Package auf Server hochladen
-2. **Extraction**: Automatisches Entpacken
-3. **Setup-Script**: Browser-basierte Installation
-4. **Database Setup**: Automatische DB-Erstellung und -Konfiguration
-5. **Admin-Account**: Ersten Administrator-Account anlegen
-6. **System-Check**: Abhängigkeiten und Berechtigungen prüfen
+### Installations-Prozess (WordPress-Style)
+1. **Download**: CMS-Package von Website herunterladen
+2. **Upload**: ZIP via FTP/cPanel auf Webserver hochladen
+3. **Entpacken**: Dateien im Webserver-Root entpacken
+4. **Browser öffnen**: Domain aufrufen (z.B. https://ihre-domain.de)
+5. **Setup-Wizard**:
+   - Schritt 1: System-Check (PHP-Version, Extensions, Permissions)
+   - Schritt 2: Datenbank-Konfiguration (Host, Name, User, Passwort)
+   - Schritt 3: Website-Einstellungen (Name, URL)
+   - Schritt 4: Admin-Account erstellen (E-Mail, Passwort)
+   - Schritt 5: Installation abschließen
+6. **Fertig**: Zugriff auf Admin-Panel unter `/admin`
+
+**Installationszeit**: 5-10 Minuten
 
 ### Post-Installation
 - **Backend-Zugriff**: Via `/admin` oder konfigurierbare URL
@@ -285,9 +304,20 @@ Entwicklung eines modernen, benutzerfreundlichen Content Management Systems mit 
 
 ### Development Setup
 1. **Repository Setup**: Git-Struktur und Development-Workflow
-2. **Development Environment**: Docker-basierte lokale Entwicklung
-3. **Testing Strategy**: Unit-, Integration- und E2E-Tests
-4. **CI/CD Pipeline**: Automatisierte Builds und Deployments
+2. **Development Environment**:
+   - Laravel Sail (Docker) oder lokales PHP/MySQL
+   - Composer für PHP-Dependencies
+   - npm/Vite für React Builder Development
+3. **Testing Strategy**:
+   - PHPUnit für Backend-Tests
+   - Pest (optional) für elegantere Tests
+   - Vitest für React-Tests
+   - Laravel Dusk für E2E-Tests
+4. **CI/CD Pipeline**: GitHub Actions oder GitLab CI
+5. **Code Quality**:
+   - PHP CS Fixer für Code-Standards
+   - PHPStan für statische Analyse
+   - ESLint für React/TypeScript
 
 ### MVP Timeline
 - **Woche 1-2**: Projekt-Setup und Architektur
