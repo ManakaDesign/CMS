@@ -1,0 +1,92 @@
+<?php
+
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ElementController;
+use App\Http\Controllers\Api\MediaController;
+use App\Http\Controllers\Api\PageController;
+use App\Http\Controllers\Api\TemplateController;
+use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register API routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "api" middleware group. Make something great!
+|
+*/
+
+// Public routes (no auth required)
+Route::prefix('public')->group(function () {
+    // Get published pages for frontend
+    Route::get('/pages', [PageController::class, 'index'])->name('api.public.pages.index');
+    Route::get('/pages/{page:slug}', [PageController::class, 'show'])->name('api.public.pages.show');
+});
+
+// Authentication routes (no auth required)
+Route::prefix('auth')->name('api.auth.')->group(function () {
+    Route::post('/login', [AuthController::class, 'login'])->name('login');
+    Route::post('/register', [AuthController::class, 'register'])->name('register');
+
+    // These require authentication
+    Route::middleware(['auth:sanctum'])->group(function () {
+        Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+        Route::get('/me', [AuthController::class, 'me'])->name('me');
+    });
+});
+
+// Protected routes (require authentication)
+Route::middleware(['auth:sanctum'])->group(function () {
+
+    // Pages
+    Route::prefix('pages')->name('api.pages.')->group(function () {
+        Route::get('/', [PageController::class, 'index'])->name('index');
+        Route::post('/', [PageController::class, 'store'])->name('store');
+        Route::get('/{page}', [PageController::class, 'show'])->name('show');
+        Route::put('/{page}', [PageController::class, 'update'])->name('update');
+        Route::delete('/{page}', [PageController::class, 'destroy'])->name('destroy');
+
+        // Page actions
+        Route::post('/{page}/publish', [PageController::class, 'publish'])->name('publish');
+        Route::post('/{page}/unpublish', [PageController::class, 'unpublish'])->name('unpublish');
+        Route::post('/{page}/duplicate', [PageController::class, 'duplicate'])->name('duplicate');
+    });
+
+    // Elements
+    Route::prefix('elements')->name('api.elements.')->group(function () {
+        Route::get('/pages/{page}', [ElementController::class, 'index'])->name('index');
+        Route::post('/', [ElementController::class, 'store'])->name('store');
+        Route::get('/{element}', [ElementController::class, 'show'])->name('show');
+        Route::put('/{element}', [ElementController::class, 'update'])->name('update');
+        Route::delete('/{element}', [ElementController::class, 'destroy'])->name('destroy');
+
+        // Element actions
+        Route::post('/{element}/duplicate', [ElementController::class, 'duplicate'])->name('duplicate');
+        Route::post('/reorder', [ElementController::class, 'reorder'])->name('reorder');
+    });
+
+    // Media
+    Route::prefix('media')->name('api.media.')->group(function () {
+        Route::get('/', [MediaController::class, 'index'])->name('index');
+        Route::post('/', [MediaController::class, 'store'])->name('store');
+        Route::get('/{media}', [MediaController::class, 'show'])->name('show');
+        Route::put('/{media}', [MediaController::class, 'update'])->name('update');
+        Route::delete('/{media}', [MediaController::class, 'destroy'])->name('destroy');
+    });
+
+    // Templates
+    Route::prefix('templates')->name('api.templates.')->group(function () {
+        Route::get('/', [TemplateController::class, 'index'])->name('index');
+        Route::post('/', [TemplateController::class, 'store'])->name('store');
+        Route::get('/{template}', [TemplateController::class, 'show'])->name('show');
+        Route::put('/{template}', [TemplateController::class, 'update'])->name('update');
+        Route::delete('/{template}', [TemplateController::class, 'destroy'])->name('destroy');
+    });
+
+    // User info
+    Route::get('/user', function () {
+        return response()->json(auth()->user());
+    })->name('api.user');
+});
