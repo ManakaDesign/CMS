@@ -6,9 +6,10 @@
 
 session_start();
 
-// Check if already installed
+// Check if already installed (allow step 6 to show success message)
 $installedFile = __DIR__ . '/../.installed';
-if (file_exists($installedFile)) {
+$currentStep = $_GET['step'] ?? 1;
+if (file_exists($installedFile) && $currentStep != 6) {
     header('Location: /');
     exit;
 }
@@ -236,22 +237,34 @@ function handleAdminAccount(): void
 
 function runInstallation(): void
 {
-    // Check if exec() is available
-    $execAvailable = function_exists('exec') && !in_array('exec', array_map('trim', explode(',', ini_get('disable_functions'))));
+    try {
+        // Check if exec() is available
+        $execAvailable = function_exists('exec') && !in_array('exec', array_map('trim', explode(',', ini_get('disable_functions'))));
 
-    if ($execAvailable) {
-        // Try to run via artisan commands (faster and cleaner)
-        runInstallationViaArtisan();
-    } else {
-        // Fallback for shared hosting without exec()
-        runInstallationManually();
+        if ($execAvailable) {
+            // Try to run via artisan commands (faster and cleaner)
+            runInstallationViaArtisan();
+        } else {
+            // Fallback for shared hosting without exec()
+            runInstallationManually();
+        }
+
+        // Create .installed lock file ONLY if installation succeeded
+        file_put_contents(__DIR__ . '/../.installed', date('Y-m-d H:i:s'));
+
+        // Clear session
+        session_destroy();
+    } catch (Exception $e) {
+        // Log error and show to user
+        $_SESSION['error'] = 'Installation failed: ' . $e->getMessage() . '<br><br>Stack trace: <pre>' . $e->getTraceAsString() . '</pre>';
+
+        // Delete .installed file if it exists (to allow retry)
+        @unlink(__DIR__ . '/../.installed');
+
+        // Redirect back to admin account step
+        header('Location: ?step=5');
+        exit;
     }
-
-    // Create .installed lock file
-    file_put_contents(__DIR__ . '/../.installed', date('Y-m-d H:i:s'));
-
-    // Clear session
-    session_destroy();
 }
 
 function runInstallationViaArtisan(): void
@@ -850,11 +863,45 @@ function displayAdminAccount(): void
 
 function displayComplete(): void
 {
+    // Verify installation
+    $envFile = __DIR__ . '/../.env';
+    $appKeySet = false;
+    $dbConfigured = false;
+
+    if (file_exists($envFile)) {
+        $envContent = file_get_contents($envFile);
+        $appKeySet = preg_match('/^APP_KEY=base64:.+/m', $envContent);
+        $dbConfigured = preg_match('/^DB_DATABASE=.+/m', $envContent) && !preg_match('/^DB_DATABASE=laravel/m', $envContent);
+    }
+
     ?>
     <div class="step-content success">
         <div class="success-icon">✅</div>
         <h2>Installation Complete!</h2>
         <p>Your CMS has been successfully installed and is ready to use.</p>
+
+        <?php if (!$appKeySet || !$dbConfigured): ?>
+        <div class="alert alert-danger">
+            <strong>⚠️ Configuration Warning</strong>
+            <?php if (!$appKeySet): ?>
+                <p>APP_KEY might not be set correctly. Check your .env file.</p>
+            <?php endif; ?>
+            <?php if (!$dbConfigured): ?>
+                <p>Database might not be configured correctly. Check your .env file.</p>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
+
+        <div class="info-box">
+            <h3>Installation Summary:</h3>
+            <ul>
+                <li>✅ Configuration file created (.env)</li>
+                <li><?php echo $appKeySet ? '✅' : '❌'; ?> Application key generated</li>
+                <li><?php echo $dbConfigured ? '✅' : '❌'; ?> Database configured</li>
+                <li>✅ Database tables created</li>
+                <li>✅ Admin account created</li>
+            </ul>
+        </div>
 
         <div class="info-box">
             <h3>Next Steps:</h3>
