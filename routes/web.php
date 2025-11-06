@@ -8,6 +8,6 @@ Route::get('/', function () {
 });
 
 // Admin Panel - React SPA
-Route::get('/admin/{any?}', function () {
+Route::get('/public/admin/{any?}', function () {
     return view('admin');
 })->where('any', '.*');
