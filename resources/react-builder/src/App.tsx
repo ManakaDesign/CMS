@@ -6,6 +6,11 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { isAuthenticated } from './api/client';
 
 function App() {
+  console.log('[DEBUG] ===== APP VERSION: BUILD-2025-11-06-23:30 =====');
+  console.log('[DEBUG] App loaded with basename: /public/admin');
+  console.log('[DEBUG] Current URL:', window.location.href);
+  console.log('[DEBUG] Current pathname:', window.location.pathname);
+
   return (
     <BrowserRouter basename="/public/admin">
       <Routes>

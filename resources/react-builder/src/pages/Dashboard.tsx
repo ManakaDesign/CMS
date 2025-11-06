@@ -15,6 +15,7 @@ import { removeAuthToken } from '../api/client';
 import type { Page } from '../types';
 
 export const Dashboard: React.FC = () => {
+  console.log('[DEBUG] Dashboard component loaded - NEW VERSION');
   const navigate = useNavigate();
   const [pages, setPages] = useState<Page[]>([]);
   const [loading, setLoading] = useState(true);
