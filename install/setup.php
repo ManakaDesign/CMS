@@ -537,6 +537,21 @@ function runMigrationsManually(): void
                 INDEX `site_settings_group_index` (`group`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ",
+        'personal_access_tokens' => "
+            CREATE TABLE IF NOT EXISTS `personal_access_tokens` (
+                `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `tokenable_type` VARCHAR(255) NOT NULL,
+                `tokenable_id` BIGINT UNSIGNED NOT NULL,
+                `name` VARCHAR(255) NOT NULL,
+                `token` VARCHAR(64) NOT NULL UNIQUE,
+                `abilities` TEXT NULL,
+                `last_used_at` TIMESTAMP NULL,
+                `expires_at` TIMESTAMP NULL,
+                `created_at` TIMESTAMP NULL,
+                `updated_at` TIMESTAMP NULL,
+                INDEX `personal_access_tokens_tokenable_type_tokenable_id_index` (`tokenable_type`, `tokenable_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ",
     ];
 
     // Execute each table creation
@@ -571,6 +586,7 @@ function getMigrationNameForTable(string $tableName): string
         'elements' => '2025_11_05_130318_create_elements_table',
         'media' => '2025_11_05_130318_create_media_table',
         'site_settings' => '2025_11_05_130319_create_site_settings_table',
+        'personal_access_tokens' => '2025_11_05_130320_create_personal_access_tokens_table',
     ];
 
     return $migrationMap[$tableName] ?? $tableName;
