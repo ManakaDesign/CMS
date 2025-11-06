@@ -79,12 +79,40 @@ function handleDatabaseConfig(): void
 
     // Test database connection
     try {
-        $dsn = "mysql:host=$host;port=$port";
-        $pdo = new PDO($dsn, $username, $password);
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        // First, try to connect directly to the database (if it already exists)
+        $dsnWithDb = "mysql:host=$host;port=$port;dbname=$database";
+        try {
+            $pdo = new PDO($dsnWithDb, $username, $password);
+            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        // Create database if not exists
-        $pdo->exec("CREATE DATABASE IF NOT EXISTS `$database` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+            // Database exists and connection successful!
+            $dbExists = true;
+        } catch (PDOException $e) {
+            // Database doesn't exist or connection failed, try to create it
+            $dbExists = false;
+        }
+
+        // If database doesn't exist, try to create it
+        if (!$dbExists) {
+            try {
+                $dsn = "mysql:host=$host;port=$port";
+                $pdo = new PDO($dsn, $username, $password);
+                $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+                // Try to create database
+                $pdo->exec("CREATE DATABASE `$database` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+
+                // Reconnect to the newly created database
+                $pdo = new PDO($dsnWithDb, $username, $password);
+                $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+            } catch (PDOException $createError) {
+                // Cannot create database - user needs to create it manually
+                $_SESSION['error'] = "Cannot create database automatically. Please create the database '<strong>$database</strong>' manually in cPanel/phpMyAdmin first, then try again.<br><br>Error: " . $createError->getMessage();
+                header('Location: ?step=3');
+                exit;
+            }
+        }
 
         // Save to session
         $_SESSION['db_config'] = [
@@ -102,7 +130,7 @@ function handleDatabaseConfig(): void
         header('Location: ?step=4');
         exit;
     } catch (PDOException $e) {
-        $_SESSION['error'] = 'Database connection failed: ' . $e->getMessage();
+        $_SESSION['error'] = 'Database connection failed: ' . $e->getMessage() . '<br><br><strong>Troubleshooting:</strong><ul><li>Check username and password</li><li>Verify database host (try "127.0.0.1" instead of "localhost")</li><li>Ensure user has permissions to access the database</li></ul>';
         header('Location: ?step=3');
         exit;
     }
@@ -385,10 +413,11 @@ function displayWelcome(): void
         <div class="info-box">
             <h3>Before you begin, make sure you have:</h3>
             <ul>
-                <li>✅ MySQL/MariaDB server access (database will be created automatically)</li>
-                <li>✅ Database username and password with CREATE DATABASE privileges</li>
+                <li>✅ MySQL/MariaDB server access</li>
+                <li>✅ Database username and password</li>
                 <li>✅ Write permissions for storage/ and bootstrap/cache/ directories</li>
             </ul>
+            <p><small><strong>Note:</strong> The installer will try to create the database automatically. If that fails, you can create it manually in cPanel/phpMyAdmin.</small></p>
         </div>
 
         <div class="info-box info-box-success">
@@ -475,9 +504,20 @@ function displayDatabaseConfig(): void
 
         <?php if ($error): ?>
             <div class="alert alert-error">
-                <?= htmlspecialchars($error) ?>
+                <?= $error ?>
             </div>
         <?php endif; ?>
+
+        <div class="info-box">
+            <h3>💡 Database Setup Options</h3>
+            <p><strong>Option 1 (Automatic):</strong> Enter a database name below. The installer will try to create it automatically.</p>
+            <p><strong>Option 2 (Manual):</strong> If your hosting doesn't allow automatic database creation:</p>
+            <ol>
+                <li>Create the database in cPanel → MySQL Databases (or phpMyAdmin)</li>
+                <li>Create a MySQL user with all privileges on that database</li>
+                <li>Enter the database name and credentials below</li>
+            </ol>
+        </div>
 
         <form method="POST" action="?step=3" class="install-form">
             <div class="form-group">
@@ -495,7 +535,7 @@ function displayDatabaseConfig(): void
             <div class="form-group">
                 <label for="db_database">Database Name</label>
                 <input type="text" id="db_database" name="db_database" required>
-                <small>The installer will create this database if it doesn't exist</small>
+                <small>Enter your database name. If it doesn't exist, the installer will try to create it. If auto-creation fails, please create it manually in cPanel/phpMyAdmin.</small>
             </div>
 
             <div class="form-group">
@@ -563,7 +603,7 @@ function displayAdminAccount(): void
 
         <?php if ($error): ?>
             <div class="alert alert-error">
-                <?= htmlspecialchars($error) ?>
+                <?= $error ?>
             </div>
         <?php endif; ?>
 
