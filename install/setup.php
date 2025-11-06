@@ -6,9 +6,10 @@
 
 session_start();
 
-// Check if already installed
+// Check if already installed (allow step 6 to show success message)
 $installedFile = __DIR__ . '/../.installed';
-if (file_exists($installedFile)) {
+$currentStep = $_GET['step'] ?? 1;
+if (file_exists($installedFile) && $currentStep != 6) {
     header('Location: /');
     exit;
 }
@@ -236,22 +237,34 @@ function handleAdminAccount(): void
 
 function runInstallation(): void
 {
-    // Check if exec() is available
-    $execAvailable = function_exists('exec') && !in_array('exec', array_map('trim', explode(',', ini_get('disable_functions'))));
+    try {
+        // Check if exec() is available
+        $execAvailable = function_exists('exec') && !in_array('exec', array_map('trim', explode(',', ini_get('disable_functions'))));
 
-    if ($execAvailable) {
-        // Try to run via artisan commands (faster and cleaner)
-        runInstallationViaArtisan();
-    } else {
-        // Fallback for shared hosting without exec()
-        runInstallationManually();
+        if ($execAvailable) {
+            // Try to run via artisan commands (faster and cleaner)
+            runInstallationViaArtisan();
+        } else {
+            // Fallback for shared hosting without exec()
+            runInstallationManually();
+        }
+
+        // Create .installed lock file ONLY if installation succeeded
+        file_put_contents(__DIR__ . '/../.installed', date('Y-m-d H:i:s'));
+
+        // Clear session
+        session_destroy();
+    } catch (Exception $e) {
+        // Log error and show to user
+        $_SESSION['error'] = 'Installation failed: ' . $e->getMessage() . '<br><br>Stack trace: <pre>' . $e->getTraceAsString() . '</pre>';
+
+        // Delete .installed file if it exists (to allow retry)
+        @unlink(__DIR__ . '/../.installed');
+
+        // Redirect back to admin account step
+        header('Location: ?step=5');
+        exit;
     }
-
-    // Create .installed lock file
-    file_put_contents(__DIR__ . '/../.installed', date('Y-m-d H:i:s'));
-
-    // Clear session
-    session_destroy();
 }
 
 function runInstallationViaArtisan(): void
@@ -335,10 +348,6 @@ function runMigrationsManually(): void
     $pdo = new PDO($dsn, $dbConfig['username'], $dbConfig['password']);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // Read all migration files
-    $migrationFiles = glob(__DIR__ . '/../database/migrations/*.php');
-    sort($migrationFiles);
-
     // Create migrations table
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS migrations (
@@ -348,50 +357,239 @@ function runMigrationsManually(): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ");
 
-    // Run each migration
-    foreach ($migrationFiles as $file) {
-        $migrationName = basename($file, '.php');
+    // Create all tables directly with SQL
+    $tables = [
+        'users' => "
+            CREATE TABLE IF NOT EXISTS `users` (
+                `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `name` VARCHAR(255) NOT NULL,
+                `email` VARCHAR(255) NOT NULL UNIQUE,
+                `email_verified_at` TIMESTAMP NULL,
+                `password` VARCHAR(255) NOT NULL,
+                `remember_token` VARCHAR(100) NULL,
+                `created_at` TIMESTAMP NULL,
+                `updated_at` TIMESTAMP NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ",
+        'password_reset_tokens' => "
+            CREATE TABLE IF NOT EXISTS `password_reset_tokens` (
+                `email` VARCHAR(255) PRIMARY KEY,
+                `token` VARCHAR(255) NOT NULL,
+                `created_at` TIMESTAMP NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ",
+        'sessions' => "
+            CREATE TABLE IF NOT EXISTS `sessions` (
+                `id` VARCHAR(255) PRIMARY KEY,
+                `user_id` BIGINT UNSIGNED NULL,
+                `ip_address` VARCHAR(45) NULL,
+                `user_agent` TEXT NULL,
+                `payload` LONGTEXT NOT NULL,
+                `last_activity` INT NOT NULL,
+                INDEX `sessions_user_id_index` (`user_id`),
+                INDEX `sessions_last_activity_index` (`last_activity`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ",
+        'cache' => "
+            CREATE TABLE IF NOT EXISTS `cache` (
+                `key` VARCHAR(255) PRIMARY KEY,
+                `value` MEDIUMTEXT NOT NULL,
+                `expiration` INT NOT NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ",
+        'cache_locks' => "
+            CREATE TABLE IF NOT EXISTS `cache_locks` (
+                `key` VARCHAR(255) PRIMARY KEY,
+                `owner` VARCHAR(255) NOT NULL,
+                `expiration` INT NOT NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ",
+        'jobs' => "
+            CREATE TABLE IF NOT EXISTS `jobs` (
+                `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `queue` VARCHAR(255) NOT NULL,
+                `payload` LONGTEXT NOT NULL,
+                `attempts` TINYINT UNSIGNED NOT NULL,
+                `reserved_at` INT UNSIGNED NULL,
+                `available_at` INT UNSIGNED NOT NULL,
+                `created_at` INT UNSIGNED NOT NULL,
+                INDEX `jobs_queue_index` (`queue`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ",
+        'job_batches' => "
+            CREATE TABLE IF NOT EXISTS `job_batches` (
+                `id` VARCHAR(255) PRIMARY KEY,
+                `name` VARCHAR(255) NOT NULL,
+                `total_jobs` INT NOT NULL,
+                `pending_jobs` INT NOT NULL,
+                `failed_jobs` INT NOT NULL,
+                `failed_job_ids` LONGTEXT NOT NULL,
+                `options` MEDIUMTEXT NULL,
+                `cancelled_at` INT NULL,
+                `created_at` INT NOT NULL,
+                `finished_at` INT NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ",
+        'failed_jobs' => "
+            CREATE TABLE IF NOT EXISTS `failed_jobs` (
+                `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `uuid` VARCHAR(255) NOT NULL UNIQUE,
+                `connection` TEXT NOT NULL,
+                `queue` TEXT NOT NULL,
+                `payload` LONGTEXT NOT NULL,
+                `exception` LONGTEXT NOT NULL,
+                `failed_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ",
+        'templates' => "
+            CREATE TABLE IF NOT EXISTS `templates` (
+                `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `name` VARCHAR(255) NOT NULL,
+                `slug` VARCHAR(255) NOT NULL UNIQUE,
+                `type` ENUM('page', 'header', 'footer', 'global') NOT NULL DEFAULT 'page',
+                `structure` JSON NULL,
+                `description` TEXT NULL,
+                `thumbnail` VARCHAR(255) NULL,
+                `is_default` BOOLEAN NOT NULL DEFAULT 0,
+                `created_at` TIMESTAMP NULL,
+                `updated_at` TIMESTAMP NULL,
+                INDEX `templates_type_index` (`type`),
+                INDEX `templates_is_default_index` (`is_default`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ",
+        'pages' => "
+            CREATE TABLE IF NOT EXISTS `pages` (
+                `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `title` VARCHAR(255) NOT NULL,
+                `slug` VARCHAR(255) NOT NULL UNIQUE,
+                `content` JSON NULL,
+                `template_id` BIGINT UNSIGNED NULL,
+                `meta_title` VARCHAR(255) NULL,
+                `meta_description` TEXT NULL,
+                `meta_keywords` VARCHAR(255) NULL,
+                `status` ENUM('draft', 'published') NOT NULL DEFAULT 'draft',
+                `published_at` TIMESTAMP NULL,
+                `user_id` BIGINT UNSIGNED NOT NULL,
+                `order` INT NOT NULL DEFAULT 0,
+                `show_in_menu` BOOLEAN NOT NULL DEFAULT 1,
+                `parent_id` BIGINT UNSIGNED NULL,
+                `created_at` TIMESTAMP NULL,
+                `updated_at` TIMESTAMP NULL,
+                `deleted_at` TIMESTAMP NULL,
+                INDEX `pages_slug_index` (`slug`),
+                INDEX `pages_status_index` (`status`),
+                INDEX `pages_published_at_index` (`published_at`),
+                FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+                FOREIGN KEY (`parent_id`) REFERENCES `pages`(`id`) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ",
+        'elements' => "
+            CREATE TABLE IF NOT EXISTS `elements` (
+                `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `page_id` BIGINT UNSIGNED NOT NULL,
+                `type` VARCHAR(255) NOT NULL,
+                `settings` JSON NULL,
+                `styles` JSON NULL,
+                `parent_id` BIGINT UNSIGNED NULL,
+                `order` INT NOT NULL DEFAULT 0,
+                `is_visible` BOOLEAN NOT NULL DEFAULT 1,
+                `created_at` TIMESTAMP NULL,
+                `updated_at` TIMESTAMP NULL,
+                INDEX `elements_page_id_index` (`page_id`),
+                INDEX `elements_parent_id_index` (`parent_id`),
+                INDEX `elements_order_index` (`order`),
+                INDEX `elements_type_index` (`type`),
+                FOREIGN KEY (`page_id`) REFERENCES `pages`(`id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ",
+        'media' => "
+            CREATE TABLE IF NOT EXISTS `media` (
+                `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `filename` VARCHAR(255) NOT NULL,
+                `original_filename` VARCHAR(255) NOT NULL,
+                `path` VARCHAR(255) NOT NULL,
+                `disk` VARCHAR(255) NOT NULL DEFAULT 'public',
+                `mime_type` VARCHAR(255) NOT NULL,
+                `size` BIGINT UNSIGNED NOT NULL,
+                `width` INT NULL,
+                `height` INT NULL,
+                `alt_text` VARCHAR(255) NULL,
+                `caption` TEXT NULL,
+                `user_id` BIGINT UNSIGNED NOT NULL,
+                `created_at` TIMESTAMP NULL,
+                `updated_at` TIMESTAMP NULL,
+                INDEX `media_mime_type_index` (`mime_type`),
+                INDEX `media_user_id_index` (`user_id`),
+                FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ",
+        'site_settings' => "
+            CREATE TABLE IF NOT EXISTS `site_settings` (
+                `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `key` VARCHAR(255) NOT NULL UNIQUE,
+                `value` TEXT NULL,
+                `type` VARCHAR(255) NOT NULL DEFAULT 'string',
+                `group` VARCHAR(255) NOT NULL DEFAULT 'general',
+                `description` TEXT NULL,
+                `created_at` TIMESTAMP NULL,
+                `updated_at` TIMESTAMP NULL,
+                INDEX `site_settings_key_index` (`key`),
+                INDEX `site_settings_group_index` (`group`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ",
+        'personal_access_tokens' => "
+            CREATE TABLE IF NOT EXISTS `personal_access_tokens` (
+                `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `tokenable_type` VARCHAR(255) NOT NULL,
+                `tokenable_id` BIGINT UNSIGNED NOT NULL,
+                `name` VARCHAR(255) NOT NULL,
+                `token` VARCHAR(64) NOT NULL UNIQUE,
+                `abilities` TEXT NULL,
+                `last_used_at` TIMESTAMP NULL,
+                `expires_at` TIMESTAMP NULL,
+                `created_at` TIMESTAMP NULL,
+                `updated_at` TIMESTAMP NULL,
+                INDEX `personal_access_tokens_tokenable_type_tokenable_id_index` (`tokenable_type`, `tokenable_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ",
+    ];
 
-        // Check if already run
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM migrations WHERE migration = ?");
-        $stmt->execute([$migrationName]);
-        if ($stmt->fetchColumn() > 0) {
-            continue; // Already run
+    // Execute each table creation
+    foreach ($tables as $tableName => $sql) {
+        try {
+            $pdo->exec($sql);
+
+            // Record migration
+            $migrationName = getMigrationNameForTable($tableName);
+            $stmt = $pdo->prepare("INSERT IGNORE INTO migrations (migration, batch) VALUES (?, 1)");
+            $stmt->execute([$migrationName]);
+        } catch (PDOException $e) {
+            // Table might already exist, continue
+            error_log("Migration warning for table $tableName: " . $e->getMessage());
         }
-
-        // Execute migration SQL
-        $sql = file_get_contents($file);
-
-        // Extract SQL from PHP migration file (simplified approach)
-        // This reads the Schema::create/table calls and converts them
-        executeMigrationFile($pdo, $file);
-
-        // Record migration
-        $stmt = $pdo->prepare("INSERT INTO migrations (migration, batch) VALUES (?, 1)");
-        $stmt->execute([$migrationName]);
     }
 }
 
-function executeMigrationFile(PDO $pdo, string $file): void
+function getMigrationNameForTable(string $tableName): string
 {
-    // Bootstrap Laravel without exec()
-    require_once __DIR__ . '/../vendor/autoload.php';
+    $migrationMap = [
+        'users' => '0001_01_01_000000_create_users_table',
+        'password_reset_tokens' => '0001_01_01_000000_create_users_table',
+        'sessions' => '0001_01_01_000000_create_users_table',
+        'cache' => '0001_01_01_000001_create_cache_table',
+        'cache_locks' => '0001_01_01_000001_create_cache_table',
+        'jobs' => '0001_01_01_000002_create_jobs_table',
+        'job_batches' => '0001_01_01_000002_create_jobs_table',
+        'failed_jobs' => '0001_01_01_000002_create_jobs_table',
+        'pages' => '2025_11_05_130251_create_pages_table',
+        'templates' => '2025_11_05_130317_create_templates_table',
+        'elements' => '2025_11_05_130318_create_elements_table',
+        'media' => '2025_11_05_130318_create_media_table',
+        'site_settings' => '2025_11_05_130319_create_site_settings_table',
+        'personal_access_tokens' => '2025_11_05_130320_create_personal_access_tokens_table',
+    ];
 
-    // Load environment variables
-    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
-    $dotenv->load();
-
-    // Bootstrap Laravel application
-    $app = require_once __DIR__ . '/../bootstrap/app.php';
-    $kernel = $app->make(\Illuminate\Contracts\Console\Kernel::class);
-    $kernel->bootstrap();
-
-    // Get migration instance and run it
-    $migration = require $file;
-
-    if (method_exists($migration, 'up')) {
-        $migration->up();
-    }
+    return $migrationMap[$tableName] ?? $tableName;
 }
 
 function createAdminUserManually(string $email, string $password, string $siteName): void
@@ -428,13 +626,13 @@ function createEnvFile(array $dbConfig): void
 
     $env = file_get_contents($envFile);
 
-    // Update database config
-    $env = preg_replace('/DB_CONNECTION=.*/', 'DB_CONNECTION=mysql', $env);
-    $env = preg_replace('/DB_HOST=.*/', 'DB_HOST=' . $dbConfig['host'], $env);
-    $env = preg_replace('/DB_PORT=.*/', 'DB_PORT=' . $dbConfig['port'], $env);
-    $env = preg_replace('/DB_DATABASE=.*/', 'DB_DATABASE=' . $dbConfig['database'], $env);
-    $env = preg_replace('/DB_USERNAME=.*/', 'DB_USERNAME=' . $dbConfig['username'], $env);
-    $env = preg_replace('/DB_PASSWORD=.*/', 'DB_PASSWORD=' . $dbConfig['password'], $env);
+    // Update database config - handles both commented and uncommented lines
+    $env = preg_replace('/^#?\s*DB_CONNECTION=.*/m', 'DB_CONNECTION=mysql', $env);
+    $env = preg_replace('/^#?\s*DB_HOST=.*/m', 'DB_HOST=' . $dbConfig['host'], $env);
+    $env = preg_replace('/^#?\s*DB_PORT=.*/m', 'DB_PORT=' . $dbConfig['port'], $env);
+    $env = preg_replace('/^#?\s*DB_DATABASE=.*/m', 'DB_DATABASE=' . $dbConfig['database'], $env);
+    $env = preg_replace('/^#?\s*DB_USERNAME=.*/m', 'DB_USERNAME=' . $dbConfig['username'], $env);
+    $env = preg_replace('/^#?\s*DB_PASSWORD=.*/m', 'DB_PASSWORD=' . $dbConfig['password'], $env);
 
     file_put_contents($envFile, $env);
 }
@@ -443,7 +641,8 @@ function updateEnvFile(string $key, string $value): void
 {
     $envFile = __DIR__ . '/../.env';
     $env = file_get_contents($envFile);
-    $env = preg_replace("/$key=.*/", "$key=$value", $env);
+    // Handle both commented and uncommented lines
+    $env = preg_replace("/^#?\s*$key=.*/m", "$key=$value", $env);
     file_put_contents($envFile, $env);
 }
 
@@ -680,11 +879,45 @@ function displayAdminAccount(): void
 
 function displayComplete(): void
 {
+    // Verify installation
+    $envFile = __DIR__ . '/../.env';
+    $appKeySet = false;
+    $dbConfigured = false;
+
+    if (file_exists($envFile)) {
+        $envContent = file_get_contents($envFile);
+        $appKeySet = preg_match('/^APP_KEY=base64:.+/m', $envContent);
+        $dbConfigured = preg_match('/^DB_DATABASE=.+/m', $envContent) && !preg_match('/^DB_DATABASE=laravel/m', $envContent);
+    }
+
     ?>
     <div class="step-content success">
         <div class="success-icon">✅</div>
         <h2>Installation Complete!</h2>
         <p>Your CMS has been successfully installed and is ready to use.</p>
+
+        <?php if (!$appKeySet || !$dbConfigured): ?>
+        <div class="alert alert-danger">
+            <strong>⚠️ Configuration Warning</strong>
+            <?php if (!$appKeySet): ?>
+                <p>APP_KEY might not be set correctly. Check your .env file.</p>
+            <?php endif; ?>
+            <?php if (!$dbConfigured): ?>
+                <p>Database might not be configured correctly. Check your .env file.</p>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
+
+        <div class="info-box">
+            <h3>Installation Summary:</h3>
+            <ul>
+                <li>✅ Configuration file created (.env)</li>
+                <li><?php echo $appKeySet ? '✅' : '❌'; ?> Application key generated</li>
+                <li><?php echo $dbConfigured ? '✅' : '❌'; ?> Database configured</li>
+                <li>✅ Database tables created</li>
+                <li>✅ Admin account created</li>
+            </ul>
+        </div>
 
         <div class="info-box">
             <h3>Next Steps:</h3>

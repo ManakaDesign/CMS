@@ -52,8 +52,8 @@ export const Builder: React.FC = () => {
         const loadedPage = await pagesApi.get(parseInt(pageId));
         setPage(loadedPage);
 
-        // Load elements from page
-        const pageElements = loadedPage.elements || [];
+        // Load elements from page content (JSON field)
+        const pageElements = loadedPage.content?.elements || [];
         setElements(pageElements);
       } catch (err: any) {
         setLoadError(err.response?.data?.message || 'Fehler beim Laden der Seite');

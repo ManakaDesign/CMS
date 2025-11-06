@@ -1,0 +1,19 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Allow access to installer during setup
+    RewriteCond %{REQUEST_URI} ^/install/ [OR]
+    RewriteCond %{REQUEST_URI} ^/web-installer\.php
+    RewriteRule ^ - [L]
+
+    # If the file exists in public/, serve it directly
+    RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f
+    RewriteRule ^(.*)$ public/$1 [L]
+
+    # If the directory exists in public/, serve it directly
+    RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -d
+    RewriteRule ^(.*)$ public/$1 [L]
+
+    # Redirect all other requests to public/index.php
+    RewriteRule ^(.*)$ public/index.php [L]
+</IfModule>
