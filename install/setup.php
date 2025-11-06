@@ -13,6 +13,50 @@ if (file_exists($installedFile)) {
     exit;
 }
 
+// Check if vendor directory exists
+$vendorDir = __DIR__ . '/../vendor';
+if (!file_exists($vendorDir) || !file_exists($vendorDir . '/autoload.php')) {
+    die('
+        <html>
+        <head>
+            <title>CMS Installation - Missing Dependencies</title>
+            <style>
+                body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; line-height: 1.6; }
+                .error-box { background: #fee; border: 2px solid #c33; border-radius: 8px; padding: 30px; margin: 20px 0; }
+                h1 { color: #c33; }
+                code { background: #f5f5f5; padding: 2px 8px; border-radius: 3px; font-family: monospace; }
+                .solution { background: #efe; border-left: 4px solid #4a4; padding: 15px; margin: 20px 0; }
+                ol { padding-left: 20px; }
+                li { margin: 10px 0; }
+            </style>
+        </head>
+        <body>
+            <div class="error-box">
+                <h1>❌ Missing Dependencies (vendor/ directory)</h1>
+                <p>The <code>vendor/</code> directory is missing. This directory contains all required PHP dependencies.</p>
+
+                <div class="solution">
+                    <h2>✅ Solution:</h2>
+                    <ol>
+                        <li><strong>Re-download the complete package</strong> from GitHub (make sure <code>vendor/</code> is included)</li>
+                        <li><strong>OR</strong> run <code>composer install</code> locally:
+                            <ul>
+                                <li>Open terminal/command prompt</li>
+                                <li>Navigate to the CMS directory</li>
+                                <li>Run: <code>composer install --no-dev</code></li>
+                                <li>Re-upload all files including <code>vendor/</code></li>
+                            </ul>
+                        </li>
+                    </ol>
+                </div>
+
+                <p><strong>Note:</strong> The latest version should include <code>vendor/</code> in the repository for easy shared hosting deployment.</p>
+            </div>
+        </body>
+        </html>
+    ');
+}
+
 require_once 'requirements.php';
 
 // Get current step

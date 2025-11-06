@@ -18,7 +18,7 @@
 /public/storage
 /storage/*.key
 /storage/pail
-/vendor
+# /vendor - INCLUDED for Shared Hosting deployment
 Homestead.json
 Homestead.yaml
 Thumbs.db
