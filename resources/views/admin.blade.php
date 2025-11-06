@@ -5,7 +5,7 @@
     <link rel="icon" type="image/svg+xml" href="/admin/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CMS Admin Panel</title>
-    <script type="module" crossorigin src="/admin/assets/index-BAaQBLTA.js"></script>
+    <script type="module" crossorigin src="/admin/assets/index-DlvnLtJB.js"></script>
     <link rel="stylesheet" crossorigin href="/admin/assets/index-DS4Riyjh.css">
 </head>
 <body>
