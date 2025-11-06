@@ -67,18 +67,51 @@ function extractZipFile() {
     $extracted = 0;
     $errors = [];
 
-    // Extract files one by one to show progress
+    // Detect and skip root directory (GitHub ZIP contains branch name folder)
+    $rootDir = null;
+    $firstFile = $zip->getNameIndex(0);
+
+    // Check if all files are in a single root directory
+    if (strpos($firstFile, '/') !== false) {
+        $possibleRoot = substr($firstFile, 0, strpos($firstFile, '/') + 1);
+
+        // Verify all files start with this root
+        $allInRoot = true;
+        for ($i = 0; $i < min(10, $totalFiles); $i++) {
+            $testFile = $zip->getNameIndex($i);
+            if (strpos($testFile, $possibleRoot) !== 0) {
+                $allInRoot = false;
+                break;
+            }
+        }
+
+        if ($allInRoot) {
+            $rootDir = $possibleRoot;
+        }
+    }
+
+    // Extract files one by one, stripping root directory if detected
     for ($i = 0; $i < $totalFiles; $i++) {
         $filename = $zip->getNameIndex($i);
-        $fileInfo = $zip->statIndex($i);
 
-        // Skip directories
-        if (substr($filename, -1) === '/') {
+        // Skip root directory itself
+        if ($filename === $rootDir) {
+            continue;
+        }
+
+        // Strip root directory from path
+        if ($rootDir && strpos($filename, $rootDir) === 0) {
+            $filename = substr($filename, strlen($rootDir));
+        }
+
+        // Skip empty filenames or directories
+        if (empty($filename) || substr($filename, -1) === '/') {
             continue;
         }
 
         // Create directory if needed
-        $dirname = dirname($extractPath . '/' . $filename);
+        $fullPath = $extractPath . '/' . $filename;
+        $dirname = dirname($fullPath);
         if (!is_dir($dirname)) {
             @mkdir($dirname, 0755, true);
         }
@@ -90,7 +123,7 @@ function extractZipFile() {
             continue;
         }
 
-        $success = @file_put_contents($extractPath . '/' . $filename, $content);
+        $success = @file_put_contents($fullPath, $content);
         if ($success === false) {
             $errors[] = "Failed to write: $filename";
             continue;
