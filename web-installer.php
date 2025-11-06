@@ -4,6 +4,10 @@
  * Upload this file + cms.zip to your web server, then open in browser
  */
 
+// Suppress all PHP warnings/notices to ensure clean JSON output
+error_reporting(0);
+@ini_set('display_errors', '0');
+
 session_start();
 
 // Configuration
@@ -24,7 +28,10 @@ if (file_exists($extractPath . '/install/setup.php')) {
 
 // Handle POST request (extraction)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['extract'])) {
+    // Start output buffering to catch any unwanted output
+    ob_start();
     extractZipFile();
+    ob_end_clean();
     exit;
 }
 
@@ -90,18 +97,6 @@ function extractZipFile() {
         }
 
         $extracted++;
-
-        // Send progress update every 100 files
-        if ($extracted % 100 === 0) {
-            $progress = round(($extracted / $totalFiles) * 100);
-            echo json_encode([
-                'progress' => true,
-                'current' => $extracted,
-                'total' => $totalFiles,
-                'percent' => $progress
-            ]) . "\n";
-            flush();
-        }
     }
 
     $zip->close();
@@ -446,6 +441,15 @@ function displayInterface() {
                 progressBar.classList.add('active');
                 message.style.display = 'none';
 
+                // Simulate progress animation (actual extraction happens on server)
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += Math.random() * 3;
+                    if (progress > 95) progress = 95; // Stop at 95% until response
+                    progressFill.style.width = Math.floor(progress) + '%';
+                    progressFill.textContent = Math.floor(progress) + '%';
+                }, 200);
+
                 fetch('', {
                     method: 'POST',
                     headers: {
@@ -453,8 +457,16 @@ function displayInterface() {
                     },
                     body: 'extract=1'
                 })
-                .then(response => response.json())
+                .then(response => {
+                    // Check if response is actually JSON
+                    const contentType = response.headers.get('content-type');
+                    if (!contentType || !contentType.includes('application/json')) {
+                        throw new Error('Server returned non-JSON response. Check PHP error logs.');
+                    }
+                    return response.json();
+                })
                 .then(data => {
+                    clearInterval(progressInterval);
                     progressFill.style.width = '100%';
                     progressFill.textContent = '100%';
 
@@ -479,12 +491,17 @@ function displayInterface() {
                     }
                 })
                 .catch(error => {
+                    clearInterval(progressInterval);
                     message.className = 'error';
                     message.textContent = '✗ Error: ' + error.message;
                     message.style.display = 'block';
 
                     btn.disabled = false;
                     btn.textContent = 'Try Again';
+
+                    // Reset progress bar
+                    progressFill.style.width = '0%';
+                    progressFill.textContent = '0%';
                 });
             }
         </script>
