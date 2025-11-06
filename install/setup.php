@@ -428,13 +428,13 @@ function createEnvFile(array $dbConfig): void
 
     $env = file_get_contents($envFile);
 
-    // Update database config
-    $env = preg_replace('/DB_CONNECTION=.*/', 'DB_CONNECTION=mysql', $env);
-    $env = preg_replace('/DB_HOST=.*/', 'DB_HOST=' . $dbConfig['host'], $env);
-    $env = preg_replace('/DB_PORT=.*/', 'DB_PORT=' . $dbConfig['port'], $env);
-    $env = preg_replace('/DB_DATABASE=.*/', 'DB_DATABASE=' . $dbConfig['database'], $env);
-    $env = preg_replace('/DB_USERNAME=.*/', 'DB_USERNAME=' . $dbConfig['username'], $env);
-    $env = preg_replace('/DB_PASSWORD=.*/', 'DB_PASSWORD=' . $dbConfig['password'], $env);
+    // Update database config - handles both commented and uncommented lines
+    $env = preg_replace('/^#?\s*DB_CONNECTION=.*/m', 'DB_CONNECTION=mysql', $env);
+    $env = preg_replace('/^#?\s*DB_HOST=.*/m', 'DB_HOST=' . $dbConfig['host'], $env);
+    $env = preg_replace('/^#?\s*DB_PORT=.*/m', 'DB_PORT=' . $dbConfig['port'], $env);
+    $env = preg_replace('/^#?\s*DB_DATABASE=.*/m', 'DB_DATABASE=' . $dbConfig['database'], $env);
+    $env = preg_replace('/^#?\s*DB_USERNAME=.*/m', 'DB_USERNAME=' . $dbConfig['username'], $env);
+    $env = preg_replace('/^#?\s*DB_PASSWORD=.*/m', 'DB_PASSWORD=' . $dbConfig['password'], $env);
 
     file_put_contents($envFile, $env);
 }
@@ -443,7 +443,8 @@ function updateEnvFile(string $key, string $value): void
 {
     $envFile = __DIR__ . '/../.env';
     $env = file_get_contents($envFile);
-    $env = preg_replace("/$key=.*/", "$key=$value", $env);
+    // Handle both commented and uncommented lines
+    $env = preg_replace("/^#?\s*$key=.*/m", "$key=$value", $env);
     file_put_contents($envFile, $env);
 }
 
