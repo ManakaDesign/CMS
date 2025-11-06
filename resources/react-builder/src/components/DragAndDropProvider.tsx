@@ -32,6 +32,13 @@ export const DragAndDropProvider: React.FC<DragAndDropProviderProps> = ({ childr
       const elementType = dragData.type as ElementType;
       const parentId = dropData?.parentId ?? null;
 
+      // Validate drop: Check if drop zone accepts this element type
+      const acceptedTypes = dropData?.accepts || [];
+      if (acceptedTypes.length > 0 && !acceptedTypes.includes(elementType)) {
+        console.warn(`Cannot drop ${elementType} here. Accepted types:`, acceptedTypes);
+        return;
+      }
+
       // Create default element based on type
       const newElement: Element = {
         id: Date.now(), // Temporary ID, will be replaced by server

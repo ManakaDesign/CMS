@@ -1,4 +1,5 @@
 import React from 'react';
+import { useDroppable } from '@dnd-kit/core';
 import type { Element } from '../../types';
 import { BaseElement } from './BaseElement';
 
@@ -15,6 +16,15 @@ interface RowProps {
 export const Row: React.FC<RowProps> = (props) => {
   const { element, children, ...baseProps } = props;
 
+  // Make row droppable - accepts columns and other elements
+  const { setNodeRef, isOver } = useDroppable({
+    id: `row-${element.id}`,
+    data: {
+      accepts: ['column', 'text', 'heading', 'button', 'image', 'video', 'spacer', 'divider', 'code'],
+      parentId: element.id,
+    },
+  });
+
   const defaultStyles: React.CSSProperties = {
     display: 'flex',
     flexDirection: 'row' as const,
@@ -24,10 +34,14 @@ export const Row: React.FC<RowProps> = (props) => {
 
   return (
     <BaseElement element={element} {...baseProps}>
-      <div style={defaultStyles}>
+      <div
+        ref={setNodeRef}
+        style={defaultStyles}
+        className={isOver ? 'bg-blue-50 ring-2 ring-blue-300' : ''}
+      >
         {children || (
           <div className="w-full text-center text-gray-400 py-4">
-            Add columns here
+            Drop elements here
           </div>
         )}
       </div>

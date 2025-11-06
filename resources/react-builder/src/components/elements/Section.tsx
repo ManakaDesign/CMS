@@ -1,4 +1,5 @@
 import React from 'react';
+import { useDroppable } from '@dnd-kit/core';
 import type { Element } from '../../types';
 import { BaseElement } from './BaseElement';
 
@@ -15,12 +16,25 @@ interface SectionProps {
 export const Section: React.FC<SectionProps> = (props) => {
   const { element, children, ...baseProps } = props;
 
+  // Make section droppable - accepts rows
+  const { setNodeRef, isOver } = useDroppable({
+    id: `section-${element.id}`,
+    data: {
+      accepts: ['row'],
+      parentId: element.id,
+    },
+  });
+
   return (
     <BaseElement element={element} {...baseProps}>
-      <div className="w-full" style={{ minHeight: element.settings.minHeight || '100px' }}>
+      <div
+        ref={setNodeRef}
+        className={`w-full ${isOver ? 'bg-blue-50 ring-2 ring-blue-300' : ''}`}
+        style={{ minHeight: element.settings.minHeight || '100px' }}
+      >
         {children || (
           <div className="text-center text-gray-400 py-8">
-            Drop elements here
+            Drop a Row here
           </div>
         )}
       </div>
