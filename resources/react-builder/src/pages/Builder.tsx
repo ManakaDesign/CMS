@@ -130,7 +130,7 @@ export const Builder: React.FC = () => {
 
   return (
     <DragAndDropProvider>
-      <div className="flex h-screen bg-gray-100">
+      <div className="min-h-screen bg-gray-100">
         {/* Top Toolbar */}
         <div className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-50 flex items-center justify-between px-4">
           {/* Left */}
@@ -236,10 +236,10 @@ export const Builder: React.FC = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex pt-16 w-full">
+        <div className="flex pt-16 h-screen">
           {/* Left Sidebar - Elements Library */}
           {!isPreviewMode && (
-            <div className="w-64 bg-white border-r border-gray-200 overflow-y-auto">
+            <div className="w-64 bg-white border-r border-gray-200 overflow-y-auto flex-shrink-0">
               <ElementsSidebar />
             </div>
           )}
@@ -249,7 +249,7 @@ export const Builder: React.FC = () => {
             <div className="p-8">
               <div
                 className={`
-                  bg-white shadow-lg mx-auto builder-canvas
+                  bg-white shadow-lg mx-auto builder-canvas min-h-full
                   ${activeBreakpoint === 'desktop' ? 'max-w-none' : ''}
                   ${activeBreakpoint === 'tablet' ? 'max-w-3xl' : ''}
                   ${activeBreakpoint === 'mobile' ? 'max-w-sm' : ''}
@@ -262,7 +262,7 @@ export const Builder: React.FC = () => {
 
           {/* Right Sidebar - Element Settings */}
           {!isPreviewMode && selectedElementId && (
-            <div className="w-80 bg-white border-l border-gray-200 overflow-y-auto">
+            <div className="w-80 bg-white border-l border-gray-200 overflow-y-auto flex-shrink-0">
               <ElementSettings />
             </div>
           )}
