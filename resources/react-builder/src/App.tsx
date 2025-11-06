@@ -7,7 +7,7 @@ import { isAuthenticated } from './api/client';
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/admin">
       <Routes>
         {/* Redirect root to dashboard or login */}
         <Route
