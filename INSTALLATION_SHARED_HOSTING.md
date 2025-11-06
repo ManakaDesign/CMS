@@ -26,92 +26,99 @@
 3. Navigiere zum Document Root
 4. Uploade alle Dateien als ZIP und entpacke sie dort
 
-### Schritt 2: MySQL-Datenbank erstellen
+### Schritt 2: MySQL-Zugang bereitstellen
 
-1. **In cPanel / phpMyAdmin**:
-   - Erstelle eine neue MySQL-Datenbank (z.B. `cms_database`)
-   - Erstelle einen MySQL-User
-   - Gib dem User alle Rechte auf die Datenbank
-   - Notiere dir:
-     - Datenbank-Name
-     - Benutzername
-     - Passwort
-     - Host (meist `localhost`)
+**✨ Wichtig: Der Installation Wizard erstellt die Datenbank automatisch!**
 
-### Schritt 3: .env konfigurieren
+Du benötigst nur:
+1. **MySQL/MariaDB Zugang** (meist schon vom Hoster vorhanden)
+2. **Benutzername & Passwort** mit `CREATE DATABASE` Berechtigung
+3. **Host-Adresse** (meist `localhost`)
 
-1. Öffne die Datei `.env` im Hauptverzeichnis
-2. Passe folgende Zeilen an:
+Der Wizard erstellt dann automatisch:
+- Die Datenbank (wenn sie noch nicht existiert)
+- Alle Tabellen
+- Den Admin-User
+- Die komplette Konfiguration
 
-```env
-APP_NAME="Dein CMS Name"
-APP_ENV=production
-APP_DEBUG=false
-APP_URL=https://deine-domain.de
+**Optional:** Du kannst die Datenbank auch vorher manuell erstellen (z.B. in cPanel/phpMyAdmin), dann braucht der User keine CREATE DATABASE Rechte.
 
-DB_CONNECTION=mysql
-DB_HOST=localhost               # Oder vom Hoster bereitgestellt
-DB_PORT=3306
-DB_DATABASE=cms_database        # Deine Datenbank
-DB_USERNAME=dein_user           # Dein MySQL-User
-DB_PASSWORD=dein_passwort       # Dein MySQL-Passwort
+### Schritt 3: Installation Wizard starten
+
+**Das war's schon mit der Vorbereitung!** 🎉
+
+Öffne jetzt einfach im Browser:
+
+```
+https://deine-domain.de/install/setup.php
 ```
 
-### Schritt 4: Datenbank-Setup
+Der Installation Wizard führt dich durch folgende Schritte:
 
-Du hast **zwei Optionen**:
+#### 🚀 Schritt 1: Willkommen
+- Übersicht über den Installationsprozess
 
-#### Option A: Automatisch mit Installation Wizard
-1. Öffne im Browser: `https://deine-domain.de/install/setup.php`
-2. Folge den Anweisungen des Wizards
-3. Der Wizard erstellt automatisch:
-   - Datenbank-Tabellen
-   - Admin-User
-   - Basis-Konfiguration
+#### ✅ Schritt 2: System-Check
+- Prüft PHP-Version, Extensions, Permissions
+- Zeigt alle Anforderungen mit ✅/❌
 
-#### Option B: Manuell (wenn kein PHP CLI verfügbar)
+#### 🗄️ Schritt 3: Datenbank-Konfiguration
+Eingabe von:
+- Database Host (meist `localhost`)
+- Database Port (meist `3306`)
+- Database Name (z.B. `cms_database` - wird automatisch erstellt!)
+- Database Username
+- Database Password
 
-**Via SSH (falls vorhanden):**
-```bash
-cd /pfad/zum/cms
-php artisan migrate --force
-php artisan db:seed
-```
+Der Wizard testet die Verbindung und erstellt die Datenbank automatisch.
 
-**Via phpMyAdmin:**
-1. Importiere die SQL-Datei `database/migrations_sql_dump.sql` (falls vorhanden)
-2. Oder kopiere den SQL-Code aus den Migration-Files
+#### ⚙️ Schritt 4: Website-Einstellungen
+- Site Name (z.B. "Meine Website")
+- Site URL (wird automatisch erkannt)
 
-### Schritt 5: Permissions setzen
+#### 👤 Schritt 5: Admin-Account
+- Deine E-Mail Adresse
+- Sicheres Passwort (mindestens 8 Zeichen)
 
-Folgende Ordner müssen **beschreibbar** sein (chmod 775 oder 777):
+#### ✨ Schritt 6: Installation
+Der Wizard führt automatisch aus:
+- ✅ Generiert `.env` Datei mit sicheren Keys
+- ✅ Erstellt Datenbank (falls nicht vorhanden)
+- ✅ Führt alle Migrations aus (erstellt Tabellen)
+- ✅ Erstellt deinen Admin-User
+- ✅ Setzt alle Permissions
+- ✅ Fertig in unter 5 Minuten!
+
+**Funktioniert auch auf Shared Hosting ohne SSH!** Der Wizard erkennt automatisch, ob `exec()` verfügbar ist und nutzt einen Fallback für eingeschränkte Hosting-Umgebungen.
+
+### Schritt 4: Admin-Login
+
+Nach erfolgreicher Installation:
+
+1. Öffne: `https://deine-domain.de/admin`
+2. Login mit den Zugangsdaten, die du im Wizard eingegeben hast
+3. 🎉 **Fertig!** Du kannst jetzt Seiten erstellen und das CMS nutzen!
+
+---
+
+## ⚠️ Wichtig: Permissions
+
+Der Installation Wizard benötigt **Schreibrechte** für folgende Ordner:
 ```
 storage/
-storage/app/
-storage/framework/
-storage/framework/sessions/
-storage/framework/views/
-storage/framework/cache/
-storage/logs/
 bootstrap/cache/
 ```
+
+Falls der Wizard Fehler meldet, setze die Permissions:
 
 **In cPanel:**
 - Rechtsklick auf Ordner → "Change Permissions" → 755 oder 775
 
-**Via SSH:**
+**Via SSH/FTP:**
 ```bash
 chmod -R 775 storage
 chmod -R 775 bootstrap/cache
 ```
-
-### Schritt 6: Admin-Login
-
-1. Öffne: `https://deine-domain.de/admin`
-2. Login mit:
-   - **Email**: `admin@example.com`
-   - **Passwort**: `password`
-3. ⚠️ **WICHTIG**: Ändere sofort das Passwort!
 
 ---
 

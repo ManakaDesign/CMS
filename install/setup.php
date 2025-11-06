@@ -164,12 +164,33 @@ function handleAdminAccount(): void
 
 function runInstallation(): void
 {
-    // Run Laravel migrations and setup
+    // Check if exec() is available
+    $execAvailable = function_exists('exec') && !in_array('exec', array_map('trim', explode(',', ini_get('disable_functions'))));
+
+    if ($execAvailable) {
+        // Try to run via artisan commands (faster and cleaner)
+        runInstallationViaArtisan();
+    } else {
+        // Fallback for shared hosting without exec()
+        runInstallationManually();
+    }
+
+    // Create .installed lock file
+    file_put_contents(__DIR__ . '/../.installed', date('Y-m-d H:i:s'));
+
+    // Clear session
+    session_destroy();
+}
+
+function runInstallationViaArtisan(): void
+{
+    $baseDir = __DIR__ . '/..';
+
+    // Generate APP_KEY
     $commands = [
-        'cd ' . __DIR__ . '/..',
-        'php artisan key:generate --force',
-        'php artisan migrate --force',
-        'php artisan storage:link',
+        "cd $baseDir && php artisan key:generate --force",
+        "cd $baseDir && php artisan migrate --force",
+        "cd $baseDir && php artisan storage:link",
     ];
 
     $output = [];
@@ -178,31 +199,150 @@ function runInstallation(): void
     foreach ($commands as $cmd) {
         exec($cmd . ' 2>&1', $output, $returnVar);
         if ($returnVar !== 0) {
-            $_SESSION['error'] = 'Installation command failed: ' . implode("\n", $output);
+            // If artisan fails, fallback to manual installation
+            runInstallationManually();
             return;
         }
     }
 
-    // Create admin user using artisan command
+    // Create admin user using artisan
     $email = $_SESSION['admin_config']['email'];
     $password = $_SESSION['admin_config']['password'];
     $siteName = $_SESSION['site_config']['name'] ?? 'My CMS';
 
     $createAdminCmd = sprintf(
         'cd %s && php artisan tinker --execute="\\App\\Models\\User::create([\'name\' => \'%s\', \'email\' => \'%s\', \'password\' => bcrypt(\'%s\')])"',
-        __DIR__ . '/..',
-        $siteName . ' Admin',
-        $email,
+        $baseDir,
+        addslashes($siteName . ' Admin'),
+        addslashes($email),
         addslashes($password)
     );
 
     exec($createAdminCmd . ' 2>&1', $output, $returnVar);
 
-    // Create .installed lock file
-    file_put_contents(__DIR__ . '/../.installed', date('Y-m-d H:i:s'));
+    if ($returnVar !== 0) {
+        // Create user manually if command fails
+        createAdminUserManually($email, $password, $siteName);
+    }
+}
 
-    // Clear session
-    session_destroy();
+function runInstallationManually(): void
+{
+    try {
+        // Generate APP_KEY
+        generateAppKey();
+
+        // Run migrations manually
+        runMigrationsManually();
+
+        // Create admin user
+        $email = $_SESSION['admin_config']['email'];
+        $password = $_SESSION['admin_config']['password'];
+        $siteName = $_SESSION['site_config']['name'] ?? 'My CMS';
+        createAdminUserManually($email, $password, $siteName);
+
+        // Create storage link (symbolic link might not work on shared hosting)
+        @symlink(__DIR__ . '/../storage/app/public', __DIR__ . '/../public/storage');
+
+    } catch (Exception $e) {
+        $_SESSION['error'] = 'Installation failed: ' . $e->getMessage();
+        throw $e;
+    }
+}
+
+function generateAppKey(): void
+{
+    $key = 'base64:' . base64_encode(random_bytes(32));
+    updateEnvFile('APP_KEY', $key);
+}
+
+function runMigrationsManually(): void
+{
+    $dbConfig = $_SESSION['db_config'];
+    $dsn = "mysql:host={$dbConfig['host']};port={$dbConfig['port']};dbname={$dbConfig['database']}";
+    $pdo = new PDO($dsn, $dbConfig['username'], $dbConfig['password']);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    // Read all migration files
+    $migrationFiles = glob(__DIR__ . '/../database/migrations/*.php');
+    sort($migrationFiles);
+
+    // Create migrations table
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS migrations (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            migration VARCHAR(255) NOT NULL,
+            batch INT NOT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    ");
+
+    // Run each migration
+    foreach ($migrationFiles as $file) {
+        $migrationName = basename($file, '.php');
+
+        // Check if already run
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM migrations WHERE migration = ?");
+        $stmt->execute([$migrationName]);
+        if ($stmt->fetchColumn() > 0) {
+            continue; // Already run
+        }
+
+        // Execute migration SQL
+        $sql = file_get_contents($file);
+
+        // Extract SQL from PHP migration file (simplified approach)
+        // This reads the Schema::create/table calls and converts them
+        executeMigrationFile($pdo, $file);
+
+        // Record migration
+        $stmt = $pdo->prepare("INSERT INTO migrations (migration, batch) VALUES (?, 1)");
+        $stmt->execute([$migrationName]);
+    }
+}
+
+function executeMigrationFile(PDO $pdo, string $file): void
+{
+    // Bootstrap Laravel without exec()
+    require_once __DIR__ . '/../vendor/autoload.php';
+
+    // Load environment variables
+    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
+    $dotenv->load();
+
+    // Bootstrap Laravel application
+    $app = require_once __DIR__ . '/../bootstrap/app.php';
+    $kernel = $app->make(\Illuminate\Contracts\Console\Kernel::class);
+    $kernel->bootstrap();
+
+    // Get migration instance and run it
+    $migration = require $file;
+
+    if (method_exists($migration, 'up')) {
+        $migration->up();
+    }
+}
+
+function createAdminUserManually(string $email, string $password, string $siteName): void
+{
+    $dbConfig = $_SESSION['db_config'];
+    $dsn = "mysql:host={$dbConfig['host']};port={$dbConfig['port']};dbname={$dbConfig['database']}";
+    $pdo = new PDO($dsn, $dbConfig['username'], $dbConfig['password']);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    // Hash password using bcrypt
+    $hashedPassword = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+
+    // Insert admin user
+    $stmt = $pdo->prepare("
+        INSERT INTO users (name, email, password, email_verified_at, created_at, updated_at)
+        VALUES (?, ?, ?, NOW(), NOW(), NOW())
+    ");
+
+    $stmt->execute([
+        $siteName . ' Admin',
+        $email,
+        $hashedPassword
+    ]);
 }
 
 function createEnvFile(array $dbConfig): void
@@ -245,9 +385,20 @@ function displayWelcome(): void
         <div class="info-box">
             <h3>Before you begin, make sure you have:</h3>
             <ul>
-                <li>MySQL database created</li>
-                <li>Database username and password</li>
-                <li>Write permissions for storage/ and bootstrap/cache/ directories</li>
+                <li>✅ MySQL/MariaDB server access (database will be created automatically)</li>
+                <li>✅ Database username and password with CREATE DATABASE privileges</li>
+                <li>✅ Write permissions for storage/ and bootstrap/cache/ directories</li>
+            </ul>
+        </div>
+
+        <div class="info-box info-box-success">
+            <h3>✨ What this installer does for you:</h3>
+            <ul>
+                <li>Automatically creates your database</li>
+                <li>Generates secure .env configuration</li>
+                <li>Runs all database migrations</li>
+                <li>Creates your admin account</li>
+                <li>Sets up the CMS in under 5 minutes!</li>
             </ul>
         </div>
 
@@ -605,6 +756,19 @@ function includeHeader(int $step): void
 
             .info-box li {
                 margin: 5px 0;
+            }
+
+            .info-box-success {
+                background: #f0fdf4;
+                border-left-color: #22c55e;
+            }
+
+            .info-box-success h3 {
+                color: #166534;
+            }
+
+            .info-box-success ul, .info-box-success li {
+                color: #166534;
             }
 
             .alert {
