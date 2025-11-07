@@ -7,8 +7,11 @@
     RewriteRule ^ - [L]
 
     # SPA Routes - send to Laravel (before file/directory checks)
+    # Don't rewrite if it's an actual file in public/admin/assets
     RewriteCond %{REQUEST_URI} ^/public/admin
-    RewriteRule ^(.*)$ public/index.php [L]
+    RewriteCond %{REQUEST_URI} !^/public/admin/assets/
+    RewriteCond %{REQUEST_URI} !^/public/admin/.*\.(js|css|svg|png|jpg|jpeg|gif|ico|woff|woff2|ttf|eot)$
+    RewriteRule ^(.*)$ public/index.php [L,QSA]
 
     # If the file exists in public/, serve it directly
     RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f
