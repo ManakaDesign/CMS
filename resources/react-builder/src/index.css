@@ -1,5 +1,22 @@
 @import "tailwindcss";
 
+/* Dark Mode CSS Custom Properties */
+@theme {
+  --color-brand-primary: #0ea5e9;
+
+  --color-dark-bg: #0f172a;
+  --color-dark-surface: #1e293b;
+  --color-dark-panel: #334155;
+  --color-dark-border: #475569;
+  --color-dark-hover: #475569;
+  --color-dark-divider: #334155;
+
+  --color-light-bg: #ffffff;
+  --color-light-text: #f1f5f9;
+  --color-light-muted: #94a3b8;
+  --color-light-border: #e2e8f0;
+}
+
 * {
   box-sizing: border-box;
 }
