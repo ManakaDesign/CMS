@@ -303,18 +303,18 @@ const CreatePageDialog: React.FC<CreatePageDialogProps> = ({ onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Neue Seite erstellen</h2>
+      <div className="bg-dark-surface rounded-lg shadow-xl max-w-md w-full p-6">
+        <h2 className="text-xl font-bold text-light-text mb-4">Neue Seite erstellen</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded p-3">
-              <p className="text-sm text-red-800">{error}</p>
+            <div className="bg-red-900/20 border border-red-700 rounded p-3">
+              <p className="text-sm text-red-300">{error}</p>
             </div>
           )}
 
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="title" className="block text-sm font-medium text-light-text mb-1">
               Titel
             </label>
             <input
@@ -322,7 +322,7 @@ const CreatePageDialog: React.FC<CreatePageDialogProps> = ({ onClose }) => {
               type="text"
               value={title}
               onChange={(e) => handleTitleChange(e.target.value)}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="block w-full px-3 py-2 bg-dark-panel border border-dark-border text-light-text placeholder-light-muted rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               placeholder="z.B. Startseite"
               required
               autoFocus
@@ -330,7 +330,7 @@ const CreatePageDialog: React.FC<CreatePageDialogProps> = ({ onClose }) => {
           </div>
 
           <div>
-            <label htmlFor="slug" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="slug" className="block text-sm font-medium text-light-text mb-1">
               URL-Slug
             </label>
             <input
@@ -338,7 +338,7 @@ const CreatePageDialog: React.FC<CreatePageDialogProps> = ({ onClose }) => {
               type="text"
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="block w-full px-3 py-2 border border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               placeholder="z.B. startseite"
               required
             />
@@ -349,7 +349,7 @@ const CreatePageDialog: React.FC<CreatePageDialogProps> = ({ onClose }) => {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              className="px-4 py-2 text-light-text hover:bg-dark-hover rounded-lg transition-colors"
             >
               Abbrechen
             </button>
