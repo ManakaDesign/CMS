@@ -134,27 +134,27 @@ export const Builder: React.FC = () => {
 
   return (
     <DragAndDropProvider>
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen bg-dark-bg">
         {/* Top Toolbar */}
-        <div className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-50 flex items-center justify-between px-4">
+        <div className="fixed top-0 left-0 right-0 h-16 bg-dark-surface border-b border-dark-border z-50 flex items-center justify-between px-4">
           {/* Left */}
           <div className="flex items-center space-x-4">
             <button
               onClick={handleBackToDashboard}
-              className="p-2 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100"
+              className="p-2 text-light-text hover:text-white rounded-lg hover:bg-dark-hover"
               title="Zurück zum Dashboard"
             >
               <FiArrowLeft size={20} />
             </button>
-            <div className="w-px h-6 bg-gray-300" />
-            <h1 className="text-xl font-bold text-gray-800">{page?.title || 'Untitled Page'}</h1>
-            <span className="text-sm text-gray-500">
+            <div className="w-px h-6 bg-dark-border" />
+            <h1 className="text-xl font-bold text-light-text">{page?.title || 'Untitled Page'}</h1>
+            <span className="text-sm text-light-muted">
               {page?.status === 'draft' ? '• Entwurf' : '• Veröffentlicht'}
             </span>
           </div>
 
           {/* Center - Breakpoint Switcher */}
-          <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
+          <div className="flex items-center space-x-2 bg-dark-panel rounded-lg p-1">
             {breakpoints.map(({ value, icon: Icon, label }) => (
               <button
                 key={value}
@@ -163,8 +163,8 @@ export const Builder: React.FC = () => {
                   flex items-center space-x-2 px-3 py-2 rounded-md transition-colors
                   ${
                     activeBreakpoint === value
-                      ? 'bg-white text-primary-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
+                      ? 'bg-brand-primary text-white shadow-sm'
+                      : 'text-light-muted hover:text-light-text hover:bg-dark-hover'
                   }
                 `}
                 title={label}
@@ -181,7 +181,7 @@ export const Builder: React.FC = () => {
             <button
               onClick={undo}
               disabled={!canUndo()}
-              className="p-2 text-gray-600 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="p-2 text-light-text hover:text-white hover:bg-dark-hover rounded-lg disabled:opacity-30 disabled:cursor-not-allowed"
               title="Rückgängig"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -191,7 +191,7 @@ export const Builder: React.FC = () => {
             <button
               onClick={redo}
               disabled={!canRedo()}
-              className="p-2 text-gray-600 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="p-2 text-light-text hover:text-white hover:bg-dark-hover rounded-lg disabled:opacity-30 disabled:cursor-not-allowed"
               title="Wiederholen"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -199,7 +199,7 @@ export const Builder: React.FC = () => {
               </svg>
             </button>
 
-            <div className="w-px h-6 bg-gray-300 mx-2" />
+            <div className="w-px h-6 bg-dark-border mx-2" />
 
             {/* Preview Toggle */}
             <button
@@ -208,8 +208,8 @@ export const Builder: React.FC = () => {
                 flex items-center space-x-2 px-4 py-2 rounded-md transition-colors
                 ${
                   isPreviewMode
-                    ? 'bg-primary-100 text-primary-700'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-brand-primary text-white'
+                    : 'bg-dark-panel text-light-text hover:bg-dark-hover'
                 }
               `}
             >
@@ -221,7 +221,7 @@ export const Builder: React.FC = () => {
             <button
               onClick={handleSave}
               disabled={isSaving || !page}
-              className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors disabled:opacity-50"
+              className="flex items-center space-x-2 px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-primary-600 transition-colors disabled:opacity-50"
               title={saveError || ''}
             >
               <FiSave size={18} />
@@ -231,7 +231,7 @@ export const Builder: React.FC = () => {
             {/* Settings */}
             <button
               onClick={() => setShowSettings(!showSettings)}
-              className="p-2 text-gray-600 hover:text-gray-900"
+              className="p-2 text-light-text hover:text-white hover:bg-dark-hover rounded-lg"
               title="Einstellungen"
             >
               <FiSettings size={20} />
@@ -243,13 +243,13 @@ export const Builder: React.FC = () => {
         <div className="flex pt-16 h-screen">
           {/* Left Sidebar - Elements Library */}
           {!isPreviewMode && (
-            <div className="w-64 bg-white border-r border-gray-200 overflow-y-auto flex-shrink-0">
+            <div className="w-64 bg-dark-surface border-r border-dark-border overflow-y-auto flex-shrink-0">
               <ElementsSidebar />
             </div>
           )}
 
           {/* Canvas Area */}
-          <div className="flex-1 overflow-auto bg-gray-100">
+          <div className="flex-1 overflow-auto bg-dark-bg">
             <div className="p-8">
               <div
                 className={`
@@ -266,7 +266,7 @@ export const Builder: React.FC = () => {
 
           {/* Right Sidebar - Element Settings */}
           {!isPreviewMode && selectedElementId && (
-            <div className="w-80 bg-white border-l border-gray-200 overflow-y-auto flex-shrink-0">
+            <div className="w-80 bg-dark-surface border-l border-dark-border overflow-y-auto flex-shrink-0">
               <ElementSettings />
             </div>
           )}

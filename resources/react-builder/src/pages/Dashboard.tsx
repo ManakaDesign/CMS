@@ -95,18 +95,18 @@ export const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-dark-bg">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-dark-surface border-b border-dark-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">CMS Dashboard</h1>
-              <p className="text-sm text-gray-600 mt-1">Verwalte deine Seiten</p>
+              <h1 className="text-2xl font-bold text-light-text">CMS Dashboard</h1>
+              <p className="text-sm text-light-muted mt-1">Verwalte deine Seiten</p>
             </div>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-light-text hover:text-white hover:bg-dark-hover rounded-lg transition-colors"
             >
               <FiLogOut size={18} />
               Abmelden
@@ -119,10 +119,10 @@ export const Dashboard: React.FC = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Actions Bar */}
         <div className="mb-6 flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-gray-900">Alle Seiten</h2>
+          <h2 className="text-lg font-semibold text-light-text">Alle Seiten</h2>
           <button
             onClick={() => setShowCreateDialog(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
           >
             <FiPlus size={18} />
             Neue Seite
@@ -131,26 +131,26 @@ export const Dashboard: React.FC = () => {
 
         {/* Error State */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <p className="text-red-800">{error}</p>
+          <div className="bg-red-900/20 border border-red-700 rounded-lg p-4 mb-6">
+            <p className="text-red-300">{error}</p>
           </div>
         )}
 
         {/* Loading State */}
         {loading && (
           <div className="text-center py-12">
-            <p className="text-gray-500">Lade Seiten...</p>
+            <p className="text-light-muted">Lade Seiten...</p>
           </div>
         )}
 
         {/* Pages List */}
         {!loading && pages.length === 0 && (
-          <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-            <FiGlobe className="mx-auto text-gray-400 mb-4" size={48} />
-            <p className="text-gray-600 mb-4">Noch keine Seiten erstellt</p>
+          <div className="text-center py-12 bg-dark-panel rounded-lg border border-dark-border">
+            <FiGlobe className="mx-auto text-light-muted mb-4" size={48} />
+            <p className="text-light-text mb-4">Noch keine Seiten erstellt</p>
             <button
               onClick={() => setShowCreateDialog(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
             >
               <FiPlus size={18} />
               Erste Seite erstellen
@@ -159,62 +159,62 @@ export const Dashboard: React.FC = () => {
         )}
 
         {!loading && pages.length > 0 && (
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <div className="bg-dark-panel rounded-lg border border-dark-border overflow-hidden">
+            <table className="min-w-full divide-y divide-dark-border">
+              <thead className="bg-dark-surface">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-light-muted uppercase tracking-wider">
                     Titel
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-light-muted uppercase tracking-wider">
                     Slug
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-light-muted uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-light-muted uppercase tracking-wider">
                     Aktualisiert
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-light-muted uppercase tracking-wider">
                     Aktionen
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-dark-panel divide-y divide-dark-divider">
                 {pages.map((page) => (
-                  <tr key={page.id} className="hover:bg-gray-50">
+                  <tr key={page.id} className="hover:bg-dark-hover transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{page.title}</div>
+                      <div className="text-sm font-medium text-light-text">{page.title}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">/{page.slug}</div>
+                      <div className="text-sm text-light-muted">/{page.slug}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                           page.status === 'published'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-yellow-100 text-yellow-800'
+                            ? 'bg-green-900/30 text-green-300 border border-green-700'
+                            : 'bg-yellow-900/30 text-yellow-300 border border-yellow-700'
                         }`}
                       >
                         {page.status === 'published' ? 'Veröffentlicht' : 'Entwurf'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-light-muted">
                       {formatDate(page.updated_at)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleOpenBuilder(page.id)}
-                          className="text-primary-600 hover:text-primary-900"
+                          className="p-2 text-brand-primary hover:text-primary-400 hover:bg-dark-hover rounded-lg transition-colors"
                           title="Im Builder bearbeiten"
                         >
                           <FiEdit2 size={18} />
                         </button>
                         <button
                           onClick={() => handlePublish(page)}
-                          className="text-gray-600 hover:text-gray-900"
+                          className="p-2 text-light-text hover:text-white hover:bg-dark-hover rounded-lg transition-colors"
                           title={
                             page.status === 'published' ? 'Veröffentlichung zurücknehmen' : 'Veröffentlichen'
                           }
@@ -223,14 +223,14 @@ export const Dashboard: React.FC = () => {
                         </button>
                         <button
                           onClick={() => handleDuplicate(page)}
-                          className="text-gray-600 hover:text-gray-900"
+                          className="p-2 text-light-text hover:text-white hover:bg-dark-hover rounded-lg transition-colors"
                           title="Duplizieren"
                         >
                           <FiCopy size={18} />
                         </button>
                         <button
                           onClick={() => handleDelete(page)}
-                          className="text-red-600 hover:text-red-900"
+                          className="p-2 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-lg transition-colors"
                           title="Löschen"
                         >
                           <FiTrash2 size={18} />
