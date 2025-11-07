@@ -38,7 +38,7 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       // Clear token and redirect to login
       localStorage.removeItem(TOKEN_KEY);
-      window.location.href = '/login';
+      window.location.href = '/public/admin/login';
     }
 
     // Handle 403 Forbidden
