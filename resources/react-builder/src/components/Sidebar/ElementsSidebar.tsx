@@ -48,11 +48,11 @@ export const ElementsSidebar: React.FC = () => {
 
   return (
     <div className="h-full overflow-y-auto p-4">
-      <h2 className="text-lg font-semibold mb-4">Elements</h2>
+      <h2 className="text-lg font-semibold mb-4 text-light-text">Elements</h2>
 
       {categories.map((category) => (
         <div key={category} className="mb-6">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase mb-2">{category}</h3>
+          <h3 className="text-xs font-semibold text-light-muted uppercase mb-2">{category}</h3>
           <div className="space-y-1">
             {elementDefinitions
               .filter((el) => el.category === category)
