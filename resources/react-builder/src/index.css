@@ -62,13 +62,3 @@ code {
 .builder-canvas {
   min-height: 600px;
 }
-
-.element-hover {
-  outline: 2px dashed #0ea5e9;
-  outline-offset: 2px;
-}
-
-.element-selected {
-  outline: 2px solid #0ea5e9;
-  outline-offset: 2px;
-}

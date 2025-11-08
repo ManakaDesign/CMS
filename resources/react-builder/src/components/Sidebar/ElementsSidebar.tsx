@@ -2,7 +2,6 @@ import React from 'react';
 import {
   FaSquare,
   FaColumns,
-  FaGripVertical,
   FaFont,
   FaHeading,
   FaImage,
@@ -26,7 +25,7 @@ const elementDefinitions: ElementDefinition[] = [
   // Layout
   { type: 'section', label: 'Section', icon: <FaSquare />, category: 'Layout' },
   { type: 'row', label: 'Row', icon: <FaColumns />, category: 'Layout' },
-  { type: 'column', label: 'Column', icon: <FaGripVertical />, category: 'Layout' },
+  // Column removed - Rows now support 1-6 columns directly
 
   // Content
   { type: 'text', label: 'Text', icon: <FaFont />, category: 'Content' },

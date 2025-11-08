@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Element } from '../../types';
 import { useBuilderStore } from '../../store/builderStore';
+import { ElementToolbar } from './ElementToolbar';
 
 interface BaseElementProps {
   element: Element;
@@ -11,6 +12,13 @@ interface BaseElementProps {
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
 }
+
+// Get border color based on element type
+const getBorderColor = (type: string): string => {
+  if (type === 'section') return '#3b82f6'; // Blue
+  if (type === 'row') return '#10b981'; // Green
+  return '#6b7280'; // Dark gray for content elements
+};
 
 export const BaseElement: React.FC<BaseElementProps> = ({
   element,
@@ -34,9 +42,20 @@ export const BaseElement: React.FC<BaseElementProps> = ({
     onClick?.();
   };
 
+  const borderColor = getBorderColor(element.type);
+
+  // Combine outline styles with border color
+  const outlineStyle: React.CSSProperties = {};
+  if (isSelected) {
+    outlineStyle.outline = `2px solid ${borderColor}`;
+    outlineStyle.outlineOffset = '2px';
+  } else if (isHovered) {
+    outlineStyle.outline = `2px dashed ${borderColor}`;
+    outlineStyle.outlineOffset = '2px';
+  }
+
   const className = `
-    ${isSelected ? 'element-selected' : ''}
-    ${isHovered ? 'element-hover' : ''}
+    relative
     ${!element.is_visible ? 'opacity-50' : ''}
   `.trim();
 
@@ -45,11 +64,18 @@ export const BaseElement: React.FC<BaseElementProps> = ({
       data-element-id={element.id}
       data-element-type={element.type}
       className={className}
-      style={getActiveStyles()}
+      style={{ ...getActiveStyles(), ...outlineStyle }}
       onClick={handleClick}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
+      {/* Show toolbar on hover or selection */}
+      {(isHovered || isSelected) && (
+        <ElementToolbar
+          elementId={element.id}
+          elementType={element.type}
+        />
+      )}
       {children}
     </div>
   );

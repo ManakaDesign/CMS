@@ -1,6 +1,7 @@
 import React from 'react';
 import { useBuilderStore } from '../../store/builderStore';
 import { FiTrash2, FiCopy, FiEye, FiEyeOff } from 'react-icons/fi';
+import { SpacingControl } from './SpacingControl';
 
 export const ElementSettings: React.FC = () => {
   const { selectedElementId, getElementById, updateElement, deleteElement, duplicateElement } =
@@ -23,12 +24,17 @@ export const ElementSettings: React.FC = () => {
   };
 
   const updateStyle = (property: string, value: string, breakpoint: 'desktop' | 'tablet' | 'mobile' = 'desktop') => {
+    // Auto-append 'px' if only a number is provided (for spacing/size properties)
+    const spacingProps = ['padding', 'margin', 'width', 'height', 'fontSize', 'borderRadius', 'gap'];
+    const needsPx = spacingProps.includes(property) && /^\d+$/.test(value.trim());
+    const finalValue = needsPx ? `${value}px` : value;
+
     updateElement(element.id, {
       styles: {
         ...element.styles,
         [breakpoint]: {
           ...element.styles[breakpoint],
-          [property]: value,
+          [property]: finalValue,
         },
       },
     });
@@ -161,6 +167,25 @@ export const ElementSettings: React.FC = () => {
           </>
         )}
 
+        {/* Row Columns */}
+        {element.type === 'row' && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-light-text mb-2">Columns</label>
+            <select
+              value={element.settings.columns || 1}
+              onChange={(e) => updateSetting('columns', parseInt(e.target.value))}
+              className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+            >
+              <option value="1">1 Column</option>
+              <option value="2">2 Columns</option>
+              <option value="3">3 Columns</option>
+              <option value="4">4 Columns</option>
+              <option value="5">5 Columns</option>
+              <option value="6">6 Columns</option>
+            </select>
+          </div>
+        )}
+
         {/* Spacer Height */}
         {element.type === 'spacer' && (
           <div className="mb-4">
@@ -221,27 +246,19 @@ export const ElementSettings: React.FC = () => {
         )}
 
         {/* Spacing */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-light-text mb-2">Padding</label>
-          <input
-            type="text"
-            value={element.styles.desktop?.padding || ''}
-            onChange={(e) => updateStyle('padding', e.target.value)}
-            className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
-            placeholder="10px 20px"
-          />
-        </div>
+        <SpacingControl
+          label="Padding"
+          value={element.styles.desktop?.padding || ''}
+          onChange={(value) => updateStyle('padding', value)}
+          className="mb-4"
+        />
 
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-light-text mb-2">Margin</label>
-          <input
-            type="text"
-            value={element.styles.desktop?.margin || ''}
-            onChange={(e) => updateStyle('margin', e.target.value)}
-            className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
-            placeholder="10px 0"
-          />
-        </div>
+        <SpacingControl
+          label="Margin"
+          value={element.styles.desktop?.margin || ''}
+          onChange={(value) => updateStyle('margin', value)}
+          className="mb-4"
+        />
 
         {/* Background */}
         <div className="mb-4">

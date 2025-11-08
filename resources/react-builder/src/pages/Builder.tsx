@@ -7,6 +7,7 @@ import { DragAndDropProvider } from '../components/DragAndDropProvider';
 import { DroppableCanvas } from '../components/DroppableCanvas';
 import { ElementsSidebar } from '../components/Sidebar/ElementsSidebar';
 import { ElementSettings } from '../components/Settings/ElementSettings';
+import { BreakpointSettings } from '../components/Settings/BreakpointSettings';
 import { pagesApi } from '../api/services';
 
 export const Builder: React.FC = () => {
@@ -20,6 +21,7 @@ export const Builder: React.FC = () => {
     elements,
     selectedElementId,
     activeBreakpoint,
+    breakpointWidths,
     isPreviewMode,
     isSaving,
     setPage,
@@ -34,6 +36,7 @@ export const Builder: React.FC = () => {
   } = useBuilderStore();
 
   const [showSettings, setShowSettings] = useState(false);
+  const [showBreakpointSettings, setShowBreakpointSettings] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -154,25 +157,34 @@ export const Builder: React.FC = () => {
           </div>
 
           {/* Center - Breakpoint Switcher */}
-          <div className="flex items-center space-x-2 bg-dark-panel rounded-lg p-1">
-            {breakpoints.map(({ value, icon: Icon, label }) => (
-              <button
-                key={value}
-                onClick={() => setActiveBreakpoint(value)}
-                className={`
-                  flex items-center space-x-2 px-3 py-2 rounded-md transition-colors
-                  ${
-                    activeBreakpoint === value
-                      ? 'bg-brand-primary text-white shadow-sm'
-                      : 'text-light-muted hover:text-light-text hover:bg-dark-hover'
-                  }
-                `}
-                title={label}
-              >
-                <Icon size={18} />
-                <span className="hidden md:inline text-sm">{label}</span>
-              </button>
-            ))}
+          <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 bg-dark-panel rounded-lg p-1">
+              {breakpoints.map(({ value, icon: Icon, label }) => (
+                <button
+                  key={value}
+                  onClick={() => setActiveBreakpoint(value)}
+                  className={`
+                    flex items-center space-x-2 px-3 py-2 rounded-md transition-colors
+                    ${
+                      activeBreakpoint === value
+                        ? 'bg-brand-primary text-white shadow-sm'
+                        : 'text-light-muted hover:text-light-text hover:bg-dark-hover'
+                    }
+                  `}
+                  title={label}
+                >
+                  <Icon size={18} />
+                  <span className="hidden md:inline text-sm">{label}</span>
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setShowBreakpointSettings(true)}
+              className="p-2 text-light-muted hover:text-light-text hover:bg-dark-hover rounded-lg"
+              title="Breakpoint Einstellungen"
+            >
+              <FiSettings size={18} />
+            </button>
           </div>
 
           {/* Right - Actions */}
@@ -252,12 +264,15 @@ export const Builder: React.FC = () => {
           <div className="flex-1 overflow-auto bg-dark-bg">
             <div className="p-8">
               <div
-                className={`
-                  bg-white shadow-lg mx-auto builder-canvas min-h-full
-                  ${activeBreakpoint === 'desktop' ? 'max-w-none' : ''}
-                  ${activeBreakpoint === 'tablet' ? 'max-w-3xl' : ''}
-                  ${activeBreakpoint === 'mobile' ? 'max-w-sm' : ''}
-                `}
+                className="bg-white shadow-lg mx-auto builder-canvas min-h-full"
+                style={{
+                  maxWidth: activeBreakpoint === 'desktop'
+                    ? `${breakpointWidths.desktop}px`
+                    : activeBreakpoint === 'tablet'
+                      ? `${breakpointWidths.tablet}px`
+                      : `${breakpointWidths.mobile}px`,
+                  width: '100%',
+                }}
               >
                 <DroppableCanvas />
               </div>
@@ -271,6 +286,11 @@ export const Builder: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Breakpoint Settings Dialog */}
+        {showBreakpointSettings && (
+          <BreakpointSettings onClose={() => setShowBreakpointSettings(false)} />
+        )}
       </div>
     </DragAndDropProvider>
   );

@@ -2,7 +2,6 @@ import React from 'react';
 import type { Element, ElementType } from '../../types';
 import { Section } from './Section';
 import { Row } from './Row';
-import { Column } from './Column';
 import { Text } from './Text';
 import { Heading } from './Heading';
 import { Image } from './Image';
@@ -22,10 +21,11 @@ interface ElementComponentProps {
   onMouseLeave?: () => void;
 }
 
+// Column element is deprecated - Rows now have built-in column support (1-6 columns)
 const elementComponents: Record<ElementType, React.FC<ElementComponentProps>> = {
   section: Section,
   row: Row,
-  column: Column,
+  column: Text, // Fallback for legacy column elements
   text: Text,
   heading: Heading,
   image: Image,
