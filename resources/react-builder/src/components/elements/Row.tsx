@@ -115,18 +115,25 @@ const RowColumn: React.FC<RowColumnProps> = ({ rowId, columnIndex, columnCount, 
   return (
     <div
       ref={setNodeRef}
-      className={`flex-1 min-h-[100px] transition-all ${isOver ? 'bg-green-50 ring-4 ring-green-400' : ''}`}
+      className="flex-1 min-h-[100px] relative transition-all"
       style={{
         flex: `1 1 ${100 / columnCount}%`,
         ...borderStyle,
       }}
     >
+      {/* Drop indicator line */}
+      {isOver && (
+        <>
+          <div className="absolute top-0 left-0 right-0 h-1 bg-green-400 z-10" />
+          <div className="absolute inset-0 bg-green-50 bg-opacity-50 z-0" />
+        </>
+      )}
       {children.length > 0 ? (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 relative z-1">
           {children.map(renderElement)}
         </div>
       ) : (
-        <div className="w-full h-full flex items-center justify-center text-center text-gray-400 py-4 text-sm">
+        <div className="w-full h-full flex items-center justify-center text-center text-gray-400 py-4 text-sm relative z-1">
           Drop elements here
         </div>
       )}

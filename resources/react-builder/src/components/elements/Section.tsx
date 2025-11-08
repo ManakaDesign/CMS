@@ -29,9 +29,16 @@ export const Section: React.FC<SectionProps> = (props) => {
     <BaseElement element={element} {...baseProps}>
       <div
         ref={setNodeRef}
-        className={`w-full transition-all ${isOver ? 'bg-blue-50 ring-4 ring-blue-400' : ''}`}
+        className="w-full relative transition-all"
         style={{ minHeight: element.settings.minHeight || '100px' }}
       >
+        {/* Drop indicator line */}
+        {isOver && (
+          <>
+            <div className="absolute top-0 left-0 right-0 h-1 bg-blue-400 z-10" />
+            <div className="absolute inset-0 bg-blue-50 bg-opacity-50 z-0" />
+          </>
+        )}
         {children || (
           <div className="text-center text-gray-400 py-8">
             Drop a Row here

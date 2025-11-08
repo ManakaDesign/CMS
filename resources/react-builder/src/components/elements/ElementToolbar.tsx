@@ -8,10 +8,37 @@ interface ElementToolbarProps {
   elementType?: string;
 }
 
+// Get colors based on element type
+const getElementColors = (type: string): { bg: string; border: string; text: string; hover: string } => {
+  if (type === 'section') {
+    return {
+      bg: 'bg-blue-50',
+      border: 'border-blue-400',
+      text: 'text-blue-700',
+      hover: 'hover:bg-blue-100',
+    };
+  }
+  if (type === 'row') {
+    return {
+      bg: 'bg-green-50',
+      border: 'border-green-400',
+      text: 'text-green-700',
+      hover: 'hover:bg-green-100',
+    };
+  }
+  return {
+    bg: 'bg-gray-50',
+    border: 'border-gray-400',
+    text: 'text-gray-700',
+    hover: 'hover:bg-gray-100',
+  };
+};
+
 export const ElementToolbar: React.FC<ElementToolbarProps> = ({ elementId, elementType }) => {
   const { duplicateElement, deleteElement, getElementById } = useBuilderStore();
 
   const element = getElementById(elementId);
+  const colors = getElementColors(element?.type || elementType || '');
 
   // Setup draggable for the move button only
   const { attributes, listeners, setNodeRef } = useDraggable({
@@ -37,7 +64,7 @@ export const ElementToolbar: React.FC<ElementToolbarProps> = ({ elementId, eleme
 
   return (
     <div
-      className="absolute top-0 right-0 -translate-y-full flex gap-1 bg-white border border-gray-300 rounded shadow-lg p-1 z-50"
+      className={`absolute top-0 right-0 -translate-y-full flex gap-1 ${colors.bg} border ${colors.border} rounded shadow-lg p-1 z-50`}
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
     >
@@ -46,19 +73,19 @@ export const ElementToolbar: React.FC<ElementToolbarProps> = ({ elementId, eleme
         ref={setNodeRef}
         {...attributes}
         {...listeners}
-        className="p-1.5 hover:bg-gray-100 rounded transition-colors cursor-move"
+        className={`p-1.5 ${colors.hover} rounded transition-colors cursor-move`}
         title="Move (Drag to reorder)"
       >
-        <Move className="w-4 h-4 text-gray-700" />
+        <Move className={`w-4 h-4 ${colors.text}`} />
       </button>
 
       {/* Duplicate button */}
       <button
-        className="p-1.5 hover:bg-gray-100 rounded transition-colors cursor-pointer"
+        className={`p-1.5 ${colors.hover} rounded transition-colors cursor-pointer`}
         title="Duplicate"
         onClick={handleDuplicate}
       >
-        <Copy className="w-4 h-4 text-gray-700" />
+        <Copy className={`w-4 h-4 ${colors.text}`} />
       </button>
 
       {/* Delete button */}
