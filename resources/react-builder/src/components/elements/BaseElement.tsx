@@ -1,6 +1,4 @@
 import React from 'react';
-import { useDraggable } from '@dnd-kit/core';
-import { CSS } from '@dnd-kit/utilities';
 import type { Element } from '../../types';
 import { useBuilderStore } from '../../store/builderStore';
 import { ElementToolbar } from './ElementToolbar';
@@ -33,16 +31,6 @@ export const BaseElement: React.FC<BaseElementProps> = ({
 }) => {
   const { activeBreakpoint } = useBuilderStore();
 
-  // Make element draggable for reordering within canvas
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: `canvas-element-${element.id}`,
-    data: {
-      elementId: element.id,
-      elementType: element.type,
-      isCanvasElement: true,
-    },
-  });
-
   const getActiveStyles = (): React.CSSProperties => {
     // Get styles for current breakpoint with fallback to desktop
     const breakpointStyles = element.styles[activeBreakpoint] || element.styles.desktop || {};
@@ -66,13 +54,6 @@ export const BaseElement: React.FC<BaseElementProps> = ({
     outlineStyle.outlineOffset = '2px';
   }
 
-  const dragStyle = transform
-    ? {
-        transform: CSS.Translate.toString(transform),
-        opacity: isDragging ? 0.5 : 1,
-      }
-    : {};
-
   const className = `
     relative
     ${!element.is_visible ? 'opacity-50' : ''}
@@ -80,24 +61,20 @@ export const BaseElement: React.FC<BaseElementProps> = ({
 
   return (
     <div
-      ref={setNodeRef}
       data-element-id={element.id}
       data-element-type={element.type}
       className={className}
-      style={{ ...getActiveStyles(), ...outlineStyle, ...dragStyle }}
+      style={{ ...getActiveStyles(), ...outlineStyle }}
       onClick={handleClick}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      {...attributes}
-      {...listeners}
     >
-      {/* Show toolbar on hover */}
-      {isHovered && !isSelected && (
-        <ElementToolbar elementId={element.id} elementType={element.type} />
-      )}
-      {/* Show toolbar on selection */}
-      {isSelected && (
-        <ElementToolbar elementId={element.id} elementType={element.type} />
+      {/* Show toolbar on hover or selection */}
+      {(isHovered || isSelected) && (
+        <ElementToolbar
+          elementId={element.id}
+          elementType={element.type}
+        />
       )}
       {children}
     </div>
