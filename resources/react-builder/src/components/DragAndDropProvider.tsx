@@ -8,7 +8,7 @@ interface DragAndDropProviderProps {
 }
 
 export const DragAndDropProvider: React.FC<DragAndDropProviderProps> = ({ children }) => {
-  const { page, addElement, setIsDragging } = useBuilderStore();
+  const { page, elements, addElement, moveElement, setIsDragging } = useBuilderStore();
   const [activeId, setActiveId] = React.useState<string | null>(null);
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -27,7 +27,7 @@ export const DragAndDropProvider: React.FC<DragAndDropProviderProps> = ({ childr
     const dragData = active.data.current;
     const dropData = over.data.current;
 
-    // Check if we're creating a new element
+    // Check if we're creating a new element from sidebar
     if (dragData?.isNew) {
       const elementType = dragData.type as ElementType;
       const parentId = dropData?.parentId ?? null;
@@ -39,12 +39,18 @@ export const DragAndDropProvider: React.FC<DragAndDropProviderProps> = ({ childr
         return;
       }
 
+      // Get default settings and add columnIndex if dropping into a row column
+      const defaultSettings = getDefaultSettings(elementType);
+      if (dropData?.columnIndex !== undefined) {
+        defaultSettings.columnIndex = dropData.columnIndex;
+      }
+
       // Create default element based on type
       const newElement: Element = {
         id: Date.now(), // Temporary ID, will be replaced by server
         page_id: page.id,
         type: elementType,
-        settings: getDefaultSettings(elementType),
+        settings: defaultSettings,
         styles: {
           desktop: getDefaultStyles(elementType),
         },
@@ -57,8 +63,58 @@ export const DragAndDropProvider: React.FC<DragAndDropProviderProps> = ({ childr
 
       addElement(newElement);
     }
+    // Handle reordering existing canvas elements
+    else if (dragData?.isCanvasElement) {
+      const elementId = dragData.elementId;
+      const newParentId = dropData?.parentId ?? null;
 
-    // TODO: Handle reordering existing elements
+      // Don't allow dropping an element into itself or its own children
+      if (elementId === newParentId) {
+        console.warn('Cannot drop element into itself');
+        return;
+      }
+
+      // Check if the new parent is a child of the element being moved
+      const isChildOfElement = (potentialChildId: number | null, parentId: number): boolean => {
+        if (!potentialChildId) return false;
+        if (potentialChildId === parentId) return true;
+
+        const potentialChild = elements.find(el => el.id === potentialChildId);
+        if (!potentialChild?.parent_id) return false;
+
+        return isChildOfElement(potentialChild.parent_id, parentId);
+      };
+
+      if (newParentId && isChildOfElement(newParentId, elementId)) {
+        console.warn('Cannot drop element into its own child');
+        return;
+      }
+
+      // Validate drop: Check if drop zone accepts this element type
+      const acceptedTypes = dropData?.accepts || [];
+      if (acceptedTypes.length > 0 && !acceptedTypes.includes(dragData.elementType)) {
+        console.warn(`Cannot drop ${dragData.elementType} here. Accepted types:`, acceptedTypes);
+        return;
+      }
+
+      // Calculate new order (add to end of siblings)
+      const siblings = elements.filter(el => el.parent_id === newParentId);
+      const newOrder = siblings.length > 0 ? Math.max(...siblings.map(el => el.order)) + 1 : 0;
+
+      moveElement(elementId, newParentId, newOrder);
+
+      // Update columnIndex if dropping into a row column
+      if (dropData?.columnIndex !== undefined) {
+        const element = elements.find(el => el.id === elementId);
+        if (element) {
+          const updatedSettings = { ...element.settings, columnIndex: dropData.columnIndex };
+          // We need to use updateElement from store
+          // Since we don't have it here, we'll need to import it
+          const { updateElement } = useBuilderStore.getState();
+          updateElement(elementId, { settings: updatedSettings });
+        }
+      }
+    }
   };
 
   return (
@@ -81,9 +137,9 @@ function getDefaultSettings(type: ElementType): Record<string, any> {
     case 'section':
       return { minHeight: '100px' };
     case 'row':
-      return { gap: '16px' };
+      return { gap: '16px', columns: 1 };
     case 'column':
-      return { width: '1' };
+      return { width: '1' }; // Legacy - deprecated
     case 'text':
       return { content: 'Edit this text...' };
     case 'heading':

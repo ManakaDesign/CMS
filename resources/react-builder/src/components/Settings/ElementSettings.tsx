@@ -161,6 +161,25 @@ export const ElementSettings: React.FC = () => {
           </>
         )}
 
+        {/* Row Columns */}
+        {element.type === 'row' && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-light-text mb-2">Columns</label>
+            <select
+              value={element.settings.columns || 1}
+              onChange={(e) => updateSetting('columns', parseInt(e.target.value))}
+              className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+            >
+              <option value="1">1 Column</option>
+              <option value="2">2 Columns</option>
+              <option value="3">3 Columns</option>
+              <option value="4">4 Columns</option>
+              <option value="5">5 Columns</option>
+              <option value="6">6 Columns</option>
+            </select>
+          </div>
+        )}
+
         {/* Spacer Height */}
         {element.type === 'spacer' && (
           <div className="mb-4">
