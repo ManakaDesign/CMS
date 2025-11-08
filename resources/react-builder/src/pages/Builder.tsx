@@ -267,10 +267,11 @@ export const Builder: React.FC = () => {
                 className="bg-white shadow-lg mx-auto builder-canvas min-h-full"
                 style={{
                   maxWidth: activeBreakpoint === 'desktop'
-                    ? '100%'
+                    ? `${breakpointWidths.desktop}px`
                     : activeBreakpoint === 'tablet'
                       ? `${breakpointWidths.tablet}px`
-                      : `${breakpointWidths.mobile}px`
+                      : `${breakpointWidths.mobile}px`,
+                  width: '100%',
                 }}
               >
                 <DroppableCanvas />

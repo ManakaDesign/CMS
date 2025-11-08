@@ -163,39 +163,38 @@ export const useBuilderStore = create<BuilderStore>()(
 
         if (!element) return;
 
-        // Generate new ID (temporary, will be replaced by server)
-        const newId = Math.max(...elements.map((el) => el.id), 0) + 1;
+        // Generate unique IDs for all duplicated elements
+        let nextId = Math.max(...elements.map((el) => el.id), 0) + 1;
+        const idMap = new Map<number, number>(); // Map old IDs to new IDs
 
-        const duplicated: Element = {
-          ...element,
-          id: newId,
-          order: element.order + 1,
-        };
+        // Duplicate children recursively with unique IDs
+        const duplicateWithChildren = (originalElement: Element, newParentId?: number): Element[] => {
+          const newId = nextId++;
+          idMap.set(originalElement.id, newId);
 
-        // Duplicate children recursively
-        const duplicateChildren = (parentId: number, newParentId: number): Element[] => {
-          const children = elements.filter((el) => el.parent_id === parentId);
-          const duplicatedChildren: Element[] = [];
+          const duplicatedElement: Element = {
+            ...originalElement,
+            id: newId,
+            parent_id: newParentId,
+            order: originalElement.id === elementId ? originalElement.order + 1 : originalElement.order,
+          };
 
+          const result: Element[] = [duplicatedElement];
+
+          // Find and duplicate all children
+          const children = elements.filter((el) => el.parent_id === originalElement.id);
           children.forEach((child) => {
-            const childNewId = Math.max(...elements.map((el) => el.id), ...duplicatedChildren.map((el) => el.id), 0) + 1;
-            const duplicatedChild: Element = {
-              ...child,
-              id: childNewId,
-              parent_id: newParentId,
-            };
-            duplicatedChildren.push(duplicatedChild);
-            duplicatedChildren.push(...duplicateChildren(child.id, childNewId));
+            result.push(...duplicateWithChildren(child, newId));
           });
 
-          return duplicatedChildren;
+          return result;
         };
 
-        const allDuplicated = [duplicated, ...duplicateChildren(elementId, newId)];
+        const allDuplicated = duplicateWithChildren(element, element.parent_id);
 
         set({ elements: [...elements, ...allDuplicated] });
         get().addToHistory();
-        get().selectElement(newId);
+        get().selectElement(allDuplicated[0].id);
       },
 
       // UI Actions

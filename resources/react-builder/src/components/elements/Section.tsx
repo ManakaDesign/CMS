@@ -29,7 +29,7 @@ export const Section: React.FC<SectionProps> = (props) => {
     <BaseElement element={element} {...baseProps}>
       <div
         ref={setNodeRef}
-        className={`w-full ${isOver ? 'bg-blue-50 ring-2 ring-blue-300' : ''}`}
+        className={`w-full transition-all ${isOver ? 'bg-blue-50 ring-4 ring-blue-400' : ''}`}
         style={{ minHeight: element.settings.minHeight || '100px' }}
       >
         {children || (

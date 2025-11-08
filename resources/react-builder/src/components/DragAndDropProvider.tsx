@@ -118,7 +118,10 @@ export const DragAndDropProvider: React.FC<DragAndDropProviderProps> = ({ childr
   };
 
   return (
-    <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <DndContext
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
       {children}
       <DragOverlay dropAnimation={null}>
         {activeId ? (

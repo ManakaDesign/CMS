@@ -55,6 +55,7 @@ export const Row: React.FC<RowProps> = (props) => {
             rowId={element.id}
             columnIndex={columnIndex}
             columnCount={columnCount}
+            isRowSelected={isSelected || false}
             children={columnGroups[columnIndex]}
           />
         ))}
@@ -68,10 +69,11 @@ interface RowColumnProps {
   rowId: number;
   columnIndex: number;
   columnCount: number;
+  isRowSelected: boolean;
   children: Element[];
 }
 
-const RowColumn: React.FC<RowColumnProps> = ({ rowId, columnIndex, columnCount, children }) => {
+const RowColumn: React.FC<RowColumnProps> = ({ rowId, columnIndex, columnCount, isRowSelected, children }) => {
   const { selectedElementId, hoveredElementId, selectElement, hoverElement, isPreviewMode } = useBuilderStore();
 
   // Make column droppable
@@ -102,11 +104,22 @@ const RowColumn: React.FC<RowColumnProps> = ({ rowId, columnIndex, columnCount, 
     );
   };
 
+  // Show dashed border on right for all but the last column when row is selected
+  const borderStyle: React.CSSProperties = {};
+  if (isRowSelected && columnIndex < columnCount - 1) {
+    borderStyle.borderRight = '2px dashed #10b981'; // Green dashed border
+    borderStyle.paddingRight = '8px';
+    borderStyle.marginRight = '8px';
+  }
+
   return (
     <div
       ref={setNodeRef}
-      className={`flex-1 min-h-[100px] ${isOver ? 'bg-green-50 ring-2 ring-green-300' : ''}`}
-      style={{ flex: `1 1 ${100 / columnCount}%` }}
+      className={`flex-1 min-h-[100px] transition-all ${isOver ? 'bg-green-50 ring-4 ring-green-400' : ''}`}
+      style={{
+        flex: `1 1 ${100 / columnCount}%`,
+        ...borderStyle,
+      }}
     >
       {children.length > 0 ? (
         <div className="flex flex-col gap-2">
