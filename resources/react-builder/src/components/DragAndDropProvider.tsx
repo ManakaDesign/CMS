@@ -120,10 +120,15 @@ export const DragAndDropProvider: React.FC<DragAndDropProviderProps> = ({ childr
   return (
     <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       {children}
-      <DragOverlay>
+      <DragOverlay dropAnimation={null}>
         {activeId ? (
-          <div className="bg-white shadow-lg rounded p-2 border-2 border-primary-500">
-            Dragging element...
+          <div className="bg-blue-100 border-2 border-blue-400 rounded px-3 py-2 shadow-xl opacity-80">
+            <div className="flex items-center gap-2 text-blue-900 font-medium text-sm">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+              </svg>
+              Moving...
+            </div>
           </div>
         ) : null}
       </DragOverlay>

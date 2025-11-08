@@ -2,6 +2,12 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import type { Element, Page, Breakpoint, HistoryState } from '../types';
 
+interface BreakpointWidths {
+  desktop: number;
+  tablet: number;
+  mobile: number;
+}
+
 interface BuilderStore {
   // Current page
   page: Page | null;
@@ -11,6 +17,7 @@ interface BuilderStore {
   selectedElementId: number | null;
   hoveredElementId: number | null;
   activeBreakpoint: Breakpoint;
+  breakpointWidths: BreakpointWidths;
   isPreviewMode: boolean;
   isDragging: boolean;
   isSaving: boolean;
@@ -36,6 +43,7 @@ interface BuilderStore {
 
   // Actions - UI
   setActiveBreakpoint: (breakpoint: Breakpoint) => void;
+  setBreakpointWidths: (widths: BreakpointWidths) => void;
   togglePreviewMode: () => void;
   setIsDragging: (isDragging: boolean) => void;
   setIsSaving: (isSaving: boolean) => void;
@@ -65,6 +73,11 @@ export const useBuilderStore = create<BuilderStore>()(
       selectedElementId: null,
       hoveredElementId: null,
       activeBreakpoint: 'desktop',
+      breakpointWidths: {
+        desktop: 1920,
+        tablet: 768,
+        mobile: 480,
+      },
       isPreviewMode: false,
       isDragging: false,
       isSaving: false,
@@ -188,6 +201,8 @@ export const useBuilderStore = create<BuilderStore>()(
       // UI Actions
       setActiveBreakpoint: (breakpoint) => set({ activeBreakpoint: breakpoint }),
 
+      setBreakpointWidths: (widths) => set({ breakpointWidths: widths }),
+
       togglePreviewMode: () => set((state) => ({ isPreviewMode: !state.isPreviewMode })),
 
       setIsDragging: (isDragging) => set({ isDragging }),
@@ -287,6 +302,11 @@ export const useBuilderStore = create<BuilderStore>()(
           selectedElementId: null,
           hoveredElementId: null,
           activeBreakpoint: 'desktop',
+          breakpointWidths: {
+            desktop: 1920,
+            tablet: 768,
+            mobile: 480,
+          },
           isPreviewMode: false,
           isDragging: false,
           isSaving: false,
