@@ -76,10 +76,11 @@ export const BaseElement: React.FC<BaseElementProps> = ({
   // Convert React.CSSProperties to CSS string
   const stylesToCSS = (styles: React.CSSProperties): string => {
     return Object.entries(styles)
+      .filter(([_, value]) => value !== undefined && value !== null && value !== '')
       .map(([key, value]) => {
         // Convert camelCase to kebab-case
         const cssKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
-        return `${cssKey}: ${value};`;
+        return `${cssKey}: ${value} !important;`;
       })
       .join(' ');
   };
