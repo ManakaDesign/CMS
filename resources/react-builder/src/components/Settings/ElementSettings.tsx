@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useBuilderStore } from '../../store/builderStore';
-import { FiTrash2, FiCopy, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiTrash2, FiCopy, FiEye, FiEyeOff, FiDroplet, FiImage, FiVideo } from 'react-icons/fi';
 import { SpacingControl } from './SpacingControl';
+
+type BackgroundType = 'color' | 'gradient' | 'image' | 'video';
 
 export const ElementSettings: React.FC = () => {
   const { selectedElementId, getElementById, updateElement, deleteElement, duplicateElement, activeBreakpoint, elements } =
@@ -9,6 +11,7 @@ export const ElementSettings: React.FC = () => {
 
   const element = selectedElementId ? getElementById(selectedElementId) : null;
   const [styleMode, setStyleMode] = useState<'normal' | 'hover'>('normal');
+  const [backgroundType, setBackgroundType] = useState<BackgroundType>('color');
 
   if (!element) {
     return (
@@ -394,15 +397,213 @@ export const ElementSettings: React.FC = () => {
         />
 
         {/* Background */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-light-text mb-2">Background Color</label>
-          <input
-            type="color"
-            value={getStyleValue('backgroundColor') || '#ffffff'}
-            onChange={(e) => updateStyle('backgroundColor', e.target.value, activeBreakpoint)}
-            className="w-full h-10 border border-dark-border rounded"
-          />
-        </div>
+        {(element.type === 'section' || element.type === 'row' || element.type === 'button') && (
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-light-text">Background</label>
+
+              {/* Background Type Icons */}
+              <div className="flex items-center gap-1 bg-dark-panel border border-dark-border rounded p-0.5">
+                <button
+                  onClick={() => setBackgroundType('color')}
+                  className={`p-1.5 rounded transition-colors ${
+                    backgroundType === 'color'
+                      ? 'bg-brand-primary text-white'
+                      : 'text-light-muted hover:text-light-text'
+                  }`}
+                  title="Solid Color"
+                >
+                  <FiDroplet size={14} />
+                </button>
+                <button
+                  onClick={() => setBackgroundType('gradient')}
+                  className={`p-1.5 rounded transition-colors ${
+                    backgroundType === 'gradient'
+                      ? 'bg-brand-primary text-white'
+                      : 'text-light-muted hover:text-light-text'
+                  }`}
+                  title="Gradient"
+                >
+                  <div className="w-3.5 h-3.5 rounded" style={{ background: 'linear-gradient(45deg, currentColor 0%, transparent 100%)' }} />
+                </button>
+                <button
+                  onClick={() => setBackgroundType('image')}
+                  className={`p-1.5 rounded transition-colors ${
+                    backgroundType === 'image'
+                      ? 'bg-brand-primary text-white'
+                      : 'text-light-muted hover:text-light-text'
+                  }`}
+                  title="Image"
+                >
+                  <FiImage size={14} />
+                </button>
+                <button
+                  onClick={() => setBackgroundType('video')}
+                  className={`p-1.5 rounded transition-colors ${
+                    backgroundType === 'video'
+                      ? 'bg-brand-primary text-white'
+                      : 'text-light-muted hover:text-light-text'
+                  }`}
+                  title="Video"
+                >
+                  <FiVideo size={14} />
+                </button>
+              </div>
+            </div>
+
+            {/* Background Color */}
+            {backgroundType === 'color' && (
+              <input
+                type="color"
+                value={getStyleValue('backgroundColor') || '#ffffff'}
+                onChange={(e) => updateStyle('backgroundColor', e.target.value, activeBreakpoint)}
+                className="w-full h-10 border border-dark-border rounded"
+              />
+            )}
+
+            {/* Background Gradient */}
+            {backgroundType === 'gradient' && (
+              <div className="space-y-2">
+                <div>
+                  <label className="text-xs text-light-muted mb-1 block">Color 1</label>
+                  <input
+                    type="color"
+                    value={(element.settings.backgroundGradient?.color1 as string) || '#ffffff'}
+                    onChange={(e) => updateSetting('backgroundGradient', {
+                      ...element.settings.backgroundGradient,
+                      color1: e.target.value
+                    })}
+                    className="w-full h-8 border border-dark-border rounded"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-light-muted mb-1 block">Color 2</label>
+                  <input
+                    type="color"
+                    value={(element.settings.backgroundGradient?.color2 as string) || '#000000'}
+                    onChange={(e) => updateSetting('backgroundGradient', {
+                      ...element.settings.backgroundGradient,
+                      color2: e.target.value
+                    })}
+                    className="w-full h-8 border border-dark-border rounded"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-light-muted mb-1 block">Angle (deg)</label>
+                  <input
+                    type="number"
+                    value={(element.settings.backgroundGradient?.angle as number) || 45}
+                    onChange={(e) => updateSetting('backgroundGradient', {
+                      ...element.settings.backgroundGradient,
+                      angle: parseInt(e.target.value)
+                    })}
+                    className="w-full px-2 py-1.5 bg-dark-panel border border-dark-border rounded text-sm text-light-text"
+                    min="0"
+                    max="360"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Background Image */}
+            {backgroundType === 'image' && (
+              <div className="space-y-2">
+                <div>
+                  <label className="text-xs text-light-muted mb-1 block">Image URL</label>
+                  <input
+                    type="text"
+                    value={(element.settings.backgroundImage?.url as string) || ''}
+                    onChange={(e) => updateSetting('backgroundImage', {
+                      ...element.settings.backgroundImage,
+                      url: e.target.value
+                    })}
+                    className="w-full px-2 py-1.5 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                    placeholder="https://..."
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-light-muted mb-1 block">Size</label>
+                  <select
+                    value={(element.settings.backgroundImage?.size as string) || 'cover'}
+                    onChange={(e) => updateSetting('backgroundImage', {
+                      ...element.settings.backgroundImage,
+                      size: e.target.value
+                    })}
+                    className="w-full px-2 py-1.5 bg-dark-panel border border-dark-border rounded text-sm text-light-text"
+                  >
+                    <option value="cover">Cover</option>
+                    <option value="contain">Contain</option>
+                    <option value="auto">Auto</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-light-muted mb-1 block">Position</label>
+                  <select
+                    value={(element.settings.backgroundImage?.position as string) || 'center center'}
+                    onChange={(e) => updateSetting('backgroundImage', {
+                      ...element.settings.backgroundImage,
+                      position: e.target.value
+                    })}
+                    className="w-full px-2 py-1.5 bg-dark-panel border border-dark-border rounded text-sm text-light-text"
+                  >
+                    <option value="center center">Center Center</option>
+                    <option value="top left">Top Left</option>
+                    <option value="top center">Top Center</option>
+                    <option value="top right">Top Right</option>
+                    <option value="center left">Center Left</option>
+                    <option value="center right">Center Right</option>
+                    <option value="bottom left">Bottom Left</option>
+                    <option value="bottom center">Bottom Center</option>
+                    <option value="bottom right">Bottom Right</option>
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* Background Video */}
+            {backgroundType === 'video' && (
+              <div className="space-y-2">
+                <div>
+                  <label className="text-xs text-light-muted mb-1 block">Video URL (.mp4)</label>
+                  <input
+                    type="text"
+                    value={(element.settings.backgroundVideo?.url as string) || ''}
+                    onChange={(e) => updateSetting('backgroundVideo', {
+                      ...element.settings.backgroundVideo,
+                      url: e.target.value
+                    })}
+                    className="w-full px-2 py-1.5 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                    placeholder="https://...video.mp4"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={(element.settings.backgroundVideo?.loop as boolean) ?? true}
+                    onChange={(e) => updateSetting('backgroundVideo', {
+                      ...element.settings.backgroundVideo,
+                      loop: e.target.checked
+                    })}
+                    className="rounded"
+                  />
+                  <label className="text-xs text-light-muted">Loop Video</label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={(element.settings.backgroundVideo?.muted as boolean) ?? true}
+                    onChange={(e) => updateSetting('backgroundVideo', {
+                      ...element.settings.backgroundVideo,
+                      muted: e.target.checked
+                    })}
+                    className="rounded"
+                  />
+                  <label className="text-xs text-light-muted">Muted</label>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Border */}
         <div className="mb-4">

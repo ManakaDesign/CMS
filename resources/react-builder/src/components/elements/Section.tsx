@@ -4,6 +4,7 @@ import type { Element } from '../../types';
 import { BaseElement } from './BaseElement';
 import { DropZone } from '../DropZone';
 import { useBuilderStore } from '../../store/builderStore';
+import { BackgroundRenderer } from './BackgroundRenderer';
 
 interface SectionProps {
   element: Element;
@@ -38,9 +39,14 @@ export const Section: React.FC<SectionProps> = (props) => {
   return (
     <BaseElement element={element} {...baseProps}>
       <div
-        className="w-full relative transition-all"
+        className="w-full relative transition-all overflow-hidden"
         style={{ minHeight: element.settings.minHeight || '100px' }}
       >
+        {/* Background Layer */}
+        <BackgroundRenderer element={element} />
+
+        {/* Content Layer */}
+        <div className="relative z-10">
         {hasChildren ? (
           <div className="flex flex-col relative">
             {/* Drop zone before first child */}
@@ -82,6 +88,7 @@ export const Section: React.FC<SectionProps> = (props) => {
             Drop a Row here
           </div>
         )}
+        </div>
       </div>
     </BaseElement>
   );

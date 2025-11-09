@@ -2,6 +2,7 @@ import React from 'react';
 import type { Element } from '../../types';
 import { BaseElement } from './BaseElement';
 import { useBuilderStore } from '../../store/builderStore';
+import { BackgroundRenderer } from './BackgroundRenderer';
 
 interface ButtonProps {
   element: Element;
@@ -103,9 +104,13 @@ export const Button: React.FC<ButtonProps> = (props) => {
         rel={target === '_blank' ? 'noopener noreferrer' : undefined}
         onClick={handleButtonClick}
         style={buttonStyles}
-        className="block w-full h-full"
+        className="block w-full h-full relative overflow-hidden"
       >
-        {text}
+        {/* Background Layer */}
+        <BackgroundRenderer element={element} />
+
+        {/* Text Layer */}
+        <span className="relative z-10">{text}</span>
       </a>
     </BaseElement>
   );

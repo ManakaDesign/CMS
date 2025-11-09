@@ -5,6 +5,7 @@ import { BaseElement } from './BaseElement';
 import { useBuilderStore } from '../../store/builderStore';
 import { getElementComponent } from './ElementRegistry';
 import { DropZone } from '../DropZone';
+import { BackgroundRenderer } from './BackgroundRenderer';
 
 interface RowProps {
   element: Element;
@@ -79,7 +80,12 @@ export const Row: React.FC<RowProps> = (props) => {
 
   return (
     <BaseElement element={element} isSelected={isSelected} isHovered={isHovered} onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-      <div style={defaultStyles}>
+      <div className="relative overflow-hidden" style={defaultStyles}>
+        {/* Background Layer */}
+        <BackgroundRenderer element={element} />
+
+        {/* Content Layer */}
+        <div className="relative z-10 flex" style={{ gap: element.settings.gap || '16px', width: '100%' }}>
         {Array.from({ length: columnCount }).map((_, columnIndex) => (
           <RowColumn
             key={columnIndex}
@@ -90,6 +96,7 @@ export const Row: React.FC<RowProps> = (props) => {
             children={columnGroups[columnIndex]}
           />
         ))}
+        </div>
       </div>
     </BaseElement>
   );
