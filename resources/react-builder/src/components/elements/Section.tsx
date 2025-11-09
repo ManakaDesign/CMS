@@ -3,6 +3,7 @@ import { useDroppable } from '@dnd-kit/core';
 import type { Element } from '../../types';
 import { BaseElement } from './BaseElement';
 import { DropZone } from '../DropZone';
+import { useBuilderStore } from '../../store/builderStore';
 
 interface SectionProps {
   element: Element;
@@ -16,6 +17,7 @@ interface SectionProps {
 
 export const Section: React.FC<SectionProps> = (props) => {
   const { element, children, ...baseProps } = props;
+  const { getElementChildren } = useBuilderStore();
 
   // Make section droppable for empty state
   const { setNodeRef, isOver } = useDroppable({
@@ -26,9 +28,12 @@ export const Section: React.FC<SectionProps> = (props) => {
     },
   });
 
-  // Convert children to array for processing
+  // Get actual child elements from store (sorted by order)
+  const childElements = getElementChildren(element.id);
+  const hasChildren = childElements.length > 0;
+
+  // Convert children to array for rendering
   const childrenArray = React.Children.toArray(children);
-  const hasChildren = childrenArray.length > 0;
 
   return (
     <BaseElement element={element} {...baseProps}>
@@ -48,20 +53,23 @@ export const Section: React.FC<SectionProps> = (props) => {
             />
 
             {/* Render children with drop zones between them */}
-            {childrenArray.map((child, index) => (
-              <React.Fragment key={(child as any).key || index}>
-                {child}
+            {childrenArray.map((child, index) => {
+              const childElement = childElements[index];
+              return (
+                <React.Fragment key={(child as any).key || index}>
+                  {child}
 
-                {/* Drop zone after each child */}
-                <DropZone
-                  id={`section-${element.id}-drop-after-${index}`}
-                  parentId={element.id}
-                  position="after"
-                  accepts={['row']}
-                  index={index + 1}
-                />
-              </React.Fragment>
-            ))}
+                  {/* Drop zone after each child - use actual element order + 1 */}
+                  <DropZone
+                    id={`section-${element.id}-drop-after-${childElement?.id || index}`}
+                    parentId={element.id}
+                    position="after"
+                    accepts={['row']}
+                    index={childElement ? childElement.order + 1 : index + 1}
+                  />
+                </React.Fragment>
+              );
+            })}
           </div>
         ) : (
           <div

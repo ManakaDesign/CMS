@@ -44,14 +44,13 @@ export const BaseElement: React.FC<BaseElementProps> = ({
 
   const borderColor = getBorderColor(element.type);
 
-  // Combine outline styles with border color
+  // Use inset box-shadow for inside borders instead of outline
   const outlineStyle: React.CSSProperties = {};
   if (isSelected) {
-    outlineStyle.outline = `2px solid ${borderColor}`;
-    outlineStyle.outlineOffset = '2px';
+    outlineStyle.boxShadow = `inset 0 0 0 2px ${borderColor}`;
   } else if (isHovered) {
-    outlineStyle.outline = `2px dashed ${borderColor}`;
-    outlineStyle.outlineOffset = '2px';
+    outlineStyle.boxShadow = `inset 0 0 0 2px ${borderColor}`;
+    outlineStyle.opacity = '0.6';
   }
 
   const className = `

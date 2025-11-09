@@ -132,17 +132,17 @@ const RowColumn: React.FC<RowColumnProps> = ({ rowId, columnIndex, columnCount, 
             index={0}
           />
 
-          {children.map((child, index) => (
+          {children.map((child) => (
             <React.Fragment key={child.id}>
               {renderElement(child)}
 
-              {/* Drop zone after each element */}
+              {/* Drop zone after each element - use actual element order + 1 */}
               <DropZone
                 id={`row-${rowId}-col-${columnIndex}-drop-after-${child.id}`}
                 parentId={rowId}
                 position="after"
                 accepts={['text', 'heading', 'button', 'image', 'video', 'spacer', 'divider', 'code']}
-                index={index + 1}
+                index={child.order + 1}
               />
             </React.Fragment>
           ))}

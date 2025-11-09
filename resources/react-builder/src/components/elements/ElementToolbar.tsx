@@ -37,9 +37,9 @@ const getElementColors = (type: string): { bg: string; border: string; text: str
 // Get position classes based on element type
 const getToolbarPosition = (type: string): string => {
   if (type === 'row') {
-    return 'top-2 left-2'; // Rows: left top (inside)
+    return 'top-0 left-0'; // Rows: left top (inside, no margin)
   }
-  return 'top-2 right-2'; // Sections and elements: right top (inside)
+  return 'top-0 right-0'; // Sections and elements: right top (inside, no margin)
 };
 
 export const ElementToolbar: React.FC<ElementToolbarProps> = ({ elementId, elementType }) => {
