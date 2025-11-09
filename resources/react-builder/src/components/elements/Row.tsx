@@ -4,6 +4,7 @@ import type { Element } from '../../types';
 import { BaseElement } from './BaseElement';
 import { useBuilderStore } from '../../store/builderStore';
 import { getElementComponent } from './ElementRegistry';
+import { DropZone } from '../DropZone';
 
 interface RowProps {
   element: Element;
@@ -76,8 +77,8 @@ interface RowColumnProps {
 const RowColumn: React.FC<RowColumnProps> = ({ rowId, columnIndex, columnCount, isRowSelected, children }) => {
   const { selectedElementId, hoveredElementId, selectElement, hoverElement, isPreviewMode } = useBuilderStore();
 
-  // Make column droppable
-  const { setNodeRef, isOver } = useDroppable({
+  // Make column droppable (empty state only)
+  const { setNodeRef } = useDroppable({
     id: `row-${rowId}-column-${columnIndex}`,
     data: {
       accepts: ['text', 'heading', 'button', 'image', 'video', 'spacer', 'divider', 'code'],
@@ -114,26 +115,43 @@ const RowColumn: React.FC<RowColumnProps> = ({ rowId, columnIndex, columnCount, 
 
   return (
     <div
-      ref={setNodeRef}
       className="flex-1 min-h-[100px] relative transition-all"
       style={{
         flex: `1 1 ${100 / columnCount}%`,
         ...borderStyle,
       }}
     >
-      {/* Drop indicator line */}
-      {isOver && (
-        <>
-          <div className="absolute top-0 left-0 right-0 h-1 bg-green-400 z-10" />
-          <div className="absolute inset-0 bg-green-50 bg-opacity-50 z-0" />
-        </>
-      )}
       {children.length > 0 ? (
-        <div className="flex flex-col gap-2 relative z-1">
-          {children.map(renderElement)}
+        <div className="flex flex-col relative">
+          {/* Drop zone before first element */}
+          <DropZone
+            id={`row-${rowId}-col-${columnIndex}-drop-before-0`}
+            parentId={rowId}
+            position="before"
+            accepts={['text', 'heading', 'button', 'image', 'video', 'spacer', 'divider', 'code']}
+            index={0}
+          />
+
+          {children.map((child, index) => (
+            <React.Fragment key={child.id}>
+              {renderElement(child)}
+
+              {/* Drop zone after each element */}
+              <DropZone
+                id={`row-${rowId}-col-${columnIndex}-drop-after-${child.id}`}
+                parentId={rowId}
+                position="after"
+                accepts={['text', 'heading', 'button', 'image', 'video', 'spacer', 'divider', 'code']}
+                index={index + 1}
+              />
+            </React.Fragment>
+          ))}
         </div>
       ) : (
-        <div className="w-full h-full flex items-center justify-center text-center text-gray-400 py-4 text-sm relative z-1">
+        <div
+          ref={setNodeRef}
+          className="w-full h-full flex items-center justify-center text-center text-gray-400 py-4 text-sm relative"
+        >
           Drop elements here
         </div>
       )}

@@ -42,37 +42,45 @@ export const SpacingControl: React.FC<SpacingControlProps> = ({
     return /^\d+$/.test(val.trim()) ? `${val}px` : val;
   };
 
-  // Update individual side
+  // Update individual side (without auto-px, that happens on blur)
   const updateSide = (side: keyof typeof sides, newValue: string) => {
-    const finalValue = formatValue(newValue);
-
     if (linkMode === 'all') {
       // Update all sides
       const newSides = {
-        top: finalValue,
-        right: finalValue,
-        bottom: finalValue,
-        left: finalValue,
+        top: newValue,
+        right: newValue,
+        bottom: newValue,
+        left: newValue,
       };
       setSides(newSides);
-      onChange(finalValue);
+      onChange(newValue);
     } else if (linkMode === 'axes') {
       // Update vertical or horizontal pair
       const newSides = { ...sides };
       if (side === 'top' || side === 'bottom') {
-        newSides.top = finalValue;
-        newSides.bottom = finalValue;
+        newSides.top = newValue;
+        newSides.bottom = newValue;
       } else {
-        newSides.left = finalValue;
-        newSides.right = finalValue;
+        newSides.left = newValue;
+        newSides.right = newValue;
       }
       setSides(newSides);
       onChange(`${newSides.top} ${newSides.right} ${newSides.bottom} ${newSides.left}`);
     } else {
       // Update only the specific side
-      const newSides = { ...sides, [side]: finalValue };
+      const newSides = { ...sides, [side]: newValue };
       setSides(newSides);
       onChange(`${newSides.top} ${newSides.right} ${newSides.bottom} ${newSides.left}`);
+    }
+  };
+
+  // Apply auto-px on blur
+  const handleBlur = (side: keyof typeof sides) => {
+    const currentValue = sides[side];
+    const formattedValue = formatValue(currentValue);
+
+    if (currentValue !== formattedValue) {
+      updateSide(side, formattedValue);
     }
   };
 
@@ -123,6 +131,7 @@ export const SpacingControl: React.FC<SpacingControlProps> = ({
           type="text"
           value={sides.top}
           onChange={(e) => updateSide('top', e.target.value)}
+          onBlur={() => handleBlur('top')}
           className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
           placeholder="e.g. 10px or 10"
         />
@@ -135,6 +144,7 @@ export const SpacingControl: React.FC<SpacingControlProps> = ({
               type="text"
               value={sides.top}
               onChange={(e) => updateSide('top', e.target.value)}
+              onBlur={() => handleBlur('top')}
               className="w-full px-2 py-1.5 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
               placeholder="0px"
             />
@@ -145,6 +155,7 @@ export const SpacingControl: React.FC<SpacingControlProps> = ({
               type="text"
               value={sides.left}
               onChange={(e) => updateSide('left', e.target.value)}
+              onBlur={() => handleBlur('left')}
               className="w-full px-2 py-1.5 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
               placeholder="0px"
             />
@@ -159,6 +170,7 @@ export const SpacingControl: React.FC<SpacingControlProps> = ({
               type="text"
               value={sides.top}
               onChange={(e) => updateSide('top', e.target.value)}
+              onBlur={() => handleBlur('top')}
               className="w-full px-2 py-1.5 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
               placeholder="0px"
             />
@@ -169,6 +181,7 @@ export const SpacingControl: React.FC<SpacingControlProps> = ({
               type="text"
               value={sides.right}
               onChange={(e) => updateSide('right', e.target.value)}
+              onBlur={() => handleBlur('right')}
               className="w-full px-2 py-1.5 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
               placeholder="0px"
             />
@@ -179,6 +192,7 @@ export const SpacingControl: React.FC<SpacingControlProps> = ({
               type="text"
               value={sides.bottom}
               onChange={(e) => updateSide('bottom', e.target.value)}
+              onBlur={() => handleBlur('bottom')}
               className="w-full px-2 py-1.5 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
               placeholder="0px"
             />
@@ -189,6 +203,7 @@ export const SpacingControl: React.FC<SpacingControlProps> = ({
               type="text"
               value={sides.left}
               onChange={(e) => updateSide('left', e.target.value)}
+              onBlur={() => handleBlur('left')}
               className="w-full px-2 py-1.5 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
               placeholder="0px"
             />

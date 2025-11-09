@@ -45,6 +45,9 @@ export const DragAndDropProvider: React.FC<DragAndDropProviderProps> = ({ childr
         defaultSettings.columnIndex = dropData.columnIndex;
       }
 
+      // Calculate order based on drop zone index
+      const dropIndex = dropData?.index ?? 0;
+
       // Create default element based on type
       const newElement: Element = {
         id: Date.now(), // Temporary ID, will be replaced by server
@@ -55,7 +58,7 @@ export const DragAndDropProvider: React.FC<DragAndDropProviderProps> = ({ childr
           desktop: getDefaultStyles(elementType),
         },
         parent_id: parentId ?? undefined,
-        order: 0, // Will be calculated properly
+        order: dropIndex,
         is_visible: true,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -97,9 +100,8 @@ export const DragAndDropProvider: React.FC<DragAndDropProviderProps> = ({ childr
         return;
       }
 
-      // Calculate new order (add to end of siblings)
-      const siblings = elements.filter(el => el.parent_id === newParentId);
-      const newOrder = siblings.length > 0 ? Math.max(...siblings.map(el => el.order)) + 1 : 0;
+      // Calculate new order from drop zone index
+      const newOrder = dropData?.index ?? 0;
 
       moveElement(elementId, newParentId, newOrder);
 

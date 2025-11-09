@@ -2,6 +2,7 @@ import React from 'react';
 import { useBuilderStore } from '../store/builderStore';
 import type { Element } from '../types';
 import { getElementComponent } from './elements/ElementRegistry';
+import { DropZone } from './DropZone';
 
 export const Canvas: React.FC = () => {
   const {
@@ -53,9 +54,31 @@ export const Canvas: React.FC = () => {
       }}
     >
       {rootElements.length > 0 ? (
-        rootElements.map((element) => (
-          <React.Fragment key={element.id}>{renderElement(element)}</React.Fragment>
-        ))
+        <>
+          {/* Drop zone before first element */}
+          <DropZone
+            id="canvas-drop-before-0"
+            parentId={null}
+            position="before"
+            accepts={['section']}
+            index={0}
+          />
+
+          {rootElements.map((element, index) => (
+            <React.Fragment key={element.id}>
+              {renderElement(element)}
+
+              {/* Drop zone after each element */}
+              <DropZone
+                id={`canvas-drop-after-${element.id}`}
+                parentId={null}
+                position="after"
+                accepts={['section']}
+                index={index + 1}
+              />
+            </React.Fragment>
+          ))}
+        </>
       ) : (
         <div className="flex items-center justify-center h-full min-h-[400px] text-gray-400">
           <div className="text-center">
