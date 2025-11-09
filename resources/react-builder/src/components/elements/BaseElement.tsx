@@ -114,6 +114,20 @@ export const BaseElement: React.FC<BaseElementProps> = ({
     (key) => hoverStyles[key] && Object.keys(hoverStyles[key]).length > 0
   );
 
+  // When skipStyles is true, we still need to apply display property to the wrapper
+  // so that inline-block, flex, etc. work correctly
+  const getWrapperStyles = (): React.CSSProperties => {
+    if (skipStyles) {
+      const activeStyles = getActiveStyles();
+      const displayOnly: React.CSSProperties = {};
+      if (activeStyles.display) {
+        displayOnly.display = activeStyles.display;
+      }
+      return { ...displayOnly, ...outlineStyle };
+    }
+    return { ...getActiveStyles(), ...outlineStyle };
+  };
+
   return (
     <>
       {/* Inject hover styles via CSS (skip for elements with skipStyles) */}
@@ -127,7 +141,7 @@ export const BaseElement: React.FC<BaseElementProps> = ({
         data-element-id={element.id}
         data-element-type={element.type}
         className={className}
-        style={skipStyles ? outlineStyle : { ...getActiveStyles(), ...outlineStyle }}
+        style={getWrapperStyles()}
         onClick={handleClick}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}

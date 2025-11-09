@@ -209,7 +209,7 @@ const RowColumn: React.FC<RowColumnProps> = ({ rowId, columnIndex, columnCount, 
       }}
     >
       {children.length > 0 ? (
-        <div className="flex flex-col relative">
+        <div className="relative">
           {/* Drop zone before first element */}
           <DropZone
             id={`row-${rowId}-col-${columnIndex}-drop-before-0`}
