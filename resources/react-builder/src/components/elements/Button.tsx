@@ -94,7 +94,7 @@ export const Button: React.FC<ButtonProps> = (props) => {
       {/* Inject hover styles for button */}
       {hasHoverStyles && (
         <style>
-          {`[data-element-id="${element.id}"] a:hover { ${stylesToCSS(getHoverStyles())} }`}
+          {`[data-element-id="${element.id}"] a .button-content:hover { ${stylesToCSS(getHoverStyles())} }`}
         </style>
       )}
 
@@ -103,14 +103,13 @@ export const Button: React.FC<ButtonProps> = (props) => {
         target={target}
         rel={target === '_blank' ? 'noopener noreferrer' : undefined}
         onClick={handleButtonClick}
-        style={buttonStyles}
         className="block w-full h-full relative overflow-hidden"
       >
-        {/* Background Layer */}
+        {/* Background Layer - fills entire button */}
         <BackgroundRenderer element={element} />
 
-        {/* Text Layer */}
-        <span className="relative z-10">{text}</span>
+        {/* Content Layer - padding and styles applied here */}
+        <span className="relative z-10 block button-content" style={buttonStyles}>{text}</span>
       </a>
     </BaseElement>
   );

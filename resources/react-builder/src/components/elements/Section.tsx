@@ -18,7 +18,7 @@ interface SectionProps {
 
 export const Section: React.FC<SectionProps> = (props) => {
   const { element, children, ...baseProps } = props;
-  const { getElementChildren } = useBuilderStore();
+  const { getElementChildren, activeBreakpoint } = useBuilderStore();
 
   // Make section droppable for empty state
   const { setNodeRef, isOver } = useDroppable({
@@ -36,17 +36,74 @@ export const Section: React.FC<SectionProps> = (props) => {
   // Convert children to array for rendering
   const childrenArray = React.Children.toArray(children);
 
+  // Get styles with proper inheritance: desktop → tablet → mobile
+  const getActiveStyles = (): React.CSSProperties => {
+    let styles: Record<string, any> = { ...element.styles.desktop };
+
+    if (activeBreakpoint === 'tablet' || activeBreakpoint === 'mobile') {
+      styles = { ...styles, ...element.styles.tablet };
+    }
+
+    if (activeBreakpoint === 'mobile') {
+      styles = { ...styles, ...element.styles.mobile };
+    }
+
+    return styles as React.CSSProperties;
+  };
+
+  // Get hover styles with inheritance
+  const getHoverStyles = (): React.CSSProperties => {
+    const hoverStyles = (element as any).hoverStyles || {};
+    let styles = { ...getActiveStyles() };
+    let hoverOverrides: Record<string, any> = { ...hoverStyles.desktop };
+
+    if (activeBreakpoint === 'tablet' || activeBreakpoint === 'mobile') {
+      hoverOverrides = { ...hoverOverrides, ...hoverStyles.tablet };
+    }
+
+    if (activeBreakpoint === 'mobile') {
+      hoverOverrides = { ...hoverOverrides, ...hoverStyles.mobile };
+    }
+
+    styles = { ...styles, ...hoverOverrides };
+    return styles as React.CSSProperties;
+  };
+
+  // Convert styles to CSS string
+  const stylesToCSS = (styles: React.CSSProperties): string => {
+    return Object.entries(styles)
+      .filter(([_, value]) => value !== undefined && value !== null && value !== '')
+      .map(([key, value]) => {
+        const cssKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+        return `${cssKey}: ${value} !important;`;
+      })
+      .join(' ');
+  };
+
+  // Check if element has hover styles
+  const hoverStylesObj = (element as any).hoverStyles || {};
+  const hasHoverStyles = Object.keys(hoverStylesObj).some(
+    (key) => hoverStylesObj[key] && Object.keys(hoverStylesObj[key]).length > 0
+  );
+
   return (
-    <BaseElement element={element} {...baseProps}>
+    <BaseElement element={element} {...baseProps} skipStyles={true}>
+      {/* Inject hover styles */}
+      {hasHoverStyles && (
+        <style>
+          {`[data-element-id="${element.id}"] > div > .section-content:hover { ${stylesToCSS(getHoverStyles())} }`}
+        </style>
+      )}
+
       <div
         className="w-full relative transition-all overflow-hidden"
         style={{ minHeight: element.settings.minHeight || '100px' }}
       >
-        {/* Background Layer */}
+        {/* Background Layer - fills entire element */}
         <BackgroundRenderer element={element} />
 
-        {/* Content Layer */}
-        <div className="relative z-10">
+        {/* Content Layer - padding applied here */}
+        <div className="relative z-10 section-content" style={getActiveStyles()}>
         {hasChildren ? (
           <div className="flex flex-col relative">
             {/* Drop zone before first child */}

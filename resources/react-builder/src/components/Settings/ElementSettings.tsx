@@ -378,6 +378,44 @@ export const ElementSettings: React.FC = () => {
                 className="w-full h-10 border border-dark-border rounded"
               />
             </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-light-text mb-2">Text Alignment</label>
+              <div className="flex items-center gap-1 bg-dark-panel border border-dark-border rounded p-1">
+                <button
+                  onClick={() => updateStyle('textAlign', 'left', activeBreakpoint)}
+                  className={`flex-1 px-3 py-1.5 text-xs rounded transition-colors ${
+                    getStyleValue('textAlign') === 'left' || !getStyleValue('textAlign')
+                      ? 'bg-brand-primary text-white'
+                      : 'text-light-muted hover:text-light-text'
+                  }`}
+                  title="Left"
+                >
+                  Left
+                </button>
+                <button
+                  onClick={() => updateStyle('textAlign', 'center', activeBreakpoint)}
+                  className={`flex-1 px-3 py-1.5 text-xs rounded transition-colors ${
+                    getStyleValue('textAlign') === 'center'
+                      ? 'bg-brand-primary text-white'
+                      : 'text-light-muted hover:text-light-text'
+                  }`}
+                  title="Center"
+                >
+                  Center
+                </button>
+                <button
+                  onClick={() => updateStyle('textAlign', 'right', activeBreakpoint)}
+                  className={`flex-1 px-3 py-1.5 text-xs rounded transition-colors ${
+                    getStyleValue('textAlign') === 'right'
+                      ? 'bg-brand-primary text-white'
+                      : 'text-light-muted hover:text-light-text'
+                  }`}
+                  title="Right"
+                >
+                  Right
+                </button>
+              </div>
+            </div>
           </>
         )}
 
@@ -395,6 +433,23 @@ export const ElementSettings: React.FC = () => {
           onChange={(value) => updateStyle('margin', value, activeBreakpoint)}
           className="mb-4"
         />
+
+        {/* Display Property */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-light-text mb-2">Display</label>
+          <select
+            value={getStyleValue('display') || 'block'}
+            onChange={(e) => updateStyle('display', e.target.value, activeBreakpoint)}
+            className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text"
+          >
+            <option value="block">Block</option>
+            <option value="inline">Inline</option>
+            <option value="inline-block">Inline Block</option>
+            <option value="flex">Flex</option>
+            <option value="inline-flex">Inline Flex</option>
+            <option value="none">None</option>
+          </select>
+        </div>
 
         {/* Background */}
         {(element.type === 'section' || element.type === 'row' || element.type === 'button') && (
