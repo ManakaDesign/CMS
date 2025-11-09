@@ -11,19 +11,22 @@ function App() {
   // For GitHub Pages demo: VITE_BASE_PATH=/CMS/
   // For Laravel production: /public/admin/
   const basename = import.meta.env.VITE_BASE_PATH || '/public/admin';
+  const isDemoMode = basename === '/CMS/';
 
   console.log('[DEBUG] ===== APP VERSION: BUILD-2025-11-06-23:30 =====');
   console.log('[DEBUG] App loaded with basename:', basename);
+  console.log('[DEBUG] Demo mode:', isDemoMode);
   console.log('[DEBUG] Current URL:', window.location.href);
   console.log('[DEBUG] Current pathname:', window.location.pathname);
 
   return (
     <BrowserRouter basename={basename}>
       <Routes>
-        {/* Redirect root to dashboard or login */}
+        {/* Redirect root - for demo mode go directly to demo, otherwise to dashboard/login */}
         <Route
           path="/"
           element={
+            isDemoMode ? <Navigate to="/demo" replace /> :
             isAuthenticated() ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
           }
         />
