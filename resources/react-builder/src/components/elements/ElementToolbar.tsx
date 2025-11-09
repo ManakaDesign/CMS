@@ -34,11 +34,21 @@ const getElementColors = (type: string): { bg: string; border: string; text: str
   };
 };
 
+// Get position classes based on element type
+const getToolbarPosition = (type: string): string => {
+  if (type === 'row') {
+    return 'top-2 left-2'; // Rows: left top (inside)
+  }
+  return 'top-2 right-2'; // Sections and elements: right top (inside)
+};
+
 export const ElementToolbar: React.FC<ElementToolbarProps> = ({ elementId, elementType }) => {
   const { duplicateElement, deleteElement, getElementById } = useBuilderStore();
 
   const element = getElementById(elementId);
-  const colors = getElementColors(element?.type || elementType || '');
+  const type = element?.type || elementType || '';
+  const colors = getElementColors(type);
+  const position = getToolbarPosition(type);
 
   // Setup draggable for the move button only
   const { attributes, listeners, setNodeRef } = useDraggable({
@@ -64,7 +74,7 @@ export const ElementToolbar: React.FC<ElementToolbarProps> = ({ elementId, eleme
 
   return (
     <div
-      className={`absolute top-0 right-0 -translate-y-full flex gap-1 ${colors.bg} border ${colors.border} rounded shadow-lg p-1 z-50`}
+      className={`absolute ${position} flex gap-1 ${colors.bg} border ${colors.border} rounded shadow-lg p-1 z-50`}
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
     >

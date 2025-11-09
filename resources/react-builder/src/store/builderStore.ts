@@ -141,15 +141,44 @@ export const useBuilderStore = create<BuilderStore>()(
       moveElement: (elementId, newParentId, newOrder) => {
         const { elements } = get();
 
+        // Find the element being moved
+        const movedElement = elements.find((el) => el.id === elementId);
+        if (!movedElement) return;
+
+        const oldParentId = movedElement.parent_id ?? null;
+        const oldOrder = movedElement.order;
+        const normalizedNewParentId = newParentId ?? null;
+
         // Update element's parent and order
         const updatedElements = elements.map((el) => {
+          // Update the moved element itself
           if (el.id === elementId) {
             return { ...el, parent_id: newParentId ?? undefined, order: newOrder };
           }
-          // Adjust order of siblings
-          if (el.parent_id === newParentId && el.order >= newOrder && el.id !== elementId) {
-            return { ...el, order: el.order + 1 };
+
+          // Moving within the same parent
+          if (oldParentId === normalizedNewParentId && el.parent_id === oldParentId) {
+            // Moving down (from lower order to higher order)
+            if (newOrder > oldOrder && el.order > oldOrder && el.order <= newOrder) {
+              return { ...el, order: el.order - 1 };
+            }
+            // Moving up (from higher order to lower order)
+            if (newOrder < oldOrder && el.order >= newOrder && el.order < oldOrder) {
+              return { ...el, order: el.order + 1 };
+            }
           }
+          // Moving to a different parent
+          else {
+            // Decrement order in old parent for elements after the moved element
+            if (el.parent_id === oldParentId && el.order > oldOrder) {
+              return { ...el, order: el.order - 1 };
+            }
+            // Increment order in new parent for elements at or after insertion point
+            if (el.parent_id === normalizedNewParentId && el.order >= newOrder) {
+              return { ...el, order: el.order + 1 };
+            }
+          }
+
           return el;
         });
 
