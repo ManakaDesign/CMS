@@ -26,8 +26,19 @@ export const Button: React.FC<ButtonProps> = (props) => {
     onClick?.();
   };
 
-  // Get button styles from element.styles with breakpoint support
-  const breakpointStyles = element.styles[activeBreakpoint] || element.styles.desktop || {};
+  // Get button styles with proper inheritance: desktop → tablet → mobile
+  let breakpointStyles: Record<string, any> = { ...element.styles.desktop };
+
+  if (activeBreakpoint === 'tablet' || activeBreakpoint === 'mobile') {
+    // Tablet inherits desktop and adds/overrides tablet-specific styles
+    breakpointStyles = { ...breakpointStyles, ...element.styles.tablet };
+  }
+
+  if (activeBreakpoint === 'mobile') {
+    // Mobile inherits desktop + tablet and adds/overrides mobile-specific styles
+    breakpointStyles = { ...breakpointStyles, ...element.styles.mobile };
+  }
+
   const buttonStyles = {
     display: 'inline-block',
     padding: '12px 24px',

@@ -32,9 +32,21 @@ export const BaseElement: React.FC<BaseElementProps> = ({
   const { activeBreakpoint } = useBuilderStore();
 
   const getActiveStyles = (): React.CSSProperties => {
-    // Get styles for current breakpoint with fallback to desktop
-    const breakpointStyles = element.styles[activeBreakpoint] || element.styles.desktop || {};
-    return breakpointStyles as React.CSSProperties;
+    // Build styles with proper inheritance: desktop → tablet → mobile
+    // Each breakpoint inherits from the previous one and overrides specific properties
+    let styles: Record<string, any> = { ...element.styles.desktop };
+
+    if (activeBreakpoint === 'tablet' || activeBreakpoint === 'mobile') {
+      // Tablet inherits desktop and adds/overrides tablet-specific styles
+      styles = { ...styles, ...element.styles.tablet };
+    }
+
+    if (activeBreakpoint === 'mobile') {
+      // Mobile inherits desktop + tablet and adds/overrides mobile-specific styles
+      styles = { ...styles, ...element.styles.mobile };
+    }
+
+    return styles as React.CSSProperties;
   };
 
   const handleClick = (e: React.MouseEvent) => {
