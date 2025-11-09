@@ -24,6 +24,15 @@ export const Button: React.FC<ButtonProps> = (props) => {
     onClick?.();
   };
 
+  // Get button styles from element.styles (without hardcoded classes)
+  const buttonStyles = {
+    display: 'inline-block',
+    padding: '12px 24px',
+    cursor: 'pointer',
+    textDecoration: 'none',
+    ...element.styles.desktop,
+  } as React.CSSProperties;
+
   return (
     <BaseElement element={element} onClick={onClick} {...baseProps}>
       <a
@@ -31,7 +40,7 @@ export const Button: React.FC<ButtonProps> = (props) => {
         target={target}
         rel={target === '_blank' ? 'noopener noreferrer' : undefined}
         onClick={handleButtonClick}
-        className="inline-block px-6 py-3 bg-primary-500 text-white rounded hover:bg-primary-600 transition-colors"
+        style={buttonStyles}
       >
         {text}
       </a>

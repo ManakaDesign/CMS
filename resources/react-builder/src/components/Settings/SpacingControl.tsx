@@ -70,7 +70,12 @@ export const SpacingControl: React.FC<SpacingControlProps> = ({
       // Update only the specific side
       const newSides = { ...sides, [side]: newValue };
       setSides(newSides);
-      onChange(`${newSides.top} ${newSides.right} ${newSides.bottom} ${newSides.left}`);
+      // Ensure empty values are treated as "0" for proper CSS shorthand
+      const top = newSides.top || '0';
+      const right = newSides.right || '0';
+      const bottom = newSides.bottom || '0';
+      const left = newSides.left || '0';
+      onChange(`${top} ${right} ${bottom} ${left}`);
     }
   };
 
