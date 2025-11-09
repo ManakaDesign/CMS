@@ -89,7 +89,7 @@ export const Button: React.FC<ButtonProps> = (props) => {
   );
 
   return (
-    <BaseElement element={element} onClick={onClick} {...baseProps}>
+    <BaseElement element={element} onClick={onClick} {...baseProps} skipStyles={true}>
       {/* Inject hover styles for button */}
       {hasHoverStyles && (
         <style>
@@ -103,6 +103,7 @@ export const Button: React.FC<ButtonProps> = (props) => {
         rel={target === '_blank' ? 'noopener noreferrer' : undefined}
         onClick={handleButtonClick}
         style={buttonStyles}
+        className="block w-full h-full"
       >
         {text}
       </a>

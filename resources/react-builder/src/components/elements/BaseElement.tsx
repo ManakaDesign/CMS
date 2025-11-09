@@ -11,6 +11,7 @@ interface BaseElementProps {
   onClick?: () => void;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
+  skipStyles?: boolean; // Skip applying styles to wrapper (for buttons, etc.)
 }
 
 // Get border color based on element type
@@ -28,6 +29,7 @@ export const BaseElement: React.FC<BaseElementProps> = ({
   onClick,
   onMouseEnter,
   onMouseLeave,
+  skipStyles = false,
 }) => {
   const { activeBreakpoint } = useBuilderStore();
 
@@ -114,8 +116,8 @@ export const BaseElement: React.FC<BaseElementProps> = ({
 
   return (
     <>
-      {/* Inject hover styles via CSS */}
-      {hasHoverStyles && (
+      {/* Inject hover styles via CSS (skip for elements with skipStyles) */}
+      {!skipStyles && hasHoverStyles && (
         <style>
           {`[data-element-id="${element.id}"]:hover { ${stylesToCSS(getHoverStyles())} }`}
         </style>
@@ -125,7 +127,7 @@ export const BaseElement: React.FC<BaseElementProps> = ({
         data-element-id={element.id}
         data-element-type={element.type}
         className={className}
-        style={{ ...getActiveStyles(), ...outlineStyle }}
+        style={skipStyles ? outlineStyle : { ...getActiveStyles(), ...outlineStyle }}
         onClick={handleClick}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
