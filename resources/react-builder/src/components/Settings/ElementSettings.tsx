@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useBuilderStore } from '../../store/builderStore';
 import { FiTrash2, FiCopy, FiEye, FiEyeOff } from 'react-icons/fi';
 import { SpacingControl } from './SpacingControl';
@@ -8,6 +8,7 @@ export const ElementSettings: React.FC = () => {
     useBuilderStore();
 
   const element = selectedElementId ? getElementById(selectedElementId) : null;
+  const [styleMode, setStyleMode] = useState<'normal' | 'hover'>('normal');
 
   if (!element) {
     return (
@@ -23,17 +24,43 @@ export const ElementSettings: React.FC = () => {
     });
   };
 
+  // Get current style value based on styleMode (normal or hover)
+  const getStyleValue = (property: string): string => {
+    if (styleMode === 'hover') {
+      const hoverStyles = (element as any).hoverStyles || {};
+      const breakpointStyles = hoverStyles[activeBreakpoint] || {};
+      return (breakpointStyles as any)[property] || '';
+    }
+    const breakpointStyles = element.styles[activeBreakpoint] || {};
+    return (breakpointStyles as any)[property] || '';
+  };
+
   // Update style without auto-px (for onChange)
   const updateStyleDirect = (property: string, value: string, breakpoint: 'desktop' | 'tablet' | 'mobile' = 'desktop') => {
-    updateElement(element.id, {
-      styles: {
-        ...element.styles,
-        [breakpoint]: {
-          ...element.styles[breakpoint],
-          [property]: value,
+    if (styleMode === 'hover') {
+      // Update hover styles
+      const hoverStyles = (element as any).hoverStyles || {};
+      updateElement(element.id, {
+        hoverStyles: {
+          ...hoverStyles,
+          [breakpoint]: {
+            ...hoverStyles[breakpoint],
+            [property]: value,
+          },
         },
-      },
-    });
+      } as any);
+    } else {
+      // Update normal styles
+      updateElement(element.id, {
+        styles: {
+          ...element.styles,
+          [breakpoint]: {
+            ...element.styles[breakpoint],
+            [property]: value,
+          },
+        },
+      });
+    }
   };
 
   // Update style with auto-px (for onBlur)
@@ -43,15 +70,30 @@ export const ElementSettings: React.FC = () => {
     const needsPx = spacingProps.includes(property) && /^\d+$/.test(value.trim());
     const finalValue = needsPx ? `${value}px` : value;
 
-    updateElement(element.id, {
-      styles: {
-        ...element.styles,
-        [breakpoint]: {
-          ...element.styles[breakpoint],
-          [property]: finalValue,
+    if (styleMode === 'hover') {
+      // Update hover styles
+      const hoverStyles = (element as any).hoverStyles || {};
+      updateElement(element.id, {
+        hoverStyles: {
+          ...hoverStyles,
+          [breakpoint]: {
+            ...hoverStyles[breakpoint],
+            [property]: finalValue,
+          },
         },
-      },
-    });
+      } as any);
+    } else {
+      // Update normal styles
+      updateElement(element.id, {
+        styles: {
+          ...element.styles,
+          [breakpoint]: {
+            ...element.styles[breakpoint],
+            [property]: finalValue,
+          },
+        },
+      });
+    }
   };
 
   return (
@@ -263,9 +305,37 @@ export const ElementSettings: React.FC = () => {
 
       {/* Style Settings */}
       <div className="p-4">
-        <h3 className="text-xs font-semibold text-light-muted uppercase mb-3">
-          Styles ({activeBreakpoint.charAt(0).toUpperCase() + activeBreakpoint.slice(1)})
-        </h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-xs font-semibold text-light-muted uppercase">
+            Styles ({activeBreakpoint.charAt(0).toUpperCase() + activeBreakpoint.slice(1)})
+          </h3>
+
+          {/* Normal/Hover Toggle */}
+          <div className="flex items-center gap-1 bg-dark-panel border border-dark-border rounded p-0.5">
+            <button
+              onClick={() => setStyleMode('normal')}
+              className={`px-3 py-1 text-xs rounded transition-colors ${
+                styleMode === 'normal'
+                  ? 'bg-brand-primary text-white'
+                  : 'text-light-muted hover:text-light-text'
+              }`}
+              title="Normal Styles"
+            >
+              Normal
+            </button>
+            <button
+              onClick={() => setStyleMode('hover')}
+              className={`px-3 py-1 text-xs rounded transition-colors ${
+                styleMode === 'hover'
+                  ? 'bg-brand-primary text-white'
+                  : 'text-light-muted hover:text-light-text'
+              }`}
+              title="Hover Styles"
+            >
+              Hover
+            </button>
+          </div>
+        </div>
 
         {/* Typography */}
         {(element.type === 'text' || element.type === 'heading' || element.type === 'button') && (
@@ -274,7 +344,7 @@ export const ElementSettings: React.FC = () => {
               <label className="block text-sm font-medium text-light-text mb-2">Font Size</label>
               <input
                 type="text"
-                value={element.styles[activeBreakpoint]?.fontSize || ''}
+                value={getStyleValue('fontSize')}
                 onChange={(e) => updateStyleDirect('fontSize', e.target.value, activeBreakpoint)}
                 onBlur={(e) => updateStyle('fontSize', e.target.value, activeBreakpoint)}
                 className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
@@ -284,7 +354,7 @@ export const ElementSettings: React.FC = () => {
             <div className="mb-4">
               <label className="block text-sm font-medium text-light-text mb-2">Font Weight</label>
               <select
-                value={element.styles[activeBreakpoint]?.fontWeight || 'normal'}
+                value={getStyleValue('fontWeight') || 'normal'}
                 onChange={(e) => updateStyle('fontWeight', e.target.value, activeBreakpoint)}
                 className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
               >
@@ -300,7 +370,7 @@ export const ElementSettings: React.FC = () => {
               <label className="block text-sm font-medium text-light-text mb-2">Text Color</label>
               <input
                 type="color"
-                value={element.styles[activeBreakpoint]?.color || '#000000'}
+                value={getStyleValue('color') || '#000000'}
                 onChange={(e) => updateStyle('color', e.target.value, activeBreakpoint)}
                 className="w-full h-10 border border-dark-border rounded"
               />
@@ -311,14 +381,14 @@ export const ElementSettings: React.FC = () => {
         {/* Spacing */}
         <SpacingControl
           label="Padding"
-          value={element.styles[activeBreakpoint]?.padding || ''}
+          value={getStyleValue('padding')}
           onChange={(value) => updateStyle('padding', value, activeBreakpoint)}
           className="mb-4"
         />
 
         <SpacingControl
           label="Margin"
-          value={element.styles[activeBreakpoint]?.margin || ''}
+          value={getStyleValue('margin')}
           onChange={(value) => updateStyle('margin', value, activeBreakpoint)}
           className="mb-4"
         />
@@ -328,7 +398,7 @@ export const ElementSettings: React.FC = () => {
           <label className="block text-sm font-medium text-light-text mb-2">Background Color</label>
           <input
             type="color"
-            value={element.styles[activeBreakpoint]?.backgroundColor || '#ffffff'}
+            value={getStyleValue('backgroundColor') || '#ffffff'}
             onChange={(e) => updateStyle('backgroundColor', e.target.value, activeBreakpoint)}
             className="w-full h-10 border border-dark-border rounded"
           />
@@ -339,7 +409,7 @@ export const ElementSettings: React.FC = () => {
           <label className="block text-sm font-medium text-light-text mb-2">Border</label>
           <input
             type="text"
-            value={element.styles[activeBreakpoint]?.border || ''}
+            value={getStyleValue('border')}
             onChange={(e) => updateStyle('border', e.target.value, activeBreakpoint)}
             className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
             placeholder="1px solid #000"
@@ -350,7 +420,7 @@ export const ElementSettings: React.FC = () => {
           <label className="block text-sm font-medium text-light-text mb-2">Border Radius</label>
           <input
             type="text"
-            value={element.styles[activeBreakpoint]?.borderRadius || ''}
+            value={getStyleValue('borderRadius')}
             onChange={(e) => updateStyleDirect('borderRadius', e.target.value, activeBreakpoint)}
             onBlur={(e) => updateStyle('borderRadius', e.target.value, activeBreakpoint)}
             className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"

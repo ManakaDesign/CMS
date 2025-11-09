@@ -49,6 +49,41 @@ export const BaseElement: React.FC<BaseElementProps> = ({
     return styles as React.CSSProperties;
   };
 
+  const getHoverStyles = (): React.CSSProperties => {
+    // Build hover styles with same inheritance pattern + normal styles as base
+    const hoverStyles = (element as any).hoverStyles || {};
+
+    // Start with normal styles
+    let styles = { ...getActiveStyles() };
+
+    // Apply hover overrides with inheritance
+    let hoverOverrides: Record<string, any> = { ...hoverStyles.desktop };
+
+    if (activeBreakpoint === 'tablet' || activeBreakpoint === 'mobile') {
+      hoverOverrides = { ...hoverOverrides, ...hoverStyles.tablet };
+    }
+
+    if (activeBreakpoint === 'mobile') {
+      hoverOverrides = { ...hoverOverrides, ...hoverStyles.mobile };
+    }
+
+    // Merge normal styles with hover overrides
+    styles = { ...styles, ...hoverOverrides };
+
+    return styles as React.CSSProperties;
+  };
+
+  // Convert React.CSSProperties to CSS string
+  const stylesToCSS = (styles: React.CSSProperties): string => {
+    return Object.entries(styles)
+      .map(([key, value]) => {
+        // Convert camelCase to kebab-case
+        const cssKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+        return `${cssKey}: ${value};`;
+      })
+      .join(' ');
+  };
+
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onClick?.();
@@ -70,24 +105,39 @@ export const BaseElement: React.FC<BaseElementProps> = ({
     ${!element.is_visible ? 'opacity-50' : ''}
   `.trim();
 
+  // Check if element has hover styles
+  const hoverStyles = (element as any).hoverStyles || {};
+  const hasHoverStyles = Object.keys(hoverStyles).some(
+    (key) => hoverStyles[key] && Object.keys(hoverStyles[key]).length > 0
+  );
+
   return (
-    <div
-      data-element-id={element.id}
-      data-element-type={element.type}
-      className={className}
-      style={{ ...getActiveStyles(), ...outlineStyle }}
-      onClick={handleClick}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-    >
-      {/* Show toolbar on hover or selection */}
-      {(isHovered || isSelected) && (
-        <ElementToolbar
-          elementId={element.id}
-          elementType={element.type}
-        />
+    <>
+      {/* Inject hover styles via CSS */}
+      {hasHoverStyles && (
+        <style>
+          {`[data-element-id="${element.id}"]:hover { ${stylesToCSS(getHoverStyles())} }`}
+        </style>
       )}
-      {children}
-    </div>
+
+      <div
+        data-element-id={element.id}
+        data-element-type={element.type}
+        className={className}
+        style={{ ...getActiveStyles(), ...outlineStyle }}
+        onClick={handleClick}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+      >
+        {/* Show toolbar on hover or selection */}
+        {(isHovered || isSelected) && (
+          <ElementToolbar
+            elementId={element.id}
+            elementType={element.type}
+          />
+        )}
+        {children}
+      </div>
+    </>
   );
 };
