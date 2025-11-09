@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Element } from '../../types';
 import { BaseElement } from './BaseElement';
+import { useBuilderStore } from '../../store/builderStore';
 
 interface ButtonProps {
   element: Element;
@@ -13,6 +14,7 @@ interface ButtonProps {
 
 export const Button: React.FC<ButtonProps> = (props) => {
   const { element, onClick, ...baseProps } = props;
+  const { activeBreakpoint } = useBuilderStore();
 
   const text = element.settings.text || 'Click Me';
   const url = element.settings.url || '#';
@@ -24,13 +26,14 @@ export const Button: React.FC<ButtonProps> = (props) => {
     onClick?.();
   };
 
-  // Get button styles from element.styles (without hardcoded classes)
+  // Get button styles from element.styles with breakpoint support
+  const breakpointStyles = element.styles[activeBreakpoint] || element.styles.desktop || {};
   const buttonStyles = {
     display: 'inline-block',
     padding: '12px 24px',
     cursor: 'pointer',
     textDecoration: 'none',
-    ...element.styles.desktop,
+    ...breakpointStyles,
   } as React.CSSProperties;
 
   return (

@@ -263,7 +263,9 @@ export const ElementSettings: React.FC = () => {
 
       {/* Style Settings */}
       <div className="p-4">
-        <h3 className="text-xs font-semibold text-light-muted uppercase mb-3">Styles (Desktop)</h3>
+        <h3 className="text-xs font-semibold text-light-muted uppercase mb-3">
+          Styles ({activeBreakpoint.charAt(0).toUpperCase() + activeBreakpoint.slice(1)})
+        </h3>
 
         {/* Typography */}
         {(element.type === 'text' || element.type === 'heading' || element.type === 'button') && (
@@ -272,9 +274,9 @@ export const ElementSettings: React.FC = () => {
               <label className="block text-sm font-medium text-light-text mb-2">Font Size</label>
               <input
                 type="text"
-                value={element.styles.desktop?.fontSize || ''}
-                onChange={(e) => updateStyleDirect('fontSize', e.target.value)}
-                onBlur={(e) => updateStyle('fontSize', e.target.value)}
+                value={element.styles[activeBreakpoint]?.fontSize || ''}
+                onChange={(e) => updateStyleDirect('fontSize', e.target.value, activeBreakpoint)}
+                onBlur={(e) => updateStyle('fontSize', e.target.value, activeBreakpoint)}
                 className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
                 placeholder="16px"
               />
@@ -282,8 +284,8 @@ export const ElementSettings: React.FC = () => {
             <div className="mb-4">
               <label className="block text-sm font-medium text-light-text mb-2">Font Weight</label>
               <select
-                value={element.styles.desktop?.fontWeight || 'normal'}
-                onChange={(e) => updateStyle('fontWeight', e.target.value)}
+                value={element.styles[activeBreakpoint]?.fontWeight || 'normal'}
+                onChange={(e) => updateStyle('fontWeight', e.target.value, activeBreakpoint)}
                 className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
               >
                 <option value="normal">Normal</option>
@@ -298,8 +300,8 @@ export const ElementSettings: React.FC = () => {
               <label className="block text-sm font-medium text-light-text mb-2">Text Color</label>
               <input
                 type="color"
-                value={element.styles.desktop?.color || '#000000'}
-                onChange={(e) => updateStyle('color', e.target.value)}
+                value={element.styles[activeBreakpoint]?.color || '#000000'}
+                onChange={(e) => updateStyle('color', e.target.value, activeBreakpoint)}
                 className="w-full h-10 border border-dark-border rounded"
               />
             </div>
@@ -309,15 +311,15 @@ export const ElementSettings: React.FC = () => {
         {/* Spacing */}
         <SpacingControl
           label="Padding"
-          value={element.styles.desktop?.padding || ''}
-          onChange={(value) => updateStyle('padding', value)}
+          value={element.styles[activeBreakpoint]?.padding || ''}
+          onChange={(value) => updateStyle('padding', value, activeBreakpoint)}
           className="mb-4"
         />
 
         <SpacingControl
           label="Margin"
-          value={element.styles.desktop?.margin || ''}
-          onChange={(value) => updateStyle('margin', value)}
+          value={element.styles[activeBreakpoint]?.margin || ''}
+          onChange={(value) => updateStyle('margin', value, activeBreakpoint)}
           className="mb-4"
         />
 
@@ -326,8 +328,8 @@ export const ElementSettings: React.FC = () => {
           <label className="block text-sm font-medium text-light-text mb-2">Background Color</label>
           <input
             type="color"
-            value={element.styles.desktop?.backgroundColor || '#ffffff'}
-            onChange={(e) => updateStyle('backgroundColor', e.target.value)}
+            value={element.styles[activeBreakpoint]?.backgroundColor || '#ffffff'}
+            onChange={(e) => updateStyle('backgroundColor', e.target.value, activeBreakpoint)}
             className="w-full h-10 border border-dark-border rounded"
           />
         </div>
@@ -337,8 +339,8 @@ export const ElementSettings: React.FC = () => {
           <label className="block text-sm font-medium text-light-text mb-2">Border</label>
           <input
             type="text"
-            value={element.styles.desktop?.border || ''}
-            onChange={(e) => updateStyle('border', e.target.value)}
+            value={element.styles[activeBreakpoint]?.border || ''}
+            onChange={(e) => updateStyle('border', e.target.value, activeBreakpoint)}
             className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
             placeholder="1px solid #000"
           />
@@ -348,9 +350,9 @@ export const ElementSettings: React.FC = () => {
           <label className="block text-sm font-medium text-light-text mb-2">Border Radius</label>
           <input
             type="text"
-            value={element.styles.desktop?.borderRadius || ''}
-            onChange={(e) => updateStyleDirect('borderRadius', e.target.value)}
-            onBlur={(e) => updateStyle('borderRadius', e.target.value)}
+            value={element.styles[activeBreakpoint]?.borderRadius || ''}
+            onChange={(e) => updateStyleDirect('borderRadius', e.target.value, activeBreakpoint)}
+            onBlur={(e) => updateStyle('borderRadius', e.target.value, activeBreakpoint)}
             className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
             placeholder="4px"
           />
