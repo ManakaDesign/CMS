@@ -18,10 +18,40 @@ interface RowProps {
 
 export const Row: React.FC<RowProps> = (props) => {
   const { element, isSelected, isHovered, onClick, onMouseEnter, onMouseLeave } = props;
-  const { elements } = useBuilderStore();
+  const { elements, activeBreakpoint } = useBuilderStore();
 
-  // Get column count from settings (default to 1)
-  const columnCount = element.settings.columns || 1;
+  // Get column count from settings based on active breakpoint
+  const columnsConfig = element.settings.columns || 1;
+  const isLegacy = typeof columnsConfig === 'number';
+
+  let columnCount: number;
+  if (isLegacy) {
+    // Legacy: single number, use as desktop, auto-responsive fallback
+    const desktopColumns = columnsConfig;
+    if (activeBreakpoint === 'mobile') {
+      columnCount = 1; // Always 1 column on mobile
+    } else if (activeBreakpoint === 'tablet') {
+      // Smart fallback for tablet
+      columnCount = desktopColumns >= 4 ? Math.ceil(desktopColumns / 2) : desktopColumns;
+    } else {
+      columnCount = desktopColumns;
+    }
+  } else {
+    // New format: breakpoint-specific with fallbacks
+    if (columnsConfig[activeBreakpoint]) {
+      columnCount = columnsConfig[activeBreakpoint];
+    } else if (activeBreakpoint === 'mobile') {
+      // Mobile fallback: use tablet or default to 1
+      columnCount = columnsConfig.tablet || 1;
+    } else if (activeBreakpoint === 'tablet') {
+      // Tablet fallback: use desktop with smart reduction
+      const desktopColumns = columnsConfig.desktop || 1;
+      columnCount = desktopColumns >= 4 ? Math.ceil(desktopColumns / 2) : desktopColumns;
+    } else {
+      // Desktop fallback
+      columnCount = columnsConfig.desktop || 1;
+    }
+  }
 
   // Get children elements
   const childElements = elements

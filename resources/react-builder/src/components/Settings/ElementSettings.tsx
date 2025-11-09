@@ -4,7 +4,7 @@ import { FiTrash2, FiCopy, FiEye, FiEyeOff } from 'react-icons/fi';
 import { SpacingControl } from './SpacingControl';
 
 export const ElementSettings: React.FC = () => {
-  const { selectedElementId, getElementById, updateElement, deleteElement, duplicateElement } =
+  const { selectedElementId, getElementById, updateElement, deleteElement, duplicateElement, activeBreakpoint, elements } =
     useBuilderStore();
 
   const element = selectedElementId ? getElementById(selectedElementId) : null;
@@ -23,6 +23,20 @@ export const ElementSettings: React.FC = () => {
     });
   };
 
+  // Update style without auto-px (for onChange)
+  const updateStyleDirect = (property: string, value: string, breakpoint: 'desktop' | 'tablet' | 'mobile' = 'desktop') => {
+    updateElement(element.id, {
+      styles: {
+        ...element.styles,
+        [breakpoint]: {
+          ...element.styles[breakpoint],
+          [property]: value,
+        },
+      },
+    });
+  };
+
+  // Update style with auto-px (for onBlur)
   const updateStyle = (property: string, value: string, breakpoint: 'desktop' | 'tablet' | 'mobile' = 'desktop') => {
     // Auto-append 'px' if only a number is provided (for spacing/size properties)
     const spacingProps = ['padding', 'margin', 'width', 'height', 'fontSize', 'borderRadius', 'gap'];
@@ -167,24 +181,70 @@ export const ElementSettings: React.FC = () => {
           </>
         )}
 
-        {/* Row Columns */}
-        {element.type === 'row' && (
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-light-text mb-2">Columns</label>
-            <select
-              value={element.settings.columns || 1}
-              onChange={(e) => updateSetting('columns', parseInt(e.target.value))}
-              className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
-            >
-              <option value="1">1 Column</option>
-              <option value="2">2 Columns</option>
-              <option value="3">3 Columns</option>
-              <option value="4">4 Columns</option>
-              <option value="5">5 Columns</option>
-              <option value="6">6 Columns</option>
-            </select>
-          </div>
-        )}
+        {/* Row Columns - Breakpoint specific */}
+        {element.type === 'row' && (() => {
+          // Get columns for current breakpoint
+          const columnsConfig = element.settings.columns || {};
+          const isLegacy = typeof columnsConfig === 'number';
+
+          // Legacy support: if columns is a number, treat it as desktop value
+          const currentColumns = isLegacy
+            ? (activeBreakpoint === 'desktop' ? columnsConfig : 1)
+            : (columnsConfig[activeBreakpoint] || columnsConfig.desktop || 1);
+
+          const handleColumnChange = (newColumns: number) => {
+            // Get old columns to redistribute elements
+            const oldColumns = currentColumns;
+
+            // Update columns config
+            const newColumnsConfig = isLegacy ? { desktop: columnsConfig } : { ...columnsConfig };
+            newColumnsConfig[activeBreakpoint] = newColumns;
+
+            updateSetting('columns', newColumnsConfig);
+
+            // Redistribute child elements if column count changed
+            if (newColumns !== oldColumns) {
+              const childElements = elements.filter(el => el.parent_id === element.id);
+
+              childElements.forEach((child, index) => {
+                const oldColumnIndex = child.settings.columnIndex ?? 0;
+                // Redistribute: maintain relative position but wrap to new column count
+                const newColumnIndex = index % newColumns;
+
+                if (oldColumnIndex !== newColumnIndex) {
+                  updateElement(child.id, {
+                    settings: { ...child.settings, columnIndex: newColumnIndex }
+                  });
+                }
+              });
+            }
+          };
+
+          return (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-light-text mb-2">
+                Columns ({activeBreakpoint.charAt(0).toUpperCase() + activeBreakpoint.slice(1)})
+              </label>
+              <select
+                value={currentColumns}
+                onChange={(e) => handleColumnChange(parseInt(e.target.value))}
+                className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+              >
+                <option value="1">1 Column</option>
+                <option value="2">2 Columns</option>
+                <option value="3">3 Columns</option>
+                <option value="4">4 Columns</option>
+                <option value="5">5 Columns</option>
+                <option value="6">6 Columns</option>
+              </select>
+              {!isLegacy && !columnsConfig[activeBreakpoint] && (
+                <p className="text-xs text-light-muted mt-1">
+                  Using default: {columnsConfig.desktop || 1} column(s)
+                </p>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Spacer Height */}
         {element.type === 'spacer' && (
@@ -213,7 +273,8 @@ export const ElementSettings: React.FC = () => {
               <input
                 type="text"
                 value={element.styles.desktop?.fontSize || ''}
-                onChange={(e) => updateStyle('fontSize', e.target.value)}
+                onChange={(e) => updateStyleDirect('fontSize', e.target.value)}
+                onBlur={(e) => updateStyle('fontSize', e.target.value)}
                 className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
                 placeholder="16px"
               />
@@ -288,7 +349,8 @@ export const ElementSettings: React.FC = () => {
           <input
             type="text"
             value={element.styles.desktop?.borderRadius || ''}
-            onChange={(e) => updateStyle('borderRadius', e.target.value)}
+            onChange={(e) => updateStyleDirect('borderRadius', e.target.value)}
+            onBlur={(e) => updateStyle('borderRadius', e.target.value)}
             className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
             placeholder="4px"
           />
