@@ -9,6 +9,7 @@ import { ElementsSidebar } from '../components/Sidebar/ElementsSidebar';
 import { ElementSettings } from '../components/Settings/ElementSettings';
 import { BreakpointSettings } from '../components/Settings/BreakpointSettings';
 import { pagesApi } from '../api/services';
+import { DragContextProvider } from '../contexts/DragContext';
 
 export const Builder: React.FC = () => {
   console.log('[DEBUG] Builder component loaded - NEW VERSION with layout fixes');
@@ -136,8 +137,9 @@ export const Builder: React.FC = () => {
   console.log('[DEBUG] Builder rendering with layout classes: outer=min-h-screen, toolbar=fixed top-0, main=flex pt-16 h-screen');
 
   return (
-    <DragAndDropProvider>
-      <div className="min-h-screen bg-dark-bg">
+    <DragContextProvider>
+      <DragAndDropProvider>
+        <div className="min-h-screen bg-dark-bg">
         {/* Top Toolbar */}
         <div className="fixed top-0 left-0 right-0 h-16 bg-dark-surface border-b border-dark-border z-50 flex items-center justify-between px-4">
           {/* Left */}
@@ -291,7 +293,8 @@ export const Builder: React.FC = () => {
         {showBreakpointSettings && (
           <BreakpointSettings onClose={() => setShowBreakpointSettings(false)} />
         )}
-      </div>
-    </DragAndDropProvider>
+        </div>
+      </DragAndDropProvider>
+    </DragContextProvider>
   );
 };

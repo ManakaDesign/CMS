@@ -3,7 +3,6 @@ import { useDroppable } from '@dnd-kit/core';
 import type { Element } from '../../types';
 import { BaseElement } from './BaseElement';
 import { DropZone } from '../DropZone';
-import { useBuilderStore } from '../../store/builderStore';
 
 interface SectionProps {
   element: Element;
@@ -16,13 +15,7 @@ interface SectionProps {
 }
 
 export const Section: React.FC<SectionProps> = (props) => {
-  const { element, ...baseProps } = props;
-  const { elements } = useBuilderStore();
-
-  // Get child rows
-  const childRows = elements
-    .filter((el) => el.parent_id === element.id)
-    .sort((a, b) => a.order - b.order);
+  const { element, children, ...baseProps } = props;
 
   // Make section droppable for empty state
   const { setNodeRef, isOver } = useDroppable({
@@ -33,15 +26,19 @@ export const Section: React.FC<SectionProps> = (props) => {
     },
   });
 
+  // Convert children to array for processing
+  const childrenArray = React.Children.toArray(children);
+  const hasChildren = childrenArray.length > 0;
+
   return (
     <BaseElement element={element} {...baseProps}>
       <div
         className="w-full relative transition-all"
         style={{ minHeight: element.settings.minHeight || '100px' }}
       >
-        {childRows.length > 0 ? (
+        {hasChildren ? (
           <div className="flex flex-col relative">
-            {/* Drop zone before first row */}
+            {/* Drop zone before first child */}
             <DropZone
               id={`section-${element.id}-drop-before-0`}
               parentId={element.id}
@@ -50,27 +47,21 @@ export const Section: React.FC<SectionProps> = (props) => {
               index={0}
             />
 
-            {childRows.map((row, index) => {
-              // Render the row element via children prop passed from Canvas
-              const rowChild = React.Children.toArray(props.children).find((child: any) => {
-                return child.key === `${row.id}`;
-              });
+            {/* Render children with drop zones between them */}
+            {childrenArray.map((child, index) => (
+              <React.Fragment key={(child as any).key || index}>
+                {child}
 
-              return (
-                <React.Fragment key={row.id}>
-                  {rowChild}
-
-                  {/* Drop zone after each row */}
-                  <DropZone
-                    id={`section-${element.id}-drop-after-${row.id}`}
-                    parentId={element.id}
-                    position="after"
-                    accepts={['row']}
-                    index={index + 1}
-                  />
-                </React.Fragment>
-              );
-            })}
+                {/* Drop zone after each child */}
+                <DropZone
+                  id={`section-${element.id}-drop-after-${index}`}
+                  parentId={element.id}
+                  position="after"
+                  accepts={['row']}
+                  index={index + 1}
+                />
+              </React.Fragment>
+            ))}
           </div>
         ) : (
           <div

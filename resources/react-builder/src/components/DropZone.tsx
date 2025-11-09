@@ -1,5 +1,7 @@
 import React from 'react';
 import { useDroppable } from '@dnd-kit/core';
+import { useDragContext } from '../contexts/DragContext';
+import { useBuilderStore } from '../store/builderStore';
 
 interface DropZoneProps {
   id: string;
@@ -15,6 +17,7 @@ interface DropZoneProps {
  *
  * Creates a visual drop zone that shows exactly where an element will be inserted.
  * Displays a colored line with a semi-transparent overlay when hovering.
+ * Only visible when dragging a compatible element type.
  */
 export const DropZone: React.FC<DropZoneProps> = ({
   id,
@@ -24,6 +27,8 @@ export const DropZone: React.FC<DropZoneProps> = ({
   index,
   orientation = 'horizontal',
 }) => {
+  const { activeElementType } = useDragContext();
+  const { isDragging } = useBuilderStore();
   const { setNodeRef, isOver } = useDroppable({
     id,
     data: {
@@ -34,11 +39,19 @@ export const DropZone: React.FC<DropZoneProps> = ({
     },
   });
 
-  // Determine color based on element type being accepted
+  // Only show drop zone if we're dragging and the element type is accepted
+  const isValidDrop = isDragging && activeElementType && accepts.includes(activeElementType);
+
+  // Don't render anything if this isn't a valid drop zone
+  if (!isValidDrop) {
+    return null;
+  }
+
+  // Determine color based on the DRAGGED element type (not the container)
   const getColor = () => {
-    if (accepts.includes('section')) return '#3b82f6'; // Blue
-    if (accepts.includes('row')) return '#10b981'; // Green
-    return '#6b7280'; // Gray
+    if (activeElementType === 'section') return '#3b82f6'; // Blue for sections
+    if (activeElementType === 'row') return '#10b981'; // Green for rows
+    return '#6b7280'; // Gray for content elements
   };
 
   const lineColor = getColor();

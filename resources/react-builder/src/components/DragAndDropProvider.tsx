@@ -2,6 +2,7 @@ import React from 'react';
 import { DndContext, type DragEndEvent, DragOverlay, type DragStartEvent } from '@dnd-kit/core';
 import { useBuilderStore } from '../store/builderStore';
 import type { Element, ElementType } from '../types';
+import { useDragContext } from '../contexts/DragContext';
 
 interface DragAndDropProviderProps {
   children: React.ReactNode;
@@ -9,11 +10,17 @@ interface DragAndDropProviderProps {
 
 export const DragAndDropProvider: React.FC<DragAndDropProviderProps> = ({ children }) => {
   const { page, elements, addElement, moveElement, setIsDragging } = useBuilderStore();
+  const { setActiveElementType } = useDragContext();
   const [activeId, setActiveId] = React.useState<string | null>(null);
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
     setIsDragging(true);
+
+    // Set the active element type for drop zones to use
+    const dragData = event.active.data.current;
+    const elementType = dragData?.type || dragData?.elementType;
+    setActiveElementType(elementType || null);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -21,6 +28,7 @@ export const DragAndDropProvider: React.FC<DragAndDropProviderProps> = ({ childr
 
     setActiveId(null);
     setIsDragging(false);
+    setActiveElementType(null);
 
     if (!over || !page) return;
 

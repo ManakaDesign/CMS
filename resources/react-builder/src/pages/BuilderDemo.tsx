@@ -8,6 +8,7 @@ import { ElementsSidebar } from '../components/Sidebar/ElementsSidebar';
 import { ElementSettings } from '../components/Settings/ElementSettings';
 import { BreakpointSettings } from '../components/Settings/BreakpointSettings';
 import { localStorageService } from '../api/localStorageService';
+import { DragContextProvider } from '../contexts/DragContext';
 
 export const BuilderDemo: React.FC = () => {
   const {
@@ -106,8 +107,9 @@ export const BuilderDemo: React.FC = () => {
   }
 
   return (
-    <DragAndDropProvider>
-      <div className="h-screen flex flex-col bg-dark-bg">
+    <DragContextProvider>
+      <DragAndDropProvider>
+        <div className="h-screen flex flex-col bg-dark-bg">
         {/* Demo Banner */}
         <div className="bg-brand-primary text-white px-4 py-2 text-center text-sm">
           🎨 <strong>Demo Mode</strong> - All changes are saved to your browser's LocalStorage
@@ -247,7 +249,8 @@ export const BuilderDemo: React.FC = () => {
         {showBreakpointSettings && (
           <BreakpointSettings onClose={() => setShowBreakpointSettings(false)} />
         )}
-      </div>
-    </DragAndDropProvider>
+        </div>
+      </DragAndDropProvider>
+    </DragContextProvider>
   );
 };
