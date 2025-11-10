@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useBuilderStore } from '../../store/builderStore';
 import { FiTrash2, FiCopy, FiEye, FiEyeOff, FiDroplet, FiImage, FiVideo } from 'react-icons/fi';
 import { SpacingControl } from './SpacingControl';
 
-type BackgroundType = 'color' | 'gradient' | 'image' | 'video';
+type BackgroundType = 'color' | 'gradient' | 'image' | 'video' | 'none';
 
 export const ElementSettings: React.FC = () => {
   const { selectedElementId, getElementById, updateElement, deleteElement, duplicateElement, activeBreakpoint, elements } =
@@ -13,6 +13,21 @@ export const ElementSettings: React.FC = () => {
   const [styleMode, setStyleMode] = useState<'normal' | 'hover'>('normal');
   const [backgroundType, setBackgroundType] = useState<BackgroundType>('color');
 
+  // Initialize backgroundType based on what's stored in element
+  useEffect(() => {
+    if (element) {
+      if (element.settings.backgroundVideo?.url) {
+        setBackgroundType('video');
+      } else if (element.settings.backgroundImage?.url) {
+        setBackgroundType('image');
+      } else if (element.settings.backgroundGradient?.color1 && element.settings.backgroundGradient?.color2) {
+        setBackgroundType('gradient');
+      } else {
+        setBackgroundType('color');
+      }
+    }
+  }, [element?.id]);
+
   if (!element) {
     return (
       <div className="p-4 text-center text-light-muted">
@@ -20,6 +35,33 @@ export const ElementSettings: React.FC = () => {
       </div>
     );
   }
+
+  // Handle background type change - clear other background types
+  const handleBackgroundTypeChange = (newType: BackgroundType) => {
+    setBackgroundType(newType);
+
+    // Clear all background types
+    const newSettings = { ...element.settings };
+    delete newSettings.backgroundGradient;
+    delete newSettings.backgroundImage;
+    delete newSettings.backgroundVideo;
+
+    updateElement(element.id, { settings: newSettings });
+
+    // Also clear backgroundColor style if switching away from color
+    if (newType !== 'color') {
+      const breakpointStyles = element.styles[activeBreakpoint] || {};
+      const updatedBreakpointStyles = { ...breakpointStyles };
+      delete updatedBreakpointStyles.backgroundColor;
+
+      updateElement(element.id, {
+        styles: {
+          ...element.styles,
+          [activeBreakpoint]: updatedBreakpointStyles,
+        },
+      });
+    }
+  };
 
   const updateSetting = (key: string, value: any) => {
     updateElement(element.id, {
@@ -69,7 +111,7 @@ export const ElementSettings: React.FC = () => {
   // Update style with auto-px (for onBlur)
   const updateStyle = (property: string, value: string, breakpoint: 'desktop' | 'tablet' | 'mobile' = 'desktop') => {
     // Auto-append 'px' if only a number is provided (for spacing/size properties)
-    const spacingProps = ['padding', 'margin', 'width', 'height', 'fontSize', 'borderRadius', 'gap'];
+    const spacingProps = ['padding', 'margin', 'width', 'height', 'maxWidth', 'maxHeight', 'fontSize', 'borderRadius', 'gap'];
     const needsPx = spacingProps.includes(property) && /^\d+$/.test(value.trim());
     const finalValue = needsPx ? `${value}px` : value;
 
@@ -451,6 +493,56 @@ export const ElementSettings: React.FC = () => {
           </select>
         </div>
 
+        {/* Width/Height Controls - only for certain elements */}
+        {(element.type === 'section' || element.type === 'row' || element.type === 'image' || element.type === 'video' || element.type === 'button') && (
+          <>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-light-text mb-2">Width</label>
+              <input
+                type="text"
+                value={getStyleValue('width')}
+                onChange={(e) => updateStyleDirect('width', e.target.value, activeBreakpoint)}
+                onBlur={(e) => updateStyle('width', e.target.value, activeBreakpoint)}
+                className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                placeholder="auto, 100%, 500px"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-light-text mb-2">Max Width</label>
+              <input
+                type="text"
+                value={getStyleValue('maxWidth')}
+                onChange={(e) => updateStyleDirect('maxWidth', e.target.value, activeBreakpoint)}
+                onBlur={(e) => updateStyle('maxWidth', e.target.value, activeBreakpoint)}
+                className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                placeholder="none, 100%, 1200px"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-light-text mb-2">Height</label>
+              <input
+                type="text"
+                value={getStyleValue('height')}
+                onChange={(e) => updateStyleDirect('height', e.target.value, activeBreakpoint)}
+                onBlur={(e) => updateStyle('height', e.target.value, activeBreakpoint)}
+                className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                placeholder="auto, 100%, 300px"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-light-text mb-2">Max Height</label>
+              <input
+                type="text"
+                value={getStyleValue('maxHeight')}
+                onChange={(e) => updateStyleDirect('maxHeight', e.target.value, activeBreakpoint)}
+                onBlur={(e) => updateStyle('maxHeight', e.target.value, activeBreakpoint)}
+                className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                placeholder="none, 100vh, 600px"
+              />
+            </div>
+          </>
+        )}
+
         {/* Background */}
         {(element.type === 'section' || element.type === 'row' || element.type === 'button') && (
           <div className="mb-4">
@@ -460,7 +552,7 @@ export const ElementSettings: React.FC = () => {
               {/* Background Type Icons */}
               <div className="flex items-center gap-1 bg-dark-panel border border-dark-border rounded p-0.5">
                 <button
-                  onClick={() => setBackgroundType('color')}
+                  onClick={() => handleBackgroundTypeChange('color')}
                   className={`p-1.5 rounded transition-colors ${
                     backgroundType === 'color'
                       ? 'bg-brand-primary text-white'
@@ -471,7 +563,7 @@ export const ElementSettings: React.FC = () => {
                   <FiDroplet size={14} />
                 </button>
                 <button
-                  onClick={() => setBackgroundType('gradient')}
+                  onClick={() => handleBackgroundTypeChange('gradient')}
                   className={`p-1.5 rounded transition-colors ${
                     backgroundType === 'gradient'
                       ? 'bg-brand-primary text-white'
@@ -482,7 +574,7 @@ export const ElementSettings: React.FC = () => {
                   <div className="w-3.5 h-3.5 rounded" style={{ background: 'linear-gradient(45deg, currentColor 0%, transparent 100%)' }} />
                 </button>
                 <button
-                  onClick={() => setBackgroundType('image')}
+                  onClick={() => handleBackgroundTypeChange('image')}
                   className={`p-1.5 rounded transition-colors ${
                     backgroundType === 'image'
                       ? 'bg-brand-primary text-white'
@@ -493,7 +585,7 @@ export const ElementSettings: React.FC = () => {
                   <FiImage size={14} />
                 </button>
                 <button
-                  onClick={() => setBackgroundType('video')}
+                  onClick={() => handleBackgroundTypeChange('video')}
                   className={`p-1.5 rounded transition-colors ${
                     backgroundType === 'video'
                       ? 'bg-brand-primary text-white'
