@@ -493,6 +493,57 @@ export const ElementSettings: React.FC = () => {
           </select>
         </div>
 
+        {/* Element Alignment - for elements with limited width */}
+        {(element.type === 'section' || element.type === 'row' || element.type === 'button') && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-light-text mb-2">Element Alignment</label>
+            <div className="flex items-center gap-1 bg-dark-panel border border-dark-border rounded p-1">
+              <button
+                onClick={() => {
+                  updateStyle('marginLeft', '0', activeBreakpoint);
+                  updateStyle('marginRight', 'auto', activeBreakpoint);
+                }}
+                className={`flex-1 px-3 py-1.5 text-xs rounded transition-colors ${
+                  getStyleValue('marginLeft') === '0' && getStyleValue('marginRight') === 'auto'
+                    ? 'bg-brand-primary text-white'
+                    : 'text-light-muted hover:text-light-text'
+                }`}
+                title="Align Left"
+              >
+                Left
+              </button>
+              <button
+                onClick={() => {
+                  updateStyle('marginLeft', 'auto', activeBreakpoint);
+                  updateStyle('marginRight', 'auto', activeBreakpoint);
+                }}
+                className={`flex-1 px-3 py-1.5 text-xs rounded transition-colors ${
+                  getStyleValue('marginLeft') === 'auto' && getStyleValue('marginRight') === 'auto'
+                    ? 'bg-brand-primary text-white'
+                    : 'text-light-muted hover:text-light-text'
+                }`}
+                title="Align Center"
+              >
+                Center
+              </button>
+              <button
+                onClick={() => {
+                  updateStyle('marginLeft', 'auto', activeBreakpoint);
+                  updateStyle('marginRight', '0', activeBreakpoint);
+                }}
+                className={`flex-1 px-3 py-1.5 text-xs rounded transition-colors ${
+                  getStyleValue('marginLeft') === 'auto' && getStyleValue('marginRight') === '0'
+                    ? 'bg-brand-primary text-white'
+                    : 'text-light-muted hover:text-light-text'
+                }`}
+                title="Align Right"
+              >
+                Right
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Width/Height Controls - only for certain elements */}
         {(element.type === 'section' || element.type === 'row' || element.type === 'image' || element.type === 'video' || element.type === 'button') && (
           <>

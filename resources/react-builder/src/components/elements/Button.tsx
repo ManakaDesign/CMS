@@ -40,12 +40,29 @@ export const Button: React.FC<ButtonProps> = (props) => {
     breakpointStyles = { ...breakpointStyles, ...element.styles.mobile };
   }
 
+  // Get sizing styles for anchor wrapper
+  const getSizingStyles = (): React.CSSProperties => {
+    const sizingStyles: React.CSSProperties = {};
+    if (breakpointStyles.width) sizingStyles.width = breakpointStyles.width;
+    if (breakpointStyles.maxWidth) sizingStyles.maxWidth = breakpointStyles.maxWidth;
+    if (breakpointStyles.height) sizingStyles.height = breakpointStyles.height;
+    if (breakpointStyles.maxHeight) sizingStyles.maxHeight = breakpointStyles.maxHeight;
+    return sizingStyles;
+  };
+
+  // Get content styles (everything except sizing)
+  const buttonContentStyles: Record<string, any> = { ...breakpointStyles };
+  delete buttonContentStyles.width;
+  delete buttonContentStyles.maxWidth;
+  delete buttonContentStyles.height;
+  delete buttonContentStyles.maxHeight;
+
   const buttonStyles = {
     display: 'inline-block',
     padding: '12px 24px',
     cursor: 'pointer',
     textDecoration: 'none',
-    ...breakpointStyles,
+    ...buttonContentStyles,
   } as React.CSSProperties;
 
   // Get hover styles with inheritance
@@ -103,7 +120,8 @@ export const Button: React.FC<ButtonProps> = (props) => {
         target={target}
         rel={target === '_blank' ? 'noopener noreferrer' : undefined}
         onClick={handleButtonClick}
-        className="block w-full h-full relative overflow-hidden"
+        className="block relative overflow-hidden"
+        style={getSizingStyles()}
       >
         {/* Background Layer - fills entire button */}
         <BackgroundRenderer element={element} />

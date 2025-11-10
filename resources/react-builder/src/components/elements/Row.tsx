@@ -86,6 +86,32 @@ export const Row: React.FC<RowProps> = (props) => {
     return styles as React.CSSProperties;
   };
 
+  // Get sizing styles (width, height) for outer wrapper
+  const getSizingStyles = (): React.CSSProperties => {
+    const allStyles = getActiveStyles();
+    const sizingStyles: React.CSSProperties = {};
+
+    if (allStyles.width) sizingStyles.width = allStyles.width;
+    if (allStyles.maxWidth) sizingStyles.maxWidth = allStyles.maxWidth;
+    if (allStyles.height) sizingStyles.height = allStyles.height;
+    if (allStyles.maxHeight) sizingStyles.maxHeight = allStyles.maxHeight;
+
+    return sizingStyles;
+  };
+
+  // Get content styles (everything except sizing)
+  const getContentStyles = (): React.CSSProperties => {
+    const allStyles = getActiveStyles();
+    const contentStyles = { ...allStyles };
+
+    delete contentStyles.width;
+    delete contentStyles.maxWidth;
+    delete contentStyles.height;
+    delete contentStyles.maxHeight;
+
+    return contentStyles;
+  };
+
   // Get hover styles with inheritance
   const getHoverStyles = (): React.CSSProperties => {
     const hoverStyles = (element as any).hoverStyles || {};
@@ -130,12 +156,12 @@ export const Row: React.FC<RowProps> = (props) => {
         </style>
       )}
 
-      <div className="relative overflow-hidden" style={{ width: '100%' }}>
+      <div className="relative overflow-hidden" style={{ width: '100%', ...getSizingStyles() }}>
         {/* Background Layer - fills entire element */}
         <BackgroundRenderer element={element} />
 
         {/* Content Layer - padding and other styles applied here */}
-        <div className="relative z-10 flex row-content" style={{ gap: element.settings.gap || '16px', width: '100%', ...getActiveStyles() }}>
+        <div className="relative z-10 flex row-content" style={{ gap: element.settings.gap || '16px', width: '100%', ...getContentStyles() }}>
         {Array.from({ length: columnCount }).map((_, columnIndex) => (
           <RowColumn
             key={columnIndex}
