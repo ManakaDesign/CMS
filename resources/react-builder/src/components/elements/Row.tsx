@@ -86,20 +86,7 @@ export const Row: React.FC<RowProps> = (props) => {
     return styles as React.CSSProperties;
   };
 
-  // Get sizing styles (width, height) for outer wrapper
-  const getSizingStyles = (): React.CSSProperties => {
-    const allStyles = getActiveStyles();
-    const sizingStyles: React.CSSProperties = {};
-
-    if (allStyles.width) sizingStyles.width = allStyles.width;
-    if (allStyles.maxWidth) sizingStyles.maxWidth = allStyles.maxWidth;
-    if (allStyles.height) sizingStyles.height = allStyles.height;
-    if (allStyles.maxHeight) sizingStyles.maxHeight = allStyles.maxHeight;
-
-    return sizingStyles;
-  };
-
-  // Get content styles (everything except sizing)
+  // Get content styles (everything except sizing and alignment - those go on BaseElement wrapper)
   const getContentStyles = (): React.CSSProperties => {
     const allStyles = getActiveStyles();
     const contentStyles = { ...allStyles };
@@ -108,6 +95,8 @@ export const Row: React.FC<RowProps> = (props) => {
     delete contentStyles.maxWidth;
     delete contentStyles.height;
     delete contentStyles.maxHeight;
+    delete contentStyles.marginLeft;
+    delete contentStyles.marginRight;
 
     return contentStyles;
   };
@@ -156,7 +145,7 @@ export const Row: React.FC<RowProps> = (props) => {
         </style>
       )}
 
-      <div className="relative overflow-hidden" style={{ width: '100%', ...getSizingStyles() }}>
+      <div className="relative overflow-hidden" style={{ width: '100%', height: '100%' }}>
         {/* Background Layer - fills entire element */}
         <BackgroundRenderer element={element} />
 

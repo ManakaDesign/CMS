@@ -40,22 +40,14 @@ export const Button: React.FC<ButtonProps> = (props) => {
     breakpointStyles = { ...breakpointStyles, ...element.styles.mobile };
   }
 
-  // Get sizing styles for anchor wrapper
-  const getSizingStyles = (): React.CSSProperties => {
-    const sizingStyles: React.CSSProperties = {};
-    if (breakpointStyles.width) sizingStyles.width = breakpointStyles.width;
-    if (breakpointStyles.maxWidth) sizingStyles.maxWidth = breakpointStyles.maxWidth;
-    if (breakpointStyles.height) sizingStyles.height = breakpointStyles.height;
-    if (breakpointStyles.maxHeight) sizingStyles.maxHeight = breakpointStyles.maxHeight;
-    return sizingStyles;
-  };
-
-  // Get content styles (everything except sizing)
+  // Get content styles (everything except sizing and alignment - those go on BaseElement wrapper)
   const buttonContentStyles: Record<string, any> = { ...breakpointStyles };
   delete buttonContentStyles.width;
   delete buttonContentStyles.maxWidth;
   delete buttonContentStyles.height;
   delete buttonContentStyles.maxHeight;
+  delete buttonContentStyles.marginLeft;
+  delete buttonContentStyles.marginRight;
 
   const buttonStyles = {
     display: 'inline-block',
@@ -121,7 +113,7 @@ export const Button: React.FC<ButtonProps> = (props) => {
         rel={target === '_blank' ? 'noopener noreferrer' : undefined}
         onClick={handleButtonClick}
         className="block relative overflow-hidden"
-        style={getSizingStyles()}
+        style={{ width: '100%', height: '100%' }}
       >
         {/* Background Layer - fills entire button */}
         <BackgroundRenderer element={element} />

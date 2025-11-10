@@ -114,16 +114,29 @@ export const BaseElement: React.FC<BaseElementProps> = ({
     (key) => hoverStyles[key] && Object.keys(hoverStyles[key]).length > 0
   );
 
-  // When skipStyles is true, we still need to apply display property to the wrapper
-  // so that inline-block, flex, etc. work correctly
+  // When skipStyles is true, we still need to apply certain properties to the wrapper
+  // for proper layout: display, width, height, and alignment
   const getWrapperStyles = (): React.CSSProperties => {
     if (skipStyles) {
       const activeStyles = getActiveStyles();
-      const displayOnly: React.CSSProperties = {};
+      const wrapperStyles: React.CSSProperties = {};
+
+      // Display property for inline-block, flex, etc.
       if (activeStyles.display) {
-        displayOnly.display = activeStyles.display;
+        wrapperStyles.display = activeStyles.display;
       }
-      return { ...displayOnly, ...outlineStyle };
+
+      // Sizing properties
+      if (activeStyles.width) wrapperStyles.width = activeStyles.width;
+      if (activeStyles.maxWidth) wrapperStyles.maxWidth = activeStyles.maxWidth;
+      if (activeStyles.height) wrapperStyles.height = activeStyles.height;
+      if (activeStyles.maxHeight) wrapperStyles.maxHeight = activeStyles.maxHeight;
+
+      // Alignment properties (for centering elements with limited width)
+      if (activeStyles.marginLeft) wrapperStyles.marginLeft = activeStyles.marginLeft;
+      if (activeStyles.marginRight) wrapperStyles.marginRight = activeStyles.marginRight;
+
+      return { ...wrapperStyles, ...outlineStyle };
     }
     return { ...getActiveStyles(), ...outlineStyle };
   };
