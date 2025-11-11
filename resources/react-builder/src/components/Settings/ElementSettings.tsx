@@ -1030,7 +1030,9 @@ export const ElementSettings: React.FC = () => {
         </div>
 
         {/* Typography */}
-        {(isMultiSelect || element) && (element?.type === 'text' || element?.type === 'heading' || element?.type === 'button') && (
+        {((isMultiSelect && selectedElements.length > 0) || element) &&
+         (element?.type === 'text' || element?.type === 'heading' || element?.type === 'button' ||
+          selectedElements[0]?.type === 'text' || selectedElements[0]?.type === 'heading' || selectedElements[0]?.type === 'button') && (
           <>
             <div className="mb-4">
               <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Font Size</label>
