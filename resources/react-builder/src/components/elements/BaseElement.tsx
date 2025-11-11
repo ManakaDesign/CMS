@@ -130,7 +130,14 @@ export const BaseElement: React.FC<BaseElementProps> = ({
       }
 
       // Sizing properties
-      if (activeStyles.width) wrapperStyles.width = activeStyles.width;
+      if (activeStyles.width) {
+        wrapperStyles.width = activeStyles.width;
+      } else if (element.type === 'button' && activeStyles.display === 'block') {
+        // For buttons with display:block but no explicit width, use fit-content
+        // This allows the button to be centered with margin:auto
+        wrapperStyles.width = 'fit-content';
+      }
+
       if (activeStyles.maxWidth) wrapperStyles.maxWidth = activeStyles.maxWidth;
       if (activeStyles.height) wrapperStyles.height = activeStyles.height;
       if (activeStyles.maxHeight) wrapperStyles.maxHeight = activeStyles.maxHeight;
