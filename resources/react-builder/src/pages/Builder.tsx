@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FiSettings, FiEye, FiSave, FiMonitor, FiTablet, FiSmartphone, FiArrowLeft } from 'react-icons/fi';
+import { FiSettings, FiEye, FiSave, FiMonitor, FiTablet, FiSmartphone, FiArrowLeft, FiLayers, FiGrid } from 'react-icons/fi';
 import { useBuilderStore } from '../store/builderStore';
 import type { Breakpoint } from '../types';
 import { DragAndDropProvider } from '../components/DragAndDropProvider';
@@ -8,6 +8,7 @@ import { DroppableCanvas } from '../components/DroppableCanvas';
 import { ElementsSidebar } from '../components/Sidebar/ElementsSidebar';
 import { ElementSettings } from '../components/Settings/ElementSettings';
 import { BreakpointSettings } from '../components/Settings/BreakpointSettings';
+import { LayerTree } from '../components/LayerTree/LayerTree';
 import { pagesApi } from '../api/services';
 import { DragContextProvider } from '../contexts/DragContext';
 
@@ -41,6 +42,7 @@ export const Builder: React.FC = () => {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [leftPanel, setLeftPanel] = useState<'elements' | 'layers'>('elements');
 
   // Load page on mount
   useEffect(() => {
@@ -254,10 +256,42 @@ export const Builder: React.FC = () => {
 
         {/* Main Content */}
         <div className="flex pt-16 h-screen">
-          {/* Left Sidebar - Elements Library */}
+          {/* Left Panel Switcher */}
+          {!isPreviewMode && (
+            <div className="w-12 bg-dark-surface border-r border-dark-border flex flex-col flex-shrink-0">
+              <button
+                onClick={() => setLeftPanel('elements')}
+                className={`
+                  flex items-center justify-center p-3 transition-colors border-b border-dark-border
+                  ${leftPanel === 'elements'
+                    ? 'bg-brand-primary text-white'
+                    : 'text-light-muted hover:text-light-text hover:bg-dark-hover'
+                  }
+                `}
+                title="Elements"
+              >
+                <FiGrid size={18} />
+              </button>
+              <button
+                onClick={() => setLeftPanel('layers')}
+                className={`
+                  flex items-center justify-center p-3 transition-colors border-b border-dark-border
+                  ${leftPanel === 'layers'
+                    ? 'bg-brand-primary text-white'
+                    : 'text-light-muted hover:text-light-text hover:bg-dark-hover'
+                  }
+                `}
+                title="Layer Tree"
+              >
+                <FiLayers size={18} />
+              </button>
+            </div>
+          )}
+
+          {/* Left Sidebar - Elements Library or Layer Tree */}
           {!isPreviewMode && (
             <div className="w-64 bg-dark-surface border-r border-dark-border overflow-y-auto flex-shrink-0">
-              <ElementsSidebar />
+              {leftPanel === 'elements' ? <ElementsSidebar /> : <LayerTree />}
             </div>
           )}
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FiSettings, FiEye, FiMonitor, FiTablet, FiSmartphone, FiDownload } from 'react-icons/fi';
+import { FiSettings, FiEye, FiMonitor, FiTablet, FiSmartphone, FiDownload, FiLayers, FiGrid } from 'react-icons/fi';
 import { useBuilderStore } from '../store/builderStore';
 import type { Breakpoint } from '../types';
 import { DragAndDropProvider } from '../components/DragAndDropProvider';
@@ -7,6 +7,7 @@ import { DroppableCanvas } from '../components/DroppableCanvas';
 import { ElementsSidebar } from '../components/Sidebar/ElementsSidebar';
 import { ElementSettings } from '../components/Settings/ElementSettings';
 import { BreakpointSettings } from '../components/Settings/BreakpointSettings';
+import { LayerTree } from '../components/LayerTree/LayerTree';
 import { localStorageService } from '../api/localStorageService';
 import { DragContextProvider } from '../contexts/DragContext';
 
@@ -30,6 +31,7 @@ export const BuilderDemo: React.FC = () => {
 
   const [showBreakpointSettings, setShowBreakpointSettings] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [leftPanel, setLeftPanel] = useState<'elements' | 'layers'>('elements');
 
   // Load demo data on mount
   useEffect(() => {
@@ -210,10 +212,42 @@ export const BuilderDemo: React.FC = () => {
 
         {/* Main Content */}
         <div className="flex pt-0 h-full overflow-hidden">
-          {/* Left Sidebar - Elements Library */}
+          {/* Left Panel Switcher */}
+          {!isPreviewMode && (
+            <div className="w-12 bg-dark-surface border-r border-dark-border flex flex-col flex-shrink-0">
+              <button
+                onClick={() => setLeftPanel('elements')}
+                className={`
+                  flex items-center justify-center p-3 transition-colors border-b border-dark-border
+                  ${leftPanel === 'elements'
+                    ? 'bg-brand-primary text-white'
+                    : 'text-light-muted hover:text-light-text hover:bg-dark-hover'
+                  }
+                `}
+                title="Elements"
+              >
+                <FiGrid size={18} />
+              </button>
+              <button
+                onClick={() => setLeftPanel('layers')}
+                className={`
+                  flex items-center justify-center p-3 transition-colors border-b border-dark-border
+                  ${leftPanel === 'layers'
+                    ? 'bg-brand-primary text-white'
+                    : 'text-light-muted hover:text-light-text hover:bg-dark-hover'
+                  }
+                `}
+                title="Layer Tree"
+              >
+                <FiLayers size={18} />
+              </button>
+            </div>
+          )}
+
+          {/* Left Sidebar - Elements Library or Layer Tree */}
           {!isPreviewMode && (
             <div className="w-64 bg-dark-surface border-r border-dark-border overflow-y-auto flex-shrink-0">
-              <ElementsSidebar />
+              {leftPanel === 'elements' ? <ElementsSidebar /> : <LayerTree />}
             </div>
           )}
 
