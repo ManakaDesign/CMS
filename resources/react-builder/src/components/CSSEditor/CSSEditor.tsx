@@ -201,12 +201,13 @@ export const CSSEditor: React.FC = () => {
         {/* Highlighted overlay */}
         <pre
           ref={highlightRef}
-          className="absolute inset-0 p-4 bg-transparent text-transparent font-mono text-sm pointer-events-none overflow-auto whitespace-pre-wrap break-words"
+          className="absolute inset-0 p-4 bg-transparent font-mono text-sm pointer-events-none overflow-auto whitespace-pre-wrap break-words"
           style={{
             margin: 0,
             border: 'none',
             outline: 'none',
             lineHeight: '1.5',
+            color: '#d1d5db',
           }}
           dangerouslySetInnerHTML={{
             __html: cssValue ? highlightCSS(cssValue) : ''
@@ -219,7 +220,7 @@ export const CSSEditor: React.FC = () => {
           value={cssValue}
           onChange={(e) => setCssValue(e.target.value)}
           onScroll={handleScroll}
-          className="absolute inset-0 w-full h-full p-4 bg-transparent text-light-text font-mono text-sm resize-none focus:outline-none"
+          className="absolute inset-0 w-full h-full p-4 bg-transparent font-mono text-sm resize-none focus:outline-none"
           style={{
             color: cssValue ? 'transparent' : '#9ca3af',
             background: 'transparent',
