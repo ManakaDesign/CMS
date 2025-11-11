@@ -102,9 +102,9 @@ export const CSSEditor: React.FC = () => {
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       // Highlight ID selectors
-      .replace(/(#[a-zA-Z0-9_-]+)/g, '<span style="color: #3b82f6;">$1</span>')
+      .replace(/(#[a-zA-Z0-9_-]+)/g, '<span style="color: #3E0BAA;">$1</span>')
       // Highlight class selectors
-      .replace(/(\.[a-zA-Z0-9_-]+)/g, '<span style="color: #3b82f6;">$1</span>');
+      .replace(/(\.[a-zA-Z0-9_-]+)/g, '<span style="color: #3E0BAA;">$1</span>');
 
     return highlighted;
   };
