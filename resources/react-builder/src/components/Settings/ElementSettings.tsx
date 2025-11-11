@@ -489,36 +489,36 @@ export const ElementSettings: React.FC = () => {
               <div className="flex items-center gap-1 bg-dark-panel border border-dark-border rounded p-1">
                 <button
                   onClick={() => updateStyle('textAlign', 'left', activeBreakpoint)}
-                  className={`flex-1 px-3 py-1.5 text-xs rounded transition-colors ${
+                  className={`flex-1 p-2 rounded transition-colors flex items-center justify-center ${
                     getStyleValue('textAlign') === 'left' || !getStyleValue('textAlign')
                       ? 'bg-brand-primary text-white'
                       : 'text-light-muted hover:text-light-text'
                   }`}
-                  title="Left"
+                  title="Align Left"
                 >
-                  Left
+                  <FiAlignLeft size={16} />
                 </button>
                 <button
                   onClick={() => updateStyle('textAlign', 'center', activeBreakpoint)}
-                  className={`flex-1 px-3 py-1.5 text-xs rounded transition-colors ${
+                  className={`flex-1 p-2 rounded transition-colors flex items-center justify-center ${
                     getStyleValue('textAlign') === 'center'
                       ? 'bg-brand-primary text-white'
                       : 'text-light-muted hover:text-light-text'
                   }`}
-                  title="Center"
+                  title="Align Center"
                 >
-                  Center
+                  <FiAlignCenter size={16} />
                 </button>
                 <button
                   onClick={() => updateStyle('textAlign', 'right', activeBreakpoint)}
-                  className={`flex-1 px-3 py-1.5 text-xs rounded transition-colors ${
+                  className={`flex-1 p-2 rounded transition-colors flex items-center justify-center ${
                     getStyleValue('textAlign') === 'right'
                       ? 'bg-brand-primary text-white'
                       : 'text-light-muted hover:text-light-text'
                   }`}
-                  title="Right"
+                  title="Align Right"
                 >
-                  Right
+                  <FiAlignRight size={16} />
                 </button>
               </div>
             </div>
