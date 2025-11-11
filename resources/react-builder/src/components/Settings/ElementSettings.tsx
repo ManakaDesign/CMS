@@ -219,12 +219,25 @@ export const ElementSettings: React.FC = () => {
     const currentSelectedIds = store.selectedElementIds;
     const isCurrentlyMultiSelect = currentSelectedIds.length > 1;
 
+    console.log('[DEBUG updateStyle]', {
+      property,
+      value: finalValue,
+      breakpoint,
+      currentSelectedIds,
+      isCurrentlyMultiSelect,
+      elementCount: currentElements.length
+    });
+
     if (isCurrentlyMultiSelect) {
       // Multi-select: batch update all selected elements
       const elementIdsSet = new Set(currentSelectedIds);
 
+      console.log('[DEBUG] Multi-select mode - updating elements:', Array.from(elementIdsSet));
+
       const updatedElements = currentElements.map(el => {
         if (!elementIdsSet.has(el.id)) return el;
+
+        console.log('[DEBUG] Updating element:', el.id, 'with', property, '=', finalValue);
 
         if (styleMode === 'hover') {
           const hoverStyles = (el as any).hoverStyles || {};
@@ -252,11 +265,15 @@ export const ElementSettings: React.FC = () => {
         }
       });
 
+      console.log('[DEBUG] Updated elements count:', updatedElements.filter((el, i) => el !== currentElements[i]).length);
+
       // Update all elements in a single operation
       useBuilderStore.setState({ elements: updatedElements });
       useBuilderStore.getState().addToHistory();
       return;
     }
+
+    console.log('[DEBUG] Single element mode - element:', element?.id);
 
     if (!element) return;
 

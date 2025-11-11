@@ -116,10 +116,13 @@ export const useBuilderStore = create<BuilderStore>()(
         const { elements, selectedElementIds } = get();
         const element = elements.find((el) => el.id === elementId);
 
+        console.log('[DEBUG toggleElementSelection]', { elementId, currentSelectedIds: selectedElementIds, element: element?.type });
+
         if (!element) return;
 
         // If this is the first element being selected in multi-select mode
         if (selectedElementIds.length === 0) {
+          console.log('[DEBUG] First element in multi-select, setting:', [elementId]);
           set({
             selectedElementIds: [elementId],
             selectedElementId: null,
@@ -134,6 +137,7 @@ export const useBuilderStore = create<BuilderStore>()(
 
         // Only allow selecting elements of the same type
         if (element.type !== firstType) {
+          console.log('[DEBUG] Type mismatch - ignoring. Element type:', element.type, 'First type:', firstType);
           return; // Ignore selection if type doesn't match
         }
 
@@ -141,6 +145,7 @@ export const useBuilderStore = create<BuilderStore>()(
         if (selectedElementIds.includes(elementId)) {
           // Remove from selection
           const newSelection = selectedElementIds.filter((id) => id !== elementId);
+          console.log('[DEBUG] Removing from selection. New selection:', newSelection);
           set({
             selectedElementIds: newSelection,
             // If only one element left, convert back to single selection
@@ -148,8 +153,10 @@ export const useBuilderStore = create<BuilderStore>()(
           });
         } else {
           // Add to selection
+          const newSelection = [...selectedElementIds, elementId];
+          console.log('[DEBUG] Adding to selection. New selection:', newSelection);
           set({
-            selectedElementIds: [...selectedElementIds, elementId],
+            selectedElementIds: newSelection,
             selectedElementId: null,
           });
         }
