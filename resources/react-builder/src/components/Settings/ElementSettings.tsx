@@ -133,12 +133,14 @@ export const ElementSettings: React.FC = () => {
 
   // Update style without auto-px (for onChange)
   const updateStyleDirect = (property: string, value: string, breakpoint: 'desktop' | 'tablet' | 'mobile' = 'desktop') => {
-    if (isMultiSelect) {
+    // Get fresh data from store to avoid stale closure
+    const store = useBuilderStore.getState();
+    const currentElements = store.elements;
+    const currentSelectedIds = store.selectedElementIds;
+    const isCurrentlyMultiSelect = currentSelectedIds.length > 1;
+
+    if (isCurrentlyMultiSelect) {
       // Multi-select: batch update all selected elements
-      // Get fresh data from store to avoid stale closure
-      const store = useBuilderStore.getState();
-      const currentElements = store.elements;
-      const currentSelectedIds = store.selectedElementIds;
       const elementIdsSet = new Set(currentSelectedIds);
 
       const updatedElements = currentElements.map(el => {
@@ -211,12 +213,14 @@ export const ElementSettings: React.FC = () => {
     const needsPx = spacingProps.includes(property) && /^\d+$/.test(value.trim());
     const finalValue = needsPx ? `${value}px` : value;
 
-    if (isMultiSelect) {
+    // Get fresh data from store to avoid stale closure
+    const store = useBuilderStore.getState();
+    const currentElements = store.elements;
+    const currentSelectedIds = store.selectedElementIds;
+    const isCurrentlyMultiSelect = currentSelectedIds.length > 1;
+
+    if (isCurrentlyMultiSelect) {
       // Multi-select: batch update all selected elements
-      // Get fresh data from store to avoid stale closure
-      const store = useBuilderStore.getState();
-      const currentElements = store.elements;
-      const currentSelectedIds = store.selectedElementIds;
       const elementIdsSet = new Set(currentSelectedIds);
 
       const updatedElements = currentElements.map(el => {
