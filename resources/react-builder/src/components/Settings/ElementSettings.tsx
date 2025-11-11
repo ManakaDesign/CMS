@@ -267,9 +267,16 @@ export const ElementSettings: React.FC = () => {
 
       console.log('[DEBUG] Updated elements count:', updatedElements.filter((el, i) => el !== currentElements[i]).length);
 
+      // Log the actual updated elements to verify
+      const changedElements = updatedElements.filter((el, i) => el !== currentElements[i]);
+      console.log('[DEBUG] Changed elements:', changedElements.map(el => ({ id: el.id, styles: el.styles })));
+
       // Update all elements in a single operation
+      console.log('[DEBUG] About to call setState with', updatedElements.length, 'elements');
       useBuilderStore.setState({ elements: updatedElements });
+      console.log('[DEBUG] setState called, now calling addToHistory');
       useBuilderStore.getState().addToHistory();
+      console.log('[DEBUG] addToHistory called - done!');
       return;
     }
 
