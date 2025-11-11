@@ -103,9 +103,12 @@ export const BaseElement: React.FC<BaseElementProps> = ({
     outlineStyle.opacity = '0.6';
   }
 
+  // Combine default classes with custom element classes
+  const elementClasses = element.settings.elementClass || '';
   const className = `
     relative
     ${!element.is_visible ? 'opacity-50' : ''}
+    ${elementClasses}
   `.trim();
 
   // Check if element has hover styles
@@ -151,6 +154,7 @@ export const BaseElement: React.FC<BaseElementProps> = ({
       )}
 
       <div
+        id={element.settings.elementId || undefined}
         data-element-id={element.id}
         data-element-type={element.type}
         className={className}

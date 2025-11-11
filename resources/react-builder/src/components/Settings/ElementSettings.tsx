@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useBuilderStore } from '../../store/builderStore';
-import { FiTrash2, FiCopy, FiEye, FiEyeOff, FiDroplet, FiImage, FiVideo } from 'react-icons/fi';
+import { FiTrash2, FiCopy, FiEye, FiEyeOff, FiDroplet, FiImage, FiVideo, FiAlignLeft, FiAlignCenter, FiAlignRight } from 'react-icons/fi';
 import { SpacingControl } from './SpacingControl';
 
 type BackgroundType = 'color' | 'gradient' | 'image' | 'video' | 'none';
@@ -10,6 +10,7 @@ export const ElementSettings: React.FC = () => {
     useBuilderStore();
 
   const element = selectedElementId ? getElementById(selectedElementId) : null;
+  const [settingsTab, setSettingsTab] = useState<'design' | 'element'>('design');
   const [styleMode, setStyleMode] = useState<'normal' | 'hover'>('normal');
   const [backgroundType, setBackgroundType] = useState<BackgroundType>('color');
 
@@ -173,6 +174,33 @@ export const ElementSettings: React.FC = () => {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="flex border-b border-dark-border">
+        <button
+          onClick={() => setSettingsTab('design')}
+          className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+            settingsTab === 'design'
+              ? 'text-brand-primary border-b-2 border-brand-primary bg-dark-panel'
+              : 'text-light-muted hover:text-light-text hover:bg-dark-hover'
+          }`}
+        >
+          Design
+        </button>
+        <button
+          onClick={() => setSettingsTab('element')}
+          className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+            settingsTab === 'element'
+              ? 'text-brand-primary border-b-2 border-brand-primary bg-dark-panel'
+              : 'text-light-muted hover:text-light-text hover:bg-dark-hover'
+          }`}
+        >
+          Element
+        </button>
+      </div>
+
+      {/* Tab Content - Design */}
+      {settingsTab === 'design' && (
+        <>
       {/* Content Settings */}
       <div className="p-4 border-b border-dark-border">
         <h3 className="text-xs font-semibold text-light-muted uppercase mb-3">Content</h3>
@@ -535,30 +563,30 @@ export const ElementSettings: React.FC = () => {
               <div className="flex items-center gap-1 bg-dark-panel border border-dark-border rounded p-1">
                 <button
                   onClick={() => handleAlignment('0', 'auto')}
-                  className={`flex-1 px-3 py-1.5 text-xs rounded transition-colors ${
+                  className={`flex-1 p-2 rounded transition-colors flex items-center justify-center ${
                     isLeft ? 'bg-brand-primary text-white' : 'text-light-muted hover:text-light-text'
                   }`}
                   title="Align Left"
                 >
-                  Left
+                  <FiAlignLeft size={16} />
                 </button>
                 <button
                   onClick={() => handleAlignment('auto', 'auto')}
-                  className={`flex-1 px-3 py-1.5 text-xs rounded transition-colors ${
+                  className={`flex-1 p-2 rounded transition-colors flex items-center justify-center ${
                     isCenter ? 'bg-brand-primary text-white' : 'text-light-muted hover:text-light-text'
                   }`}
                   title="Align Center"
                 >
-                  Center
+                  <FiAlignCenter size={16} />
                 </button>
                 <button
                   onClick={() => handleAlignment('auto', '0')}
-                  className={`flex-1 px-3 py-1.5 text-xs rounded transition-colors ${
+                  className={`flex-1 p-2 rounded transition-colors flex items-center justify-center ${
                     isRight ? 'bg-brand-primary text-white' : 'text-light-muted hover:text-light-text'
                   }`}
                   title="Align Right"
                 >
-                  Right
+                  <FiAlignRight size={16} />
                 </button>
               </div>
             </div>
@@ -848,6 +876,41 @@ export const ElementSettings: React.FC = () => {
           />
         </div>
       </div>
+        </>
+      )}
+
+      {/* Tab Content - Element */}
+      {settingsTab === 'element' && (
+        <div className="p-4">
+          <h3 className="text-xs font-semibold text-light-muted uppercase mb-4">Element Attributes</h3>
+
+          {/* Element ID */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-light-text mb-2">Element ID</label>
+            <input
+              type="text"
+              value={element.settings.elementId || ''}
+              onChange={(e) => updateSetting('elementId', e.target.value)}
+              className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+              placeholder="my-element-id"
+            />
+            <p className="text-xs text-light-muted mt-1">Unique identifier for this element</p>
+          </div>
+
+          {/* Element Class */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-light-text mb-2">CSS Classes</label>
+            <input
+              type="text"
+              value={element.settings.elementClass || ''}
+              onChange={(e) => updateSetting('elementClass', e.target.value)}
+              className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+              placeholder="class-1 class-2 class-3"
+            />
+            <p className="text-xs text-light-muted mt-1">Space-separated CSS class names</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

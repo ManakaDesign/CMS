@@ -166,7 +166,7 @@ export const Builder: React.FC = () => {
                   key={value}
                   onClick={() => setActiveBreakpoint(value)}
                   className={`
-                    flex items-center space-x-2 px-3 py-2 rounded-md transition-colors
+                    flex items-center justify-center p-2 rounded-md transition-colors
                     ${
                       activeBreakpoint === value
                         ? 'bg-brand-primary text-white shadow-sm'
@@ -176,7 +176,6 @@ export const Builder: React.FC = () => {
                   title={label}
                 >
                   <Icon size={18} />
-                  <span className="hidden md:inline text-sm">{label}</span>
                 </button>
               ))}
             </div>
