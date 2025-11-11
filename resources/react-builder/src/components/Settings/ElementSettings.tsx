@@ -14,6 +14,8 @@ export const ElementSettings: React.FC = () => {
   const [settingsTab, setSettingsTab] = useState<'design' | 'element'>('element');
   const [styleMode, setStyleMode] = useState<'normal' | 'hover'>('normal');
   const [backgroundType, setBackgroundType] = useState<BackgroundType>('color');
+  const [columnStyleMode, setColumnStyleMode] = useState<'normal' | 'hover'>('normal');
+  const [columnBackgroundType, setColumnBackgroundType] = useState<BackgroundType>('color');
 
   // Initialize backgroundType based on what's stored in element
   useEffect(() => {
@@ -508,46 +510,269 @@ export const ElementSettings: React.FC = () => {
         // Initialize columnStyles if not exists
         const columnStyles = element.settings.columnStyles || [];
         const columnStyle = columnStyles[selectedColumnIndex] || {};
+        const columnHoverStyles = element.settings.columnHoverStyles || [];
+        const columnHoverStyle = columnHoverStyles[selectedColumnIndex] || {};
 
-        const updateColumnStyle = (property: string, value: string) => {
-          const newColumnStyles = [...columnStyles];
-          newColumnStyles[selectedColumnIndex] = {
-            ...columnStyle,
-            [property]: value,
-          };
-          updateSetting('columnStyles', newColumnStyles);
+        // Get column style value based on mode
+        const getColumnStyleValue = (property: string): string => {
+          if (columnStyleMode === 'hover') {
+            return (columnHoverStyle as any)[property] || '';
+          }
+          return (columnStyle as any)[property] || '';
         };
+
+        // Update column style
+        const updateColumnStyle = (property: string, value: string) => {
+          if (columnStyleMode === 'hover') {
+            const newColumnHoverStyles = [...columnHoverStyles];
+            newColumnHoverStyles[selectedColumnIndex] = {
+              ...columnHoverStyle,
+              [property]: value,
+            };
+            updateSetting('columnHoverStyles', newColumnHoverStyles);
+          } else {
+            const newColumnStyles = [...columnStyles];
+            newColumnStyles[selectedColumnIndex] = {
+              ...columnStyle,
+              [property]: value,
+            };
+            updateSetting('columnStyles', newColumnStyles);
+          }
+        };
+
+        // Handle background type change for columns
+        const handleColumnBackgroundTypeChange = (newType: BackgroundType) => {
+          setColumnBackgroundType(newType);
+
+          // Get the appropriate style object based on mode
+          const targetStyle = columnStyleMode === 'hover' ? columnHoverStyle : columnStyle;
+          const targetArray = columnStyleMode === 'hover' ? [...columnHoverStyles] : [...columnStyles];
+          const settingsKey = columnStyleMode === 'hover' ? 'columnHoverStyles' : 'columnStyles';
+
+          // Clear background from target style
+          const clearedStyle = { ...targetStyle };
+          delete clearedStyle.backgroundColor;
+          delete clearedStyle.backgroundImage;
+          delete clearedStyle.background;
+
+          targetArray[selectedColumnIndex] = clearedStyle;
+          updateSetting(settingsKey, targetArray);
+
+          // Also clear background settings for this column
+          const columnBgSettings = element.settings.columnBackgrounds || [];
+          const newColumnBgSettings = [...columnBgSettings];
+          if (newType !== 'gradient' && newType !== 'image' && newType !== 'video') {
+            newColumnBgSettings[selectedColumnIndex] = {};
+            updateSetting('columnBackgrounds', newColumnBgSettings);
+          }
+        };
+
+        // Update column background settings (for gradient, image, video)
+        const updateColumnBackgroundSetting = (key: string, value: any) => {
+          const columnBackgrounds = element.settings.columnBackgrounds || [];
+          const newColumnBackgrounds = [...columnBackgrounds];
+          newColumnBackgrounds[selectedColumnIndex] = {
+            ...newColumnBackgrounds[selectedColumnIndex],
+            [key]: value,
+          };
+          updateSetting('columnBackgrounds', newColumnBackgrounds);
+        };
+
+        // Get column background settings
+        const columnBackgrounds = element.settings.columnBackgrounds || [];
+        const columnBackground = columnBackgrounds[selectedColumnIndex] || {};
 
         return (
           <div className="bg-green-900/30 border-b-2 border-green-400">
             {/* Column Header */}
-            <div className="p-4 bg-green-900/20 border-b border-green-400/30 flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-semibold text-green-300 flex items-center gap-2">
-                  <FiColumns size={16} />
-                  Column {selectedColumnIndex + 1} Settings
-                </h3>
-                <p className="text-xs text-green-400/70 mt-1">Customize this column independently</p>
+            <div className="p-4 bg-green-900/20 border-b border-green-400/30">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-green-300 flex items-center gap-2">
+                    <FiColumns size={16} />
+                    Column {selectedColumnIndex + 1} Settings
+                  </h3>
+                  <p className="text-xs text-green-400/70 mt-1">Customize this column independently</p>
+                </div>
+                <button
+                  onClick={() => selectColumn(null)}
+                  className="px-3 py-1 text-xs bg-dark-panel hover:bg-dark-hover text-light-text rounded transition-colors"
+                >
+                  Back to Row
+                </button>
               </div>
-              <button
-                onClick={() => selectColumn(null)}
-                className="px-3 py-1 text-xs bg-dark-panel hover:bg-dark-hover text-light-text rounded transition-colors"
-              >
-                Back to Row
-              </button>
+
+              {/* Normal/Hover Toggle for Column */}
+              <div className="flex items-center gap-1 bg-dark-panel border border-green-400/30 rounded p-0.5">
+                <button
+                  onClick={() => setColumnStyleMode('normal')}
+                  className={`flex-1 px-3 py-1 text-xs rounded transition-colors ${
+                    columnStyleMode === 'normal'
+                      ? 'bg-green-400 text-dark-bg font-semibold'
+                      : 'text-light-muted hover:text-light-text'
+                  }`}
+                  title="Normal Styles"
+                >
+                  Normal
+                </button>
+                <button
+                  onClick={() => setColumnStyleMode('hover')}
+                  className={`flex-1 px-3 py-1 text-xs rounded transition-colors ${
+                    columnStyleMode === 'hover'
+                      ? 'bg-green-400 text-dark-bg font-semibold'
+                      : 'text-light-muted hover:text-light-text'
+                  }`}
+                  title="Hover Styles"
+                >
+                  Hover
+                </button>
+              </div>
             </div>
 
             {/* Column Style Controls */}
             <div className="p-4 space-y-4">
-              {/* Background Color */}
+              {/* Background */}
               <div>
-                <label className="block text-sm font-medium text-green-300 mb-2">Background Color</label>
-                <input
-                  type="color"
-                  value={columnStyle.backgroundColor || '#ffffff'}
-                  onChange={(e) => updateColumnStyle('backgroundColor', e.target.value)}
-                  className="w-full h-10 rounded cursor-pointer"
-                />
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-green-300">Background</label>
+
+                  {/* Background Type Icons */}
+                  <div className="flex items-center gap-1 bg-dark-panel border border-green-400/30 rounded p-0.5">
+                    <button
+                      onClick={() => handleColumnBackgroundTypeChange('color')}
+                      className={`p-1.5 rounded transition-colors ${
+                        columnBackgroundType === 'color'
+                          ? 'bg-green-400 text-dark-bg'
+                          : 'text-light-muted hover:text-light-text'
+                      }`}
+                      title="Solid Color"
+                    >
+                      <FiDroplet size={14} />
+                    </button>
+                    <button
+                      onClick={() => handleColumnBackgroundTypeChange('gradient')}
+                      className={`p-1.5 rounded transition-colors ${
+                        columnBackgroundType === 'gradient'
+                          ? 'bg-green-400 text-dark-bg'
+                          : 'text-light-muted hover:text-light-text'
+                      }`}
+                      title="Gradient"
+                    >
+                      <div className="w-3.5 h-3.5 rounded" style={{ background: 'linear-gradient(45deg, currentColor 0%, transparent 100%)' }} />
+                    </button>
+                    <button
+                      onClick={() => handleColumnBackgroundTypeChange('image')}
+                      className={`p-1.5 rounded transition-colors ${
+                        columnBackgroundType === 'image'
+                          ? 'bg-green-400 text-dark-bg'
+                          : 'text-light-muted hover:text-light-text'
+                      }`}
+                      title="Image"
+                    >
+                      <FiImage size={14} />
+                    </button>
+                    <button
+                      onClick={() => handleColumnBackgroundTypeChange('video')}
+                      className={`p-1.5 rounded transition-colors ${
+                        columnBackgroundType === 'video'
+                          ? 'bg-green-400 text-dark-bg'
+                          : 'text-light-muted hover:text-light-text'
+                      }`}
+                      title="Video"
+                    >
+                      <FiVideo size={14} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Background Color */}
+                {columnBackgroundType === 'color' && (
+                  <input
+                    type="color"
+                    value={getColumnStyleValue('backgroundColor') || '#ffffff'}
+                    onChange={(e) => updateColumnStyle('backgroundColor', e.target.value)}
+                    className="w-full h-10 border border-green-400/30 rounded cursor-pointer"
+                  />
+                )}
+
+                {/* Background Gradient */}
+                {columnBackgroundType === 'gradient' && (
+                  <div className="space-y-2">
+                    <div>
+                      <label className="text-xs text-green-300 mb-1 block">Color 1</label>
+                      <input
+                        type="color"
+                        value={(columnBackground.gradientColor1 as string) || '#ffffff'}
+                        onChange={(e) => updateColumnBackgroundSetting('gradientColor1', e.target.value)}
+                        className="w-full h-8 border border-green-400/30 rounded"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-green-300 mb-1 block">Color 2</label>
+                      <input
+                        type="color"
+                        value={(columnBackground.gradientColor2 as string) || '#000000'}
+                        onChange={(e) => updateColumnBackgroundSetting('gradientColor2', e.target.value)}
+                        className="w-full h-8 border border-green-400/30 rounded"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-green-300 mb-1 block">Angle (deg)</label>
+                      <input
+                        type="number"
+                        value={(columnBackground.gradientAngle as number) || 45}
+                        onChange={(e) => updateColumnBackgroundSetting('gradientAngle', parseInt(e.target.value))}
+                        className="w-full px-3 py-2 bg-dark-panel border border-green-400/30 rounded text-sm text-light-text"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Background Image */}
+                {columnBackgroundType === 'image' && (
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      value={(columnBackground.imageUrl as string) || ''}
+                      onChange={(e) => updateColumnBackgroundSetting('imageUrl', e.target.value)}
+                      placeholder="Image URL"
+                      className="w-full px-3 py-2 bg-dark-panel border border-green-400/30 rounded text-sm text-light-text placeholder-light-muted"
+                    />
+                    <select
+                      value={(columnBackground.imageSize as string) || 'cover'}
+                      onChange={(e) => updateColumnBackgroundSetting('imageSize', e.target.value)}
+                      className="w-full px-3 py-2 bg-dark-panel border border-green-400/30 rounded text-sm text-light-text"
+                    >
+                      <option value="cover">Cover</option>
+                      <option value="contain">Contain</option>
+                      <option value="auto">Auto</option>
+                    </select>
+                    <select
+                      value={(columnBackground.imagePosition as string) || 'center'}
+                      onChange={(e) => updateColumnBackgroundSetting('imagePosition', e.target.value)}
+                      className="w-full px-3 py-2 bg-dark-panel border border-green-400/30 rounded text-sm text-light-text"
+                    >
+                      <option value="center">Center</option>
+                      <option value="top">Top</option>
+                      <option value="bottom">Bottom</option>
+                      <option value="left">Left</option>
+                      <option value="right">Right</option>
+                    </select>
+                  </div>
+                )}
+
+                {/* Background Video */}
+                {columnBackgroundType === 'video' && (
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      value={(columnBackground.videoUrl as string) || ''}
+                      onChange={(e) => updateColumnBackgroundSetting('videoUrl', e.target.value)}
+                      placeholder="Video URL (MP4)"
+                      className="w-full px-3 py-2 bg-dark-panel border border-green-400/30 rounded text-sm text-light-text placeholder-light-muted"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Padding */}
@@ -555,7 +780,7 @@ export const ElementSettings: React.FC = () => {
                 <label className="block text-sm font-medium text-green-300 mb-2">Padding</label>
                 <input
                   type="text"
-                  value={columnStyle.padding || ''}
+                  value={getColumnStyleValue('padding')}
                   onChange={(e) => updateColumnStyle('padding', e.target.value)}
                   placeholder="e.g., 20px or 1rem 2rem"
                   className="w-full px-3 py-2 bg-dark-panel border border-green-400/30 rounded text-sm text-light-text placeholder-light-muted focus:border-green-400 focus:outline-none"
@@ -567,7 +792,7 @@ export const ElementSettings: React.FC = () => {
                 <label className="block text-sm font-medium text-green-300 mb-2">Border</label>
                 <input
                   type="text"
-                  value={columnStyle.border || ''}
+                  value={getColumnStyleValue('border')}
                   onChange={(e) => updateColumnStyle('border', e.target.value)}
                   placeholder="e.g., 1px solid #000"
                   className="w-full px-3 py-2 bg-dark-panel border border-green-400/30 rounded text-sm text-light-text placeholder-light-muted focus:border-green-400 focus:outline-none"
@@ -579,7 +804,7 @@ export const ElementSettings: React.FC = () => {
                 <label className="block text-sm font-medium text-green-300 mb-2">Border Radius</label>
                 <input
                   type="text"
-                  value={columnStyle.borderRadius || ''}
+                  value={getColumnStyleValue('borderRadius')}
                   onChange={(e) => updateColumnStyle('borderRadius', e.target.value)}
                   placeholder="e.g., 8px or 0.5rem"
                   className="w-full px-3 py-2 bg-dark-panel border border-green-400/30 rounded text-sm text-light-text placeholder-light-muted focus:border-green-400 focus:outline-none"

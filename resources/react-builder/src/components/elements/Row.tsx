@@ -156,15 +156,26 @@ export const Row: React.FC<RowProps> = (props) => {
           const columnStyles = element.settings.columnStyles || [];
           const columnStyle = columnStyles[columnIndex] || {};
 
+          // Get column hover styles
+          const columnHoverStyles = element.settings.columnHoverStyles || [];
+          const columnHoverStyle = columnHoverStyles[columnIndex] || {};
+
+          // Get column background settings
+          const columnBackgrounds = element.settings.columnBackgrounds || [];
+          const columnBackground = columnBackgrounds[columnIndex] || {};
+
           return (
           <RowColumn
             key={columnIndex}
             rowId={element.id}
+            rowElementId={element.id}
             columnIndex={columnIndex}
             columnCount={columnCount}
             isRowSelected={isSelected || false}
             children={columnGroups[columnIndex]}
             columnStyle={columnStyle}
+            columnHoverStyle={columnHoverStyle}
+            columnBackground={columnBackground}
           />
         );
         })}
@@ -177,14 +188,17 @@ export const Row: React.FC<RowProps> = (props) => {
 // Individual column component with droppable area
 interface RowColumnProps {
   rowId: number;
+  rowElementId: number;
   columnIndex: number;
   columnCount: number;
   isRowSelected: boolean;
   children: Element[];
   columnStyle?: React.CSSProperties;
+  columnHoverStyle?: React.CSSProperties;
+  columnBackground?: any;
 }
 
-const RowColumn: React.FC<RowColumnProps> = ({ rowId, columnIndex, columnCount, isRowSelected, children, columnStyle }) => {
+const RowColumn: React.FC<RowColumnProps> = ({ rowId, rowElementId, columnIndex, columnCount, isRowSelected, children, columnStyle, columnHoverStyle, columnBackground }) => {
   const { selectedElementId, hoveredElementId, selectElement, hoverElement, isPreviewMode } = useBuilderStore();
 
   // Make column droppable (empty state only)
@@ -223,15 +237,100 @@ const RowColumn: React.FC<RowColumnProps> = ({ rowId, columnIndex, columnCount, 
     borderStyle.marginRight = '8px';
   }
 
+  // Convert styles to CSS string for hover styles
+  const stylesToCSS = (styles: React.CSSProperties): string => {
+    return Object.entries(styles)
+      .filter(([_, value]) => value !== undefined && value !== null && value !== '')
+      .map(([key, value]) => {
+        const cssKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+        return `${cssKey}: ${value} !important;`;
+      })
+      .join(' ');
+  };
+
+  // Check if column has hover styles
+  const hasColumnHoverStyles = columnHoverStyle && Object.keys(columnHoverStyle).length > 0;
+
+  // Render column background
+  const renderColumnBackground = () => {
+    if (!columnBackground) return null;
+
+    // Gradient background
+    if (columnBackground.gradientColor1 && columnBackground.gradientColor2) {
+      const angle = columnBackground.gradientAngle || 45;
+      const gradient = `linear-gradient(${angle}deg, ${columnBackground.gradientColor1}, ${columnBackground.gradientColor2})`;
+      return (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: gradient,
+            zIndex: 0,
+          }}
+        />
+      );
+    }
+
+    // Image background
+    if (columnBackground.imageUrl) {
+      return (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: `url(${columnBackground.imageUrl})`,
+            backgroundSize: columnBackground.imageSize || 'cover',
+            backgroundPosition: columnBackground.imagePosition || 'center',
+            backgroundRepeat: 'no-repeat',
+            zIndex: 0,
+          }}
+        />
+      );
+    }
+
+    // Video background
+    if (columnBackground.videoUrl) {
+      return (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ zIndex: 0 }}>
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+            style={{ minWidth: '100%', minHeight: '100%' }}
+          >
+            <source src={columnBackground.videoUrl} type="video/mp4" />
+          </video>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  const columnClassName = `row-${rowElementId}-column-${columnIndex}`;
+
   return (
-    <div
-      className="flex-1 min-h-[100px] relative transition-all"
-      style={{
-        flex: `1 1 ${100 / columnCount}%`,
-        ...borderStyle,
-        ...columnStyle,
-      }}
-    >
+    <>
+      {/* Inject hover styles for this column */}
+      {hasColumnHoverStyles && (
+        <style>
+          {`.${columnClassName}:hover { ${stylesToCSS(columnHoverStyle)} }`}
+        </style>
+      )}
+
+      <div
+        className={`${columnClassName} flex-1 min-h-[100px] relative transition-all overflow-hidden`}
+        style={{
+          flex: `1 1 ${100 / columnCount}%`,
+          ...borderStyle,
+          ...columnStyle,
+        }}
+      >
+        {/* Column Background Layer */}
+        {renderColumnBackground()}
+
+        {/* Column Content Layer */}
+        <div className="relative" style={{ zIndex: 1 }}>
       {children.length > 0 ? (
         <div className="relative">
           {/* Drop zone before first element */}
@@ -266,6 +365,8 @@ const RowColumn: React.FC<RowColumnProps> = ({ rowId, columnIndex, columnCount, 
           Drop elements here
         </div>
       )}
+      </div>
     </div>
+    </>
   );
 };
