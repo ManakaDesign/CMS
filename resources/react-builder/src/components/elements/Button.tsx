@@ -49,8 +49,13 @@ export const Button: React.FC<ButtonProps> = (props) => {
   delete buttonContentStyles.marginLeft;
   delete buttonContentStyles.marginRight;
 
+  // Handle display: block with fit-content width
+  const displayValue = buttonContentStyles.display || 'inline-block';
+  const shouldUseFitContent = displayValue === 'block' && !breakpointStyles.width;
+
   const buttonStyles = {
-    display: 'inline-block',
+    display: displayValue,
+    width: shouldUseFitContent ? 'fit-content' : undefined,
     padding: '12px 24px',
     cursor: 'pointer',
     textDecoration: 'none',
