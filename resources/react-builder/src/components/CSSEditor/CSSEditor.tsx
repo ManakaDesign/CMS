@@ -5,22 +5,48 @@ import { FiCopy, FiRefreshCw } from 'react-icons/fi';
 export const CSSEditor: React.FC = () => {
   const { customCSS, setCustomCSS, elements } = useBuilderStore();
   const [cssValue, setCssValue] = useState(customCSS || '');
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const highlightRef = React.useRef<HTMLPreElement>(null);
 
-  // Extract all IDs and Classes from elements
+  // Parse already used selectors from CSS
+  const usedSelectors = useMemo(() => {
+    const ids = new Set<string>();
+    const classes = new Set<string>();
+
+    // Match ID selectors (#id)
+    const idMatches = cssValue.matchAll(/#([a-zA-Z0-9_-]+)/g);
+    for (const match of idMatches) {
+      ids.add(match[1]);
+    }
+
+    // Match class selectors (.class)
+    const classMatches = cssValue.matchAll(/\.([a-zA-Z0-9_-]+)/g);
+    for (const match of classMatches) {
+      classes.add(match[1]);
+    }
+
+    return { ids, classes };
+  }, [cssValue]);
+
+  // Extract all IDs and Classes from elements and filter out already used ones
   const extractedSelectors = useMemo(() => {
     const ids = new Set<string>();
     const classes = new Set<string>();
 
     elements.forEach((element) => {
       // Extract element ID
-      if (element.settings.elementId) {
+      if (element.settings.elementId && !usedSelectors.ids.has(element.settings.elementId)) {
         ids.add(element.settings.elementId);
       }
 
       // Extract element classes
       if (element.settings.elementClass) {
         const classList = element.settings.elementClass.split(' ').filter(Boolean);
-        classList.forEach((cls) => classes.add(cls));
+        classList.forEach((cls) => {
+          if (!usedSelectors.classes.has(cls)) {
+            classes.add(cls);
+          }
+        });
       }
     });
 
@@ -28,7 +54,7 @@ export const CSSEditor: React.FC = () => {
       ids: Array.from(ids).sort(),
       classes: Array.from(classes).sort(),
     };
-  }, [elements]);
+  }, [elements, usedSelectors]);
 
   // Update local state when store changes
   useEffect(() => {
@@ -62,6 +88,32 @@ export const CSSEditor: React.FC = () => {
     if (confirm('Are you sure you want to reset all custom CSS?')) {
       setCssValue('');
       setCustomCSS('');
+    }
+  };
+
+  // Syntax highlighting for CSS
+  const highlightCSS = (css: string) => {
+    if (!css) return '';
+
+    // Highlight selectors (IDs and Classes)
+    let highlighted = css
+      // Escape HTML
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      // Highlight ID selectors
+      .replace(/(#[a-zA-Z0-9_-]+)/g, '<span style="color: #3b82f6;">$1</span>')
+      // Highlight class selectors
+      .replace(/(\.[a-zA-Z0-9_-]+)/g, '<span style="color: #3b82f6;">$1</span>');
+
+    return highlighted;
+  };
+
+  // Sync scroll between textarea and highlight overlay
+  const handleScroll = () => {
+    if (textareaRef.current && highlightRef.current) {
+      highlightRef.current.scrollTop = textareaRef.current.scrollTop;
+      highlightRef.current.scrollLeft = textareaRef.current.scrollLeft;
     }
   };
 
@@ -144,12 +196,36 @@ export const CSSEditor: React.FC = () => {
         </div>
       )}
 
-      {/* CSS Editor */}
-      <div className="flex-1 overflow-hidden">
+      {/* CSS Editor with Syntax Highlighting */}
+      <div className="flex-1 overflow-hidden relative bg-dark-bg">
+        {/* Highlighted overlay */}
+        <pre
+          ref={highlightRef}
+          className="absolute inset-0 p-4 bg-transparent text-transparent font-mono text-sm pointer-events-none overflow-auto whitespace-pre-wrap break-words"
+          style={{
+            margin: 0,
+            border: 'none',
+            outline: 'none',
+            lineHeight: '1.5',
+          }}
+          dangerouslySetInnerHTML={{
+            __html: cssValue ? highlightCSS(cssValue) : ''
+          }}
+        />
+
+        {/* Actual textarea */}
         <textarea
+          ref={textareaRef}
           value={cssValue}
           onChange={(e) => setCssValue(e.target.value)}
-          className="w-full h-full p-4 bg-dark-bg text-light-text font-mono text-sm resize-none focus:outline-none"
+          onScroll={handleScroll}
+          className="absolute inset-0 w-full h-full p-4 bg-transparent text-light-text font-mono text-sm resize-none focus:outline-none"
+          style={{
+            color: cssValue ? 'transparent' : '#9ca3af',
+            background: 'transparent',
+            lineHeight: '1.5',
+            caretColor: '#d1d5db',
+          }}
           placeholder="/* Enter your custom CSS here... */
 
 /* Example: */
