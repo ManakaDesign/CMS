@@ -776,16 +776,12 @@ export const ElementSettings: React.FC = () => {
               </div>
 
               {/* Padding */}
-              <div>
-                <label className="block text-sm font-medium text-green-300 mb-2">Padding</label>
-                <input
-                  type="text"
-                  value={getColumnStyleValue('padding')}
-                  onChange={(e) => updateColumnStyle('padding', e.target.value)}
-                  placeholder="e.g., 20px or 1rem 2rem"
-                  className="w-full px-3 py-2 bg-dark-panel border border-green-400/30 rounded text-sm text-light-text placeholder-light-muted focus:border-green-400 focus:outline-none"
-                />
-              </div>
+              <SpacingControl
+                label="Padding"
+                value={getColumnStyleValue('padding')}
+                onChange={(value) => updateColumnStyle('padding', value)}
+                className="mb-4"
+              />
 
               {/* Border */}
               <div>
