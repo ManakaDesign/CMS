@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useBuilderStore } from '../../store/builderStore';
-import { FiTrash2, FiCopy, FiEye, FiEyeOff, FiDroplet, FiImage, FiVideo, FiAlignLeft, FiAlignCenter, FiAlignRight } from 'react-icons/fi';
+import { FiTrash2, FiCopy, FiEye, FiEyeOff, FiDroplet, FiImage, FiVideo, FiAlignLeft, FiAlignCenter, FiAlignRight, FiArrowLeft, FiArrowRight, FiMinus } from 'react-icons/fi';
 import { SpacingControl } from './SpacingControl';
 
 type BackgroundType = 'color' | 'gradient' | 'image' | 'video' | 'none';
@@ -10,7 +10,7 @@ export const ElementSettings: React.FC = () => {
     useBuilderStore();
 
   const element = selectedElementId ? getElementById(selectedElementId) : null;
-  const [settingsTab, setSettingsTab] = useState<'design' | 'element'>('design');
+  const [settingsTab, setSettingsTab] = useState<'design' | 'element'>('element');
   const [styleMode, setStyleMode] = useState<'normal' | 'hover'>('normal');
   const [backgroundType, setBackgroundType] = useState<BackgroundType>('color');
 
@@ -177,16 +177,6 @@ export const ElementSettings: React.FC = () => {
       {/* Tabs */}
       <div className="flex border-b border-dark-border">
         <button
-          onClick={() => setSettingsTab('design')}
-          className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-            settingsTab === 'design'
-              ? 'text-brand-primary border-b-2 border-brand-primary bg-dark-panel'
-              : 'text-light-muted hover:text-light-text hover:bg-dark-hover'
-          }`}
-        >
-          Design
-        </button>
-        <button
           onClick={() => setSettingsTab('element')}
           className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
             settingsTab === 'element'
@@ -196,10 +186,20 @@ export const ElementSettings: React.FC = () => {
         >
           Element
         </button>
+        <button
+          onClick={() => setSettingsTab('design')}
+          className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+            settingsTab === 'design'
+              ? 'text-brand-primary border-b-2 border-brand-primary bg-dark-panel'
+              : 'text-light-muted hover:text-light-text hover:bg-dark-hover'
+          }`}
+        >
+          Design
+        </button>
       </div>
 
-      {/* Tab Content - Design */}
-      {settingsTab === 'design' && (
+      {/* Tab Content - Element */}
+      {settingsTab === 'element' && (
         <>
       {/* Content Settings */}
       <div className="p-4 border-b border-dark-border">
@@ -376,6 +376,42 @@ export const ElementSettings: React.FC = () => {
         )}
       </div>
 
+      {/* Element Attributes */}
+      <div className="p-4 border-b border-dark-border">
+        <h3 className="text-xs font-semibold text-light-muted uppercase mb-3">Element Attributes</h3>
+
+        {/* Element ID */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-light-text mb-2">Element ID</label>
+          <input
+            type="text"
+            value={element.settings.elementId || ''}
+            onChange={(e) => updateSetting('elementId', e.target.value)}
+            className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+            placeholder="my-element-id"
+          />
+          <p className="text-xs text-light-muted mt-1">Unique identifier for this element</p>
+        </div>
+
+        {/* Element Class */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-light-text mb-2">CSS Classes</label>
+          <input
+            type="text"
+            value={element.settings.elementClass || ''}
+            onChange={(e) => updateSetting('elementClass', e.target.value)}
+            className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+            placeholder="class-1 class-2 class-3"
+          />
+          <p className="text-xs text-light-muted mt-1">Space-separated CSS class names</p>
+        </div>
+      </div>
+        </>
+      )}
+
+      {/* Tab Content - Design */}
+      {settingsTab === 'design' && (
+        <>
       {/* Style Settings */}
       <div className="p-4">
         <div className="flex items-center justify-between mb-3">
@@ -568,7 +604,7 @@ export const ElementSettings: React.FC = () => {
                   }`}
                   title="Align Left"
                 >
-                  <FiAlignLeft size={16} />
+                  <FiArrowLeft size={16} />
                 </button>
                 <button
                   onClick={() => handleAlignment('auto', 'auto')}
@@ -577,7 +613,7 @@ export const ElementSettings: React.FC = () => {
                   }`}
                   title="Align Center"
                 >
-                  <FiAlignCenter size={16} />
+                  <FiMinus size={16} />
                 </button>
                 <button
                   onClick={() => handleAlignment('auto', '0')}
@@ -586,7 +622,7 @@ export const ElementSettings: React.FC = () => {
                   }`}
                   title="Align Right"
                 >
-                  <FiAlignRight size={16} />
+                  <FiArrowRight size={16} />
                 </button>
               </div>
             </div>
@@ -877,39 +913,6 @@ export const ElementSettings: React.FC = () => {
         </div>
       </div>
         </>
-      )}
-
-      {/* Tab Content - Element */}
-      {settingsTab === 'element' && (
-        <div className="p-4">
-          <h3 className="text-xs font-semibold text-light-muted uppercase mb-4">Element Attributes</h3>
-
-          {/* Element ID */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-light-text mb-2">Element ID</label>
-            <input
-              type="text"
-              value={element.settings.elementId || ''}
-              onChange={(e) => updateSetting('elementId', e.target.value)}
-              className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
-              placeholder="my-element-id"
-            />
-            <p className="text-xs text-light-muted mt-1">Unique identifier for this element</p>
-          </div>
-
-          {/* Element Class */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-light-text mb-2">CSS Classes</label>
-            <input
-              type="text"
-              value={element.settings.elementClass || ''}
-              onChange={(e) => updateSetting('elementClass', e.target.value)}
-              className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
-              placeholder="class-1 class-2 class-3"
-            />
-            <p className="text-xs text-light-muted mt-1">Space-separated CSS class names</p>
-          </div>
-        </div>
       )}
     </div>
   );
