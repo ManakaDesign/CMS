@@ -135,8 +135,10 @@ export const ElementSettings: React.FC = () => {
   const updateStyleDirect = (property: string, value: string, breakpoint: 'desktop' | 'tablet' | 'mobile' = 'desktop') => {
     if (isMultiSelect) {
       // Multi-select: batch update all selected elements
+      // Get fresh elements from store to avoid stale closure
+      const currentElements = useBuilderStore.getState().elements;
       const elementIdsSet = new Set(selectedElementIds);
-      const updatedElements = elements.map(el => {
+      const updatedElements = currentElements.map(el => {
         if (!elementIdsSet.has(el.id)) return el;
 
         if (styleMode === 'hover') {
@@ -208,8 +210,10 @@ export const ElementSettings: React.FC = () => {
 
     if (isMultiSelect) {
       // Multi-select: batch update all selected elements
+      // Get fresh elements from store to avoid stale closure
+      const currentElements = useBuilderStore.getState().elements;
       const elementIdsSet = new Set(selectedElementIds);
-      const updatedElements = elements.map(el => {
+      const updatedElements = currentElements.map(el => {
         if (!elementIdsSet.has(el.id)) return el;
 
         if (styleMode === 'hover') {

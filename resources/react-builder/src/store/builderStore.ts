@@ -184,7 +184,7 @@ export const useBuilderStore = create<BuilderStore>()(
       },
 
       deleteElement: (elementId) => {
-        const { elements, selectedElementId } = get();
+        const { elements, selectedElementId, selectedElementIds } = get();
 
         // Get all descendants to delete
         const toDelete = new Set<number>();
@@ -199,9 +199,13 @@ export const useBuilderStore = create<BuilderStore>()(
         // Filter out deleted elements
         const updatedElements = elements.filter((el) => !toDelete.has(el.id));
 
+        // Clean up selectedElementIds - remove any deleted element IDs
+        const updatedSelectedElementIds = selectedElementIds.filter(id => !toDelete.has(id));
+
         set({
           elements: updatedElements,
           selectedElementId: selectedElementId === elementId ? null : selectedElementId,
+          selectedElementIds: updatedSelectedElementIds,
         });
 
         get().addToHistory();
