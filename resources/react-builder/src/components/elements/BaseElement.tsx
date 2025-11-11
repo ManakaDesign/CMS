@@ -31,7 +31,7 @@ export const BaseElement: React.FC<BaseElementProps> = ({
   onMouseLeave,
   skipStyles = false,
 }) => {
-  const { activeBreakpoint } = useBuilderStore();
+  const { activeBreakpoint, selectedElementIds, toggleElementSelection } = useBuilderStore();
 
   const getActiveStyles = (): React.CSSProperties => {
     // Build styles with proper inheritance: desktop → tablet → mobile
@@ -89,14 +89,24 @@ export const BaseElement: React.FC<BaseElementProps> = ({
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onClick?.();
+
+    // Check if Shift key is pressed for multi-select
+    if (e.shiftKey) {
+      toggleElementSelection(element.id);
+    } else {
+      onClick?.();
+    }
   };
 
-  const borderColor = getBorderColor(element.type);
+  // Check if this element is part of multi-selection
+  const isMultiSelected = selectedElementIds.includes(element.id);
+
+  // Determine border color: orange for multi-select, otherwise type-based
+  const borderColor = isMultiSelected ? '#f97316' : getBorderColor(element.type); // Orange for multi-select
 
   // Use inset box-shadow for inside borders instead of outline
   const outlineStyle: React.CSSProperties = {};
-  if (isSelected) {
+  if (isSelected || isMultiSelected) {
     outlineStyle.boxShadow = `inset 0 0 0 2px ${borderColor}`;
   } else if (isHovered) {
     outlineStyle.boxShadow = `inset 0 0 0 2px ${borderColor}`;
@@ -171,7 +181,7 @@ export const BaseElement: React.FC<BaseElementProps> = ({
         onMouseLeave={onMouseLeave}
       >
         {/* Show toolbar on hover or selection */}
-        {(isHovered || isSelected) && (
+        {(isHovered || isSelected || isMultiSelected) && (
           <ElementToolbar
             elementId={element.id}
             elementType={element.type}

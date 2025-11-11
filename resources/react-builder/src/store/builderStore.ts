@@ -16,6 +16,7 @@ interface BuilderStore {
 
   // UI State
   selectedElementId: number | null;
+  selectedElementIds: number[]; // Multi-select support
   selectedColumnIndex: number | null;
   hoveredElementId: number | null;
   activeBreakpoint: Breakpoint;
@@ -37,10 +38,13 @@ interface BuilderStore {
   selectElement: (elementId: number | null) => void;
   selectColumn: (columnIndex: number | null) => void;
   hoverElement: (elementId: number | null) => void;
+  toggleElementSelection: (elementId: number) => void;
+  clearMultiSelection: () => void;
 
   // Actions - Element CRUD
   addElement: (element: Element) => void;
   updateElement: (elementId: number, updates: Partial<Element>) => void;
+  updateMultipleElements: (elementIds: number[], updates: Partial<Element>) => void;
   deleteElement: (elementId: number) => void;
   moveElement: (elementId: number, newParentId: number | null, newOrder: number) => void;
   duplicateElement: (elementId: number) => void;
@@ -76,6 +80,7 @@ export const useBuilderStore = create<BuilderStore>()(
       elements: [],
       customCSS: '',
       selectedElementId: null,
+      selectedElementIds: [],
       selectedColumnIndex: null,
       hoveredElementId: null,
       activeBreakpoint: 'desktop',
@@ -101,11 +106,56 @@ export const useBuilderStore = create<BuilderStore>()(
       setCustomCSS: (customCSS) => set({ customCSS }),
 
       // Selection Actions
-      selectElement: (elementId) => set({ selectedElementId: elementId, selectedColumnIndex: null }),
+      selectElement: (elementId) => set({ selectedElementId: elementId, selectedElementIds: [], selectedColumnIndex: null }),
 
       selectColumn: (columnIndex) => set({ selectedColumnIndex: columnIndex }),
 
       hoverElement: (elementId) => set({ hoveredElementId: elementId }),
+
+      toggleElementSelection: (elementId) => {
+        const { elements, selectedElementIds } = get();
+        const element = elements.find((el) => el.id === elementId);
+
+        if (!element) return;
+
+        // If this is the first element being selected in multi-select mode
+        if (selectedElementIds.length === 0) {
+          set({
+            selectedElementIds: [elementId],
+            selectedElementId: null,
+            selectedColumnIndex: null,
+          });
+          return;
+        }
+
+        // Check if all currently selected elements are of the same type
+        const selectedElements = elements.filter((el) => selectedElementIds.includes(el.id));
+        const firstType = selectedElements[0]?.type;
+
+        // Only allow selecting elements of the same type
+        if (element.type !== firstType) {
+          return; // Ignore selection if type doesn't match
+        }
+
+        // Toggle selection
+        if (selectedElementIds.includes(elementId)) {
+          // Remove from selection
+          const newSelection = selectedElementIds.filter((id) => id !== elementId);
+          set({
+            selectedElementIds: newSelection,
+            // If only one element left, convert back to single selection
+            selectedElementId: newSelection.length === 1 ? newSelection[0] : null,
+          });
+        } else {
+          // Add to selection
+          set({
+            selectedElementIds: [...selectedElementIds, elementId],
+            selectedElementId: null,
+          });
+        }
+      },
+
+      clearMultiSelection: () => set({ selectedElementIds: [] }),
 
       // Element CRUD Actions
       addElement: (element) => {
@@ -119,6 +169,15 @@ export const useBuilderStore = create<BuilderStore>()(
         const { elements } = get();
         const updatedElements = elements.map((el) =>
           el.id === elementId ? { ...el, ...updates } : el
+        );
+        set({ elements: updatedElements });
+        get().addToHistory();
+      },
+
+      updateMultipleElements: (elementIds, updates) => {
+        const { elements } = get();
+        const updatedElements = elements.map((el) =>
+          elementIds.includes(el.id) ? { ...el, ...updates } : el
         );
         set({ elements: updatedElements });
         get().addToHistory();
@@ -338,6 +397,7 @@ export const useBuilderStore = create<BuilderStore>()(
           page: null,
           elements: [],
           selectedElementId: null,
+          selectedElementIds: [],
           hoveredElementId: null,
           activeBreakpoint: 'desktop',
           breakpointWidths: {
