@@ -23,6 +23,7 @@ export const Builder: React.FC = () => {
     page,
     elements,
     selectedElementId,
+    selectedElementIds,
     activeBreakpoint,
     breakpointWidths,
     isPreviewMode,
@@ -331,7 +332,7 @@ export const Builder: React.FC = () => {
           </div>
 
           {/* Right Sidebar - Element Settings */}
-          {!isPreviewMode && selectedElementId && (
+          {!isPreviewMode && (selectedElementId || selectedElementIds.length > 0) && (
             <div className="w-80 bg-dark-surface border-l border-dark-border overflow-y-auto flex-shrink-0">
               <ElementSettings />
             </div>
