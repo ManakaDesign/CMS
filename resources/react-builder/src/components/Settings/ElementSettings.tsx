@@ -876,6 +876,17 @@ export const ElementSettings: React.FC = () => {
               </select>
             </div>
             <div className="mb-4">
+              <label className="block text-sm font-medium text-light-text mb-2">Line Height</label>
+              <input
+                type="text"
+                value={getStyleValue('lineHeight')}
+                onChange={(e) => updateStyleDirect('lineHeight', e.target.value, activeBreakpoint)}
+                onBlur={(e) => updateStyle('lineHeight', e.target.value, activeBreakpoint)}
+                className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                placeholder="1.5 or 24px"
+              />
+            </div>
+            <div className="mb-4">
               <label className="block text-sm font-medium text-light-text mb-2">Text Color</label>
               <input
                 type="color"
