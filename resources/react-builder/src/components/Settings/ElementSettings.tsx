@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useBuilderStore } from '../../store/builderStore';
-import { FiTrash2, FiCopy, FiEye, FiEyeOff, FiDroplet, FiImage, FiVideo, FiAlignLeft, FiAlignCenter, FiAlignRight, FiArrowLeft, FiArrowRight, FiMinus } from 'react-icons/fi';
+import { FiTrash2, FiCopy, FiEye, FiEyeOff, FiDroplet, FiImage, FiVideo, FiAlignLeft, FiAlignCenter, FiAlignRight } from 'react-icons/fi';
+import { RiAlignItemLeftFill, RiAlignItemHorizontalCenterFill, RiAlignItemRightFill } from 'react-icons/ri';
 import { SpacingControl } from './SpacingControl';
 
 type BackgroundType = 'color' | 'gradient' | 'image' | 'video' | 'none';
@@ -604,7 +605,7 @@ export const ElementSettings: React.FC = () => {
                   }`}
                   title="Align Left"
                 >
-                  <FiArrowLeft size={16} />
+                  <RiAlignItemLeftFill size={16} />
                 </button>
                 <button
                   onClick={() => handleAlignment('auto', 'auto')}
@@ -613,7 +614,7 @@ export const ElementSettings: React.FC = () => {
                   }`}
                   title="Align Center"
                 >
-                  <FiMinus size={16} />
+                  <RiAlignItemHorizontalCenterFill size={16} />
                 </button>
                 <button
                   onClick={() => handleAlignment('auto', '0')}
@@ -622,7 +623,7 @@ export const ElementSettings: React.FC = () => {
                   }`}
                   title="Align Right"
                 >
-                  <FiArrowRight size={16} />
+                  <RiAlignItemRightFill size={16} />
                 </button>
               </div>
             </div>
