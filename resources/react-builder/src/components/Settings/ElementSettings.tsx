@@ -135,9 +135,12 @@ export const ElementSettings: React.FC = () => {
   const updateStyleDirect = (property: string, value: string, breakpoint: 'desktop' | 'tablet' | 'mobile' = 'desktop') => {
     if (isMultiSelect) {
       // Multi-select: batch update all selected elements
-      // Get fresh elements from store to avoid stale closure
-      const currentElements = useBuilderStore.getState().elements;
-      const elementIdsSet = new Set(selectedElementIds);
+      // Get fresh data from store to avoid stale closure
+      const store = useBuilderStore.getState();
+      const currentElements = store.elements;
+      const currentSelectedIds = store.selectedElementIds;
+      const elementIdsSet = new Set(currentSelectedIds);
+
       const updatedElements = currentElements.map(el => {
         if (!elementIdsSet.has(el.id)) return el;
 
@@ -210,9 +213,12 @@ export const ElementSettings: React.FC = () => {
 
     if (isMultiSelect) {
       // Multi-select: batch update all selected elements
-      // Get fresh elements from store to avoid stale closure
-      const currentElements = useBuilderStore.getState().elements;
-      const elementIdsSet = new Set(selectedElementIds);
+      // Get fresh data from store to avoid stale closure
+      const store = useBuilderStore.getState();
+      const currentElements = store.elements;
+      const currentSelectedIds = store.selectedElementIds;
+      const elementIdsSet = new Set(currentSelectedIds);
+
       const updatedElements = currentElements.map(el => {
         if (!elementIdsSet.has(el.id)) return el;
 
