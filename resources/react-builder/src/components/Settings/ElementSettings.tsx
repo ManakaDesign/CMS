@@ -1085,7 +1085,10 @@ export const ElementSettings: React.FC = () => {
               <label className="block text-sm font-medium text-light-text mb-2">Text Alignment</label>
               <div className="flex items-center gap-1 bg-dark-panel border border-dark-border rounded p-1">
                 <button
-                  onClick={() => updateStyle('textAlign', 'left', activeBreakpoint)}
+                  onClick={() => {
+                    console.log('[DEBUG] Alignment LEFT button clicked!');
+                    updateStyle('textAlign', 'left', activeBreakpoint);
+                  }}
                   className={`flex-1 p-2 rounded transition-colors flex items-center justify-center ${
                     getStyleValue('textAlign') === 'left' || !getStyleValue('textAlign')
                       ? 'bg-brand-primary text-white'
@@ -1096,7 +1099,10 @@ export const ElementSettings: React.FC = () => {
                   <FiAlignLeft size={16} />
                 </button>
                 <button
-                  onClick={() => updateStyle('textAlign', 'center', activeBreakpoint)}
+                  onClick={() => {
+                    console.log('[DEBUG] Alignment CENTER button clicked!');
+                    updateStyle('textAlign', 'center', activeBreakpoint);
+                  }}
                   className={`flex-1 p-2 rounded transition-colors flex items-center justify-center ${
                     getStyleValue('textAlign') === 'center'
                       ? 'bg-brand-primary text-white'
@@ -1107,7 +1113,10 @@ export const ElementSettings: React.FC = () => {
                   <FiAlignCenter size={16} />
                 </button>
                 <button
-                  onClick={() => updateStyle('textAlign', 'right', activeBreakpoint)}
+                  onClick={() => {
+                    console.log('[DEBUG] Alignment RIGHT button clicked!');
+                    updateStyle('textAlign', 'right', activeBreakpoint);
+                  }}
                   className={`flex-1 p-2 rounded transition-colors flex items-center justify-center ${
                     getStyleValue('textAlign') === 'right'
                       ? 'bg-brand-primary text-white'
