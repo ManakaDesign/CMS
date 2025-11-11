@@ -9,7 +9,7 @@ export default {
       colors: {
         // Brand colors
         brand: {
-          primary: '#0ea5e9',  // Sky blue
+          primary: '#246dff',  // Blue
         },
         // Dark mode UI colors
         dark: {
@@ -29,16 +29,17 @@ export default {
         },
         // Keep backward compatibility with old primary colors
         primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
+          50: '#f5f0ff',
+          100: '#ede5ff',
+          200: '#dccfff',
+          300: '#c3a8ff',
+          400: '#a677ff',
+          500: '#8a4dff',
+          600: '#7d2fff',
+          700: '#6819e6',
+          800: '#5515c2',
+          900: '#47129f',
+          950: '#3E0BAA',
         },
       },
     },

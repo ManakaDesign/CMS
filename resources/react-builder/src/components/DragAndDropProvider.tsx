@@ -2,6 +2,7 @@ import React from 'react';
 import { DndContext, type DragEndEvent, DragOverlay, type DragStartEvent } from '@dnd-kit/core';
 import { useBuilderStore } from '../store/builderStore';
 import type { Element, ElementType } from '../types';
+import { useDragContext } from '../contexts/DragContext';
 
 interface DragAndDropProviderProps {
   children: React.ReactNode;
@@ -9,11 +10,17 @@ interface DragAndDropProviderProps {
 
 export const DragAndDropProvider: React.FC<DragAndDropProviderProps> = ({ children }) => {
   const { page, elements, addElement, moveElement, setIsDragging } = useBuilderStore();
+  const { setActiveElementType } = useDragContext();
   const [activeId, setActiveId] = React.useState<string | null>(null);
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
     setIsDragging(true);
+
+    // Set the active element type for drop zones to use
+    const dragData = event.active.data.current;
+    const elementType = dragData?.type || dragData?.elementType;
+    setActiveElementType(elementType || null);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -21,6 +28,7 @@ export const DragAndDropProvider: React.FC<DragAndDropProviderProps> = ({ childr
 
     setActiveId(null);
     setIsDragging(false);
+    setActiveElementType(null);
 
     if (!over || !page) return;
 
@@ -45,6 +53,9 @@ export const DragAndDropProvider: React.FC<DragAndDropProviderProps> = ({ childr
         defaultSettings.columnIndex = dropData.columnIndex;
       }
 
+      // Calculate order based on drop zone index
+      const dropIndex = dropData?.index ?? 0;
+
       // Create default element based on type
       const newElement: Element = {
         id: Date.now(), // Temporary ID, will be replaced by server
@@ -55,7 +66,7 @@ export const DragAndDropProvider: React.FC<DragAndDropProviderProps> = ({ childr
           desktop: getDefaultStyles(elementType),
         },
         parent_id: parentId ?? undefined,
-        order: 0, // Will be calculated properly
+        order: dropIndex,
         is_visible: true,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -97,9 +108,8 @@ export const DragAndDropProvider: React.FC<DragAndDropProviderProps> = ({ childr
         return;
       }
 
-      // Calculate new order (add to end of siblings)
-      const siblings = elements.filter(el => el.parent_id === newParentId);
-      const newOrder = siblings.length > 0 ? Math.max(...siblings.map(el => el.order)) + 1 : 0;
+      // Calculate new order from drop zone index
+      const newOrder = dropData?.index ?? 0;
 
       moveElement(elementId, newParentId, newOrder);
 

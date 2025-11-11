@@ -21,7 +21,7 @@ export const BreakpointSettings: React.FC<BreakpointSettingsProps> = ({ onClose 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="bg-dark-surface rounded-lg shadow-xl w-full max-w-md border border-dark-border">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-dark-border">

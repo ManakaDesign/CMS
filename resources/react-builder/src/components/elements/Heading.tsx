@@ -13,29 +13,39 @@ interface HeadingProps {
 }
 
 export const Heading: React.FC<HeadingProps> = (props) => {
-  const { element, isSelected, ...baseProps } = props;
+  const { element, isSelected, onClick, ...baseProps } = props;
   const { updateElement } = useBuilderStore();
   const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState('');
   const contentRef = useRef<HTMLDivElement>(null);
+  const wasSelectedRef = useRef(false);
 
   const tag = (element.settings.tag || 'h2') as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
   const content = element.settings.content || 'Your Heading Here';
 
-  // Enable editing on double-click when selected
-  const handleDoubleClick = (e: React.MouseEvent) => {
-    if (isSelected) {
-      e.stopPropagation();
+  // Handle click: first click selects, second click on selected element enables editing
+  const handleTextClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (isSelected && wasSelectedRef.current && !isEditing) {
+      // Second click on already selected element -> start editing
       setIsEditing(true);
-      setEditContent(content);
+    } else {
+      // First click -> select element
+      onClick?.();
     }
   };
 
+  // Track if element was already selected
+  useEffect(() => {
+    wasSelectedRef.current = isSelected || false;
+  }, [isSelected]);
+
   // Handle inline editing
   const handleBlur = () => {
-    if (editContent !== content) {
+    const newContent = contentRef.current?.innerHTML || content;
+    if (newContent !== content) {
       updateElement(element.id, {
-        settings: { ...element.settings, content: editContent },
+        settings: { ...element.settings, content: newContent },
       });
     }
     setIsEditing(false);
@@ -44,16 +54,21 @@ export const Heading: React.FC<HeadingProps> = (props) => {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
       setIsEditing(false);
-      setEditContent(content);
+      // Reset content on escape
+      if (contentRef.current) {
+        contentRef.current.innerHTML = content;
+      }
     } else if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleBlur();
     }
   };
 
-  // Auto-focus when editing starts
+  // Auto-focus and set initial content when editing starts
   useEffect(() => {
     if (isEditing && contentRef.current) {
+      // Set initial content
+      contentRef.current.innerHTML = content;
       contentRef.current.focus();
       // Select all text
       const range = document.createRange();
@@ -65,7 +80,7 @@ export const Heading: React.FC<HeadingProps> = (props) => {
   }, [isEditing]);
 
   return (
-    <BaseElement element={element} isSelected={isSelected} {...baseProps}>
+    <BaseElement element={element} isSelected={isSelected} onClick={onClick} {...baseProps}>
       {isEditing ? (
         <div
           ref={contentRef}
@@ -73,14 +88,12 @@ export const Heading: React.FC<HeadingProps> = (props) => {
           suppressContentEditableWarning
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
-          onInput={(e) => setEditContent(e.currentTarget.innerHTML)}
-          dangerouslySetInnerHTML={{ __html: editContent }}
           className="outline-none min-h-[1em]"
         />
       ) : (
         React.createElement(tag, {
           dangerouslySetInnerHTML: { __html: content },
-          onDoubleClick: handleDoubleClick,
+          onClick: handleTextClick,
           className: 'cursor-text',
         })
       )}

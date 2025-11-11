@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FiSettings, FiEye, FiSave, FiMonitor, FiTablet, FiSmartphone, FiArrowLeft } from 'react-icons/fi';
+import { FiSettings, FiEye, FiSave, FiMonitor, FiTablet, FiSmartphone, FiArrowLeft, FiLayers, FiGrid, FiCode } from 'react-icons/fi';
 import { useBuilderStore } from '../store/builderStore';
 import type { Breakpoint } from '../types';
 import { DragAndDropProvider } from '../components/DragAndDropProvider';
@@ -8,7 +8,10 @@ import { DroppableCanvas } from '../components/DroppableCanvas';
 import { ElementsSidebar } from '../components/Sidebar/ElementsSidebar';
 import { ElementSettings } from '../components/Settings/ElementSettings';
 import { BreakpointSettings } from '../components/Settings/BreakpointSettings';
+import { LayerTree } from '../components/LayerTree/LayerTree';
+import { CSSEditor } from '../components/CSSEditor/CSSEditor';
 import { pagesApi } from '../api/services';
+import { DragContextProvider } from '../contexts/DragContext';
 
 export const Builder: React.FC = () => {
   console.log('[DEBUG] Builder component loaded - NEW VERSION with layout fixes');
@@ -40,6 +43,7 @@ export const Builder: React.FC = () => {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [leftPanel, setLeftPanel] = useState<'elements' | 'layers' | 'css'>('elements');
 
   // Load page on mount
   useEffect(() => {
@@ -136,8 +140,9 @@ export const Builder: React.FC = () => {
   console.log('[DEBUG] Builder rendering with layout classes: outer=min-h-screen, toolbar=fixed top-0, main=flex pt-16 h-screen');
 
   return (
-    <DragAndDropProvider>
-      <div className="min-h-screen bg-dark-bg">
+    <DragContextProvider>
+      <DragAndDropProvider>
+        <div className="min-h-screen bg-dark-bg">
         {/* Top Toolbar */}
         <div className="fixed top-0 left-0 right-0 h-16 bg-dark-surface border-b border-dark-border z-50 flex items-center justify-between px-4">
           {/* Left */}
@@ -164,7 +169,7 @@ export const Builder: React.FC = () => {
                   key={value}
                   onClick={() => setActiveBreakpoint(value)}
                   className={`
-                    flex items-center space-x-2 px-3 py-2 rounded-md transition-colors
+                    flex items-center justify-center p-2 rounded-md transition-colors
                     ${
                       activeBreakpoint === value
                         ? 'bg-brand-primary text-white shadow-sm'
@@ -174,7 +179,6 @@ export const Builder: React.FC = () => {
                   title={label}
                 >
                   <Icon size={18} />
-                  <span className="hidden md:inline text-sm">{label}</span>
                 </button>
               ))}
             </div>
@@ -253,10 +257,57 @@ export const Builder: React.FC = () => {
 
         {/* Main Content */}
         <div className="flex pt-16 h-screen">
-          {/* Left Sidebar - Elements Library */}
+          {/* Left Panel Switcher */}
+          {!isPreviewMode && (
+            <div className="w-12 bg-dark-surface border-r border-dark-border flex flex-col flex-shrink-0">
+              <button
+                onClick={() => setLeftPanel('elements')}
+                className={`
+                  flex items-center justify-center p-3 transition-colors border-b border-dark-border
+                  ${leftPanel === 'elements'
+                    ? 'bg-brand-primary text-white'
+                    : 'text-light-muted hover:text-light-text hover:bg-dark-hover'
+                  }
+                `}
+                title="Elements"
+              >
+                <FiGrid size={18} />
+              </button>
+              <button
+                onClick={() => setLeftPanel('layers')}
+                className={`
+                  flex items-center justify-center p-3 transition-colors border-b border-dark-border
+                  ${leftPanel === 'layers'
+                    ? 'bg-brand-primary text-white'
+                    : 'text-light-muted hover:text-light-text hover:bg-dark-hover'
+                  }
+                `}
+                title="Layer Tree"
+              >
+                <FiLayers size={18} />
+              </button>
+              <button
+                onClick={() => setLeftPanel('css')}
+                className={`
+                  flex items-center justify-center p-3 transition-colors border-b border-dark-border
+                  ${leftPanel === 'css'
+                    ? 'bg-brand-primary text-white'
+                    : 'text-light-muted hover:text-light-text hover:bg-dark-hover'
+                  }
+                `}
+                title="CSS Editor"
+              >
+                <FiCode size={18} />
+              </button>
+            </div>
+          )}
+
+          {/* Left Sidebar - Elements Library, Layer Tree, or CSS Editor */}
           {!isPreviewMode && (
             <div className="w-64 bg-dark-surface border-r border-dark-border overflow-y-auto flex-shrink-0">
-              <ElementsSidebar />
+              {leftPanel === 'elements' && <ElementsSidebar />}
+              {leftPanel === 'layers' && <LayerTree />}
+              {leftPanel === 'css' && <CSSEditor />}
             </div>
           )}
 
@@ -291,7 +342,8 @@ export const Builder: React.FC = () => {
         {showBreakpointSettings && (
           <BreakpointSettings onClose={() => setShowBreakpointSettings(false)} />
         )}
-      </div>
-    </DragAndDropProvider>
+        </div>
+      </DragAndDropProvider>
+    </DragContextProvider>
   );
 };
