@@ -10,11 +10,13 @@ export const ElementSettings: React.FC = () => {
   const { selectedElementId, selectedElementIds, selectedColumnIndex, selectColumn, getElementById, updateElement, deleteElement, duplicateElement, activeBreakpoint, elements } =
     useBuilderStore();
 
-  // Check if we're in multi-select mode
-  const isMultiSelect = selectedElementIds.length > 1;
-  const selectedElements = isMultiSelect
+  // Always compute selectedElements based on selectedElementIds
+  const selectedElements = selectedElementIds.length > 0
     ? elements.filter(el => selectedElementIds.includes(el.id))
     : [];
+
+  // Check if we're in multi-select mode
+  const isMultiSelect = selectedElementIds.length > 1;
 
   const element = selectedElementId ? getElementById(selectedElementId) : (isMultiSelect ? selectedElements[0] : null);
   const [settingsTab, setSettingsTab] = useState<'design' | 'element'>('element');
