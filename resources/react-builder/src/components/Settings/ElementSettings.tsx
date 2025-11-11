@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useBuilderStore } from '../../store/builderStore';
-import { FiTrash2, FiCopy, FiEye, FiEyeOff, FiDroplet, FiImage, FiVideo, FiAlignLeft, FiAlignCenter, FiAlignRight } from 'react-icons/fi';
+import { FiTrash2, FiCopy, FiEye, FiEyeOff, FiDroplet, FiImage, FiVideo, FiAlignLeft, FiAlignCenter, FiAlignRight, FiSettings, FiColumns } from 'react-icons/fi';
 import { RiAlignItemLeftFill, RiAlignItemHorizontalCenterFill, RiAlignItemRightFill } from 'react-icons/ri';
 import { SpacingControl } from './SpacingControl';
 
 type BackgroundType = 'color' | 'gradient' | 'image' | 'video' | 'none';
 
 export const ElementSettings: React.FC = () => {
-  const { selectedElementId, getElementById, updateElement, deleteElement, duplicateElement, activeBreakpoint, elements } =
+  const { selectedElementId, selectedColumnIndex, selectColumn, getElementById, updateElement, deleteElement, duplicateElement, activeBreakpoint, elements } =
     useBuilderStore();
 
   const element = selectedElementId ? getElementById(selectedElementId) : null;
@@ -410,6 +410,44 @@ export const ElementSettings: React.FC = () => {
                   Using default: {columnsConfig.desktop || 1} column(s)
                 </p>
               )}
+
+              {/* Column Style Selector */}
+              {currentColumns > 1 && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-light-text mb-2">
+                    Column Settings
+                  </label>
+                  <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(currentColumns, 3)}, 1fr)` }}>
+                    {Array.from({ length: currentColumns }).map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          selectColumn(index);
+                          setSettingsTab('design');
+                        }}
+                        className={`
+                          flex flex-col items-center gap-2 p-3 rounded transition-colors
+                          ${selectedColumnIndex === index
+                            ? 'bg-green-400/20 border-2 border-green-400'
+                            : 'bg-dark-panel border border-dark-border hover:bg-dark-hover'
+                          }
+                        `}
+                        title={`Edit Column ${index + 1}`}
+                      >
+                        <FiColumns size={20} className={selectedColumnIndex === index ? 'text-green-400' : 'text-light-muted'} />
+                        <span className="text-xs text-light-text">Col {index + 1}</span>
+                        <FiSettings size={14} className={selectedColumnIndex === index ? 'text-green-400' : 'text-light-muted'} />
+                      </button>
+                    ))}
+                  </div>
+                  {selectedColumnIndex !== null && (
+                    <p className="text-xs text-green-400 mt-2 flex items-center gap-1">
+                      <FiSettings size={12} />
+                      Column {selectedColumnIndex + 1} selected - edit in Design tab
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           );
         })()}
@@ -465,7 +503,95 @@ export const ElementSettings: React.FC = () => {
       {/* Tab Content - Design */}
       {settingsTab === 'design' && (
         <>
-      {/* Style Settings */}
+      {/* Column-Specific Design Settings */}
+      {element.type === 'row' && selectedColumnIndex !== null && (() => {
+        // Initialize columnStyles if not exists
+        const columnStyles = element.settings.columnStyles || [];
+        const columnStyle = columnStyles[selectedColumnIndex] || {};
+
+        const updateColumnStyle = (property: string, value: string) => {
+          const newColumnStyles = [...columnStyles];
+          newColumnStyles[selectedColumnIndex] = {
+            ...columnStyle,
+            [property]: value,
+          };
+          updateSetting('columnStyles', newColumnStyles);
+        };
+
+        return (
+          <div className="bg-green-900/30 border-b-2 border-green-400">
+            {/* Column Header */}
+            <div className="p-4 bg-green-900/20 border-b border-green-400/30 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-green-300 flex items-center gap-2">
+                  <FiColumns size={16} />
+                  Column {selectedColumnIndex + 1} Settings
+                </h3>
+                <p className="text-xs text-green-400/70 mt-1">Customize this column independently</p>
+              </div>
+              <button
+                onClick={() => selectColumn(null)}
+                className="px-3 py-1 text-xs bg-dark-panel hover:bg-dark-hover text-light-text rounded transition-colors"
+              >
+                Back to Row
+              </button>
+            </div>
+
+            {/* Column Style Controls */}
+            <div className="p-4 space-y-4">
+              {/* Background Color */}
+              <div>
+                <label className="block text-sm font-medium text-green-300 mb-2">Background Color</label>
+                <input
+                  type="color"
+                  value={columnStyle.backgroundColor || '#ffffff'}
+                  onChange={(e) => updateColumnStyle('backgroundColor', e.target.value)}
+                  className="w-full h-10 rounded cursor-pointer"
+                />
+              </div>
+
+              {/* Padding */}
+              <div>
+                <label className="block text-sm font-medium text-green-300 mb-2">Padding</label>
+                <input
+                  type="text"
+                  value={columnStyle.padding || ''}
+                  onChange={(e) => updateColumnStyle('padding', e.target.value)}
+                  placeholder="e.g., 20px or 1rem 2rem"
+                  className="w-full px-3 py-2 bg-dark-panel border border-green-400/30 rounded text-sm text-light-text placeholder-light-muted focus:border-green-400 focus:outline-none"
+                />
+              </div>
+
+              {/* Border */}
+              <div>
+                <label className="block text-sm font-medium text-green-300 mb-2">Border</label>
+                <input
+                  type="text"
+                  value={columnStyle.border || ''}
+                  onChange={(e) => updateColumnStyle('border', e.target.value)}
+                  placeholder="e.g., 1px solid #000"
+                  className="w-full px-3 py-2 bg-dark-panel border border-green-400/30 rounded text-sm text-light-text placeholder-light-muted focus:border-green-400 focus:outline-none"
+                />
+              </div>
+
+              {/* Border Radius */}
+              <div>
+                <label className="block text-sm font-medium text-green-300 mb-2">Border Radius</label>
+                <input
+                  type="text"
+                  value={columnStyle.borderRadius || ''}
+                  onChange={(e) => updateColumnStyle('borderRadius', e.target.value)}
+                  placeholder="e.g., 8px or 0.5rem"
+                  className="w-full px-3 py-2 bg-dark-panel border border-green-400/30 rounded text-sm text-light-text placeholder-light-muted focus:border-green-400 focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Normal Style Settings - only show if no column is selected */}
+      {!(element.type === 'row' && selectedColumnIndex !== null) && (
       <div className="p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-xs font-semibold text-light-muted uppercase">
@@ -965,6 +1091,7 @@ export const ElementSettings: React.FC = () => {
           />
         </div>
       </div>
+      )}
         </>
       )}
     </div>

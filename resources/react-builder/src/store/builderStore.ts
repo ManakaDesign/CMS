@@ -16,6 +16,7 @@ interface BuilderStore {
 
   // UI State
   selectedElementId: number | null;
+  selectedColumnIndex: number | null;
   hoveredElementId: number | null;
   activeBreakpoint: Breakpoint;
   breakpointWidths: BreakpointWidths;
@@ -34,6 +35,7 @@ interface BuilderStore {
 
   // Actions - Element Selection
   selectElement: (elementId: number | null) => void;
+  selectColumn: (columnIndex: number | null) => void;
   hoverElement: (elementId: number | null) => void;
 
   // Actions - Element CRUD
@@ -74,6 +76,7 @@ export const useBuilderStore = create<BuilderStore>()(
       elements: [],
       customCSS: '',
       selectedElementId: null,
+      selectedColumnIndex: null,
       hoveredElementId: null,
       activeBreakpoint: 'desktop',
       breakpointWidths: {
@@ -98,7 +101,9 @@ export const useBuilderStore = create<BuilderStore>()(
       setCustomCSS: (customCSS) => set({ customCSS }),
 
       // Selection Actions
-      selectElement: (elementId) => set({ selectedElementId: elementId }),
+      selectElement: (elementId) => set({ selectedElementId: elementId, selectedColumnIndex: null }),
+
+      selectColumn: (columnIndex) => set({ selectedColumnIndex: columnIndex }),
 
       hoverElement: (elementId) => set({ hoveredElementId: elementId }),
 

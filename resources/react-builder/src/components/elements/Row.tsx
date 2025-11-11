@@ -151,7 +151,12 @@ export const Row: React.FC<RowProps> = (props) => {
 
         {/* Content Layer - padding and other styles applied here */}
         <div className="relative z-10 flex row-content" style={{ gap: element.settings.gap || '16px', width: '100%', ...getContentStyles() }}>
-        {Array.from({ length: columnCount }).map((_, columnIndex) => (
+        {Array.from({ length: columnCount }).map((_, columnIndex) => {
+          // Get column-specific styles
+          const columnStyles = element.settings.columnStyles || [];
+          const columnStyle = columnStyles[columnIndex] || {};
+
+          return (
           <RowColumn
             key={columnIndex}
             rowId={element.id}
@@ -159,8 +164,10 @@ export const Row: React.FC<RowProps> = (props) => {
             columnCount={columnCount}
             isRowSelected={isSelected || false}
             children={columnGroups[columnIndex]}
+            columnStyle={columnStyle}
           />
-        ))}
+        );
+        })}
         </div>
       </div>
     </BaseElement>
@@ -174,9 +181,10 @@ interface RowColumnProps {
   columnCount: number;
   isRowSelected: boolean;
   children: Element[];
+  columnStyle?: React.CSSProperties;
 }
 
-const RowColumn: React.FC<RowColumnProps> = ({ rowId, columnIndex, columnCount, isRowSelected, children }) => {
+const RowColumn: React.FC<RowColumnProps> = ({ rowId, columnIndex, columnCount, isRowSelected, children, columnStyle }) => {
   const { selectedElementId, hoveredElementId, selectElement, hoverElement, isPreviewMode } = useBuilderStore();
 
   // Make column droppable (empty state only)
@@ -221,6 +229,7 @@ const RowColumn: React.FC<RowColumnProps> = ({ rowId, columnIndex, columnCount, 
       style={{
         flex: `1 1 ${100 / columnCount}%`,
         ...borderStyle,
+        ...columnStyle,
       }}
     >
       {children.length > 0 ? (
