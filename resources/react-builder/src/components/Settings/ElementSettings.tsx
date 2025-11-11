@@ -147,32 +147,7 @@ export const ElementSettings: React.FC = () => {
     <div className="h-full overflow-y-auto">
       {/* Header */}
       <div className="p-4 border-b border-dark-border">
-        <h2 className="text-sm font-semibold text-light-text mb-3">Element Settings</h2>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => duplicateElement(element.id)}
-            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-dark-panel hover:bg-dark-hover rounded transition-colors"
-            title="Duplicate"
-          >
-            <FiCopy size={14} />
-            Duplicate
-          </button>
-          <button
-            onClick={() => updateElement(element.id, { is_visible: !element.is_visible })}
-            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-dark-panel hover:bg-dark-hover rounded transition-colors"
-            title={element.is_visible ? 'Hide' : 'Show'}
-          >
-            {element.is_visible ? <FiEye size={14} /> : <FiEyeOff size={14} />}
-            {element.is_visible ? 'Hide' : 'Show'}
-          </button>
-          <button
-            onClick={() => deleteElement(element.id)}
-            className="px-3 py-2 text-sm bg-red-900/20 text-red-400 hover:bg-red-900/30 rounded transition-colors"
-            title="Delete"
-          >
-            <FiTrash2 size={14} />
-          </button>
-        </div>
+        <h2 className="text-sm font-semibold text-light-text">Element Settings</h2>
       </div>
 
       {/* Tabs */}
@@ -202,6 +177,36 @@ export const ElementSettings: React.FC = () => {
       {/* Tab Content - Element */}
       {settingsTab === 'element' && (
         <>
+      {/* Element Actions */}
+      <div className="p-4 border-b border-dark-border">
+        <h3 className="text-xs font-semibold text-light-muted uppercase mb-3">Actions</h3>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => duplicateElement(element.id)}
+            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-dark-panel hover:bg-dark-hover rounded transition-colors"
+            title="Duplicate"
+          >
+            <FiCopy size={14} />
+            Duplicate
+          </button>
+          <button
+            onClick={() => updateElement(element.id, { is_visible: !element.is_visible })}
+            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm bg-dark-panel hover:bg-dark-hover rounded transition-colors"
+            title={element.is_visible ? 'Hide' : 'Show'}
+          >
+            {element.is_visible ? <FiEye size={14} /> : <FiEyeOff size={14} />}
+            {element.is_visible ? 'Hide' : 'Show'}
+          </button>
+          <button
+            onClick={() => deleteElement(element.id)}
+            className="px-3 py-2 text-sm bg-red-900/20 text-red-400 hover:bg-red-900/30 rounded transition-colors"
+            title="Delete"
+          >
+            <FiTrash2 size={14} />
+          </button>
+        </div>
+      </div>
+
       {/* Content Settings */}
       <div className="p-4 border-b border-dark-border">
         <h3 className="text-xs font-semibold text-light-muted uppercase mb-3">Content</h3>
