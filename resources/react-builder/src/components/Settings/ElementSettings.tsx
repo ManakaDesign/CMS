@@ -145,11 +145,6 @@ export const ElementSettings: React.FC = () => {
 
   return (
     <div className="h-full overflow-y-auto">
-      {/* Header */}
-      <div className="p-4 border-b border-dark-border">
-        <h2 className="text-sm font-semibold text-light-text">Element Settings</h2>
-      </div>
-
       {/* Tabs */}
       <div className="flex border-b border-dark-border">
         <button
