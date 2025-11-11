@@ -1178,7 +1178,61 @@ export const ElementSettings: React.FC = () => {
           const isRight = marginLeft === 'auto' && (marginRight === '0' || marginRight === '0px' || !marginRight);
 
           const handleAlignment = (left: string, right: string) => {
+            // Get fresh store data
+            const store = useBuilderStore.getState();
+            const currentElements = store.elements;
+            const currentSelectedIds = store.selectedElementIds;
+            const isCurrentlyMultiSelect = currentSelectedIds.length > 1;
+
+            console.log('[DEBUG handleAlignment]', { left, right, isCurrentlyMultiSelect, currentSelectedIds });
+
+            if (isCurrentlyMultiSelect) {
+              // Multi-select: batch update all selected elements
+              const elementIdsSet = new Set(currentSelectedIds);
+
+              const updatedElements = currentElements.map(el => {
+                if (!elementIdsSet.has(el.id)) return el;
+
+                console.log('[DEBUG] Updating alignment for element:', el.id);
+
+                if (styleMode === 'hover') {
+                  const hoverStyles = (el as any).hoverStyles || {};
+                  return {
+                    ...el,
+                    hoverStyles: {
+                      ...hoverStyles,
+                      [activeBreakpoint]: {
+                        ...hoverStyles[activeBreakpoint],
+                        marginLeft: left,
+                        marginRight: right,
+                      },
+                    },
+                  };
+                } else {
+                  return {
+                    ...el,
+                    styles: {
+                      ...el.styles,
+                      [activeBreakpoint]: {
+                        ...el.styles[activeBreakpoint],
+                        marginLeft: left,
+                        marginRight: right,
+                      },
+                    },
+                  };
+                }
+              });
+
+              console.log('[DEBUG] About to setState for alignment');
+              useBuilderStore.setState({ elements: updatedElements });
+              useBuilderStore.getState().addToHistory();
+              console.log('[DEBUG] Alignment update complete');
+              return;
+            }
+
+            // Single element mode
             if (!element) return;
+
             if (styleMode === 'hover') {
               const hoverStyles = (element as any).hoverStyles || {};
               updateElement(element.id, {
