@@ -134,11 +134,15 @@ export const ElementSettings: React.FC = () => {
   // Update style without auto-px (for onChange)
   const updateStyleDirect = (property: string, value: string, breakpoint: 'desktop' | 'tablet' | 'mobile' = 'desktop') => {
     if (isMultiSelect) {
-      // Multi-select: update all selected elements
-      if (styleMode === 'hover') {
-        selectedElements.forEach(el => {
+      // Multi-select: batch update all selected elements
+      const elementIdsSet = new Set(selectedElementIds);
+      const updatedElements = elements.map(el => {
+        if (!elementIdsSet.has(el.id)) return el;
+
+        if (styleMode === 'hover') {
           const hoverStyles = (el as any).hoverStyles || {};
-          updateElement(el.id, {
+          return {
+            ...el,
             hoverStyles: {
               ...hoverStyles,
               [breakpoint]: {
@@ -146,11 +150,10 @@ export const ElementSettings: React.FC = () => {
                 [property]: value,
               },
             },
-          } as any);
-        });
-      } else {
-        selectedElements.forEach(el => {
-          updateElement(el.id, {
+          };
+        } else {
+          return {
+            ...el,
             styles: {
               ...el.styles,
               [breakpoint]: {
@@ -158,9 +161,13 @@ export const ElementSettings: React.FC = () => {
                 [property]: value,
               },
             },
-          });
-        });
-      }
+          };
+        }
+      });
+
+      // Update all elements in a single operation
+      useBuilderStore.setState({ elements: updatedElements });
+      useBuilderStore.getState().addToHistory();
       return;
     }
 
@@ -200,11 +207,15 @@ export const ElementSettings: React.FC = () => {
     const finalValue = needsPx ? `${value}px` : value;
 
     if (isMultiSelect) {
-      // Multi-select: update all selected elements
-      if (styleMode === 'hover') {
-        selectedElements.forEach(el => {
+      // Multi-select: batch update all selected elements
+      const elementIdsSet = new Set(selectedElementIds);
+      const updatedElements = elements.map(el => {
+        if (!elementIdsSet.has(el.id)) return el;
+
+        if (styleMode === 'hover') {
           const hoverStyles = (el as any).hoverStyles || {};
-          updateElement(el.id, {
+          return {
+            ...el,
             hoverStyles: {
               ...hoverStyles,
               [breakpoint]: {
@@ -212,11 +223,10 @@ export const ElementSettings: React.FC = () => {
                 [property]: finalValue,
               },
             },
-          } as any);
-        });
-      } else {
-        selectedElements.forEach(el => {
-          updateElement(el.id, {
+          };
+        } else {
+          return {
+            ...el,
             styles: {
               ...el.styles,
               [breakpoint]: {
@@ -224,9 +234,13 @@ export const ElementSettings: React.FC = () => {
                 [property]: finalValue,
               },
             },
-          });
-        });
-      }
+          };
+        }
+      });
+
+      // Update all elements in a single operation
+      useBuilderStore.setState({ elements: updatedElements });
+      useBuilderStore.getState().addToHistory();
       return;
     }
 

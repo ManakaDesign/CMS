@@ -9,7 +9,7 @@ interface DragAndDropProviderProps {
 }
 
 export const DragAndDropProvider: React.FC<DragAndDropProviderProps> = ({ children }) => {
-  const { page, elements, addElement, moveElement, setIsDragging } = useBuilderStore();
+  const { page, elements, addElement, moveElement, setIsDragging, selectedElementIds } = useBuilderStore();
   const { setActiveElementType } = useDragContext();
   const [activeId, setActiveId] = React.useState<string | null>(null);
 
@@ -79,24 +79,28 @@ export const DragAndDropProvider: React.FC<DragAndDropProviderProps> = ({ childr
       const elementId = dragData.elementId;
       const newParentId = dropData?.parentId ?? null;
 
+      // Check if this element is part of multi-selection
+      const isMultiSelect = selectedElementIds.length > 1 && selectedElementIds.includes(elementId);
+      const elementsToMove = isMultiSelect ? selectedElementIds : [elementId];
+
       // Don't allow dropping an element into itself or its own children
-      if (elementId === newParentId) {
+      if (elementsToMove.includes(newParentId as number)) {
         console.warn('Cannot drop element into itself');
         return;
       }
 
-      // Check if the new parent is a child of the element being moved
-      const isChildOfElement = (potentialChildId: number | null, parentId: number): boolean => {
+      // Check if the new parent is a child of any element being moved
+      const isChildOfElement = (potentialChildId: number | null, parentIds: number[]): boolean => {
         if (!potentialChildId) return false;
-        if (potentialChildId === parentId) return true;
+        if (parentIds.includes(potentialChildId)) return true;
 
         const potentialChild = elements.find(el => el.id === potentialChildId);
         if (!potentialChild?.parent_id) return false;
 
-        return isChildOfElement(potentialChild.parent_id, parentId);
+        return isChildOfElement(potentialChild.parent_id, parentIds);
       };
 
-      if (newParentId && isChildOfElement(newParentId, elementId)) {
+      if (newParentId && isChildOfElement(newParentId, elementsToMove)) {
         console.warn('Cannot drop element into its own child');
         return;
       }
@@ -109,20 +113,23 @@ export const DragAndDropProvider: React.FC<DragAndDropProviderProps> = ({ childr
       }
 
       // Calculate new order from drop zone index
-      const newOrder = dropData?.index ?? 0;
+      let newOrder = dropData?.index ?? 0;
 
-      moveElement(elementId, newParentId, newOrder);
+      // Move all selected elements to the new location
+      elementsToMove.forEach((id, index) => {
+        moveElement(id, newParentId, newOrder + index);
+      });
 
       // Update columnIndex if dropping into a row column
       if (dropData?.columnIndex !== undefined) {
-        const element = elements.find(el => el.id === elementId);
-        if (element) {
-          const updatedSettings = { ...element.settings, columnIndex: dropData.columnIndex };
-          // We need to use updateElement from store
-          // Since we don't have it here, we'll need to import it
-          const { updateElement } = useBuilderStore.getState();
-          updateElement(elementId, { settings: updatedSettings });
-        }
+        const { updateElement } = useBuilderStore.getState();
+        elementsToMove.forEach(id => {
+          const element = elements.find(el => el.id === id);
+          if (element) {
+            const updatedSettings = { ...element.settings, columnIndex: dropData.columnIndex };
+            updateElement(id, { settings: updatedSettings });
+          }
+        });
       }
     }
   };
@@ -135,12 +142,12 @@ export const DragAndDropProvider: React.FC<DragAndDropProviderProps> = ({ childr
       {children}
       <DragOverlay dropAnimation={null}>
         {activeId ? (
-          <div className="bg-blue-100 border-2 border-blue-400 rounded px-3 py-2 shadow-xl opacity-80">
-            <div className="flex items-center gap-2 text-blue-900 font-medium text-sm">
+          <div className="bg-orange-100 border-2 border-orange-400 rounded px-3 py-2 shadow-xl opacity-90">
+            <div className="flex items-center gap-2 text-orange-900 font-medium text-sm">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
               </svg>
-              Moving...
+              {selectedElementIds.length > 1 ? `Moving ${selectedElementIds.length} elements...` : 'Moving...'}
             </div>
           </div>
         ) : null}
