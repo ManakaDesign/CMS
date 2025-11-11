@@ -12,6 +12,7 @@ export const Canvas: React.FC = () => {
     selectElement,
     hoverElement,
     isPreviewMode,
+    customCSS,
   } = useBuilderStore();
 
   const renderElement = (element: Element): React.ReactNode => {
@@ -44,15 +45,21 @@ export const Canvas: React.FC = () => {
     .sort((a, b) => a.order - b.order);
 
   return (
-    <div
-      className="builder-canvas bg-white min-h-full w-full"
-      onClick={(e) => {
-        // Click on canvas background deselects all
-        if (e.target === e.currentTarget) {
-          selectElement(null);
-        }
-      }}
-    >
+    <>
+      {/* Custom CSS */}
+      {customCSS && (
+        <style dangerouslySetInnerHTML={{ __html: customCSS }} />
+      )}
+
+      <div
+        className="builder-canvas bg-white min-h-full w-full"
+        onClick={(e) => {
+          // Click on canvas background deselects all
+          if (e.target === e.currentTarget) {
+            selectElement(null);
+          }
+        }}
+      >
       {rootElements.length > 0 ? (
         <>
           {/* Drop zone before first element */}
@@ -87,6 +94,7 @@ export const Canvas: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };

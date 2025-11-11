@@ -12,6 +12,7 @@ interface BuilderStore {
   // Current page
   page: Page | null;
   elements: Element[];
+  customCSS: string;
 
   // UI State
   selectedElementId: number | null;
@@ -29,6 +30,7 @@ interface BuilderStore {
   // Actions - Page
   setPage: (page: Page | null) => void;
   setElements: (elements: Element[]) => void;
+  setCustomCSS: (css: string) => void;
 
   // Actions - Element Selection
   selectElement: (elementId: number | null) => void;
@@ -70,6 +72,7 @@ export const useBuilderStore = create<BuilderStore>()(
       // Initial State
       page: null,
       elements: [],
+      customCSS: '',
       selectedElementId: null,
       hoveredElementId: null,
       activeBreakpoint: 'desktop',
@@ -91,6 +94,8 @@ export const useBuilderStore = create<BuilderStore>()(
         set({ elements });
         get().addToHistory();
       },
+
+      setCustomCSS: (customCSS) => set({ customCSS }),
 
       // Selection Actions
       selectElement: (elementId) => set({ selectedElementId: elementId }),

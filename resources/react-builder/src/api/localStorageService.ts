@@ -4,6 +4,7 @@ const STORAGE_KEYS = {
   PAGES: 'builder_demo_pages',
   ELEMENTS: 'builder_demo_elements',
   CURRENT_PAGE_ID: 'builder_demo_current_page_id',
+  CUSTOM_CSS: 'builder_demo_custom_css',
 };
 
 // Initialize with sample data if storage is empty
@@ -160,6 +161,18 @@ export const localStorageService = {
 
   setCurrentPageId: (pageId: number): void => {
     localStorage.setItem(STORAGE_KEYS.CURRENT_PAGE_ID, pageId.toString());
+  },
+
+  // Custom CSS
+  getCustomCSS: (pageId: number): string => {
+    const cssData = JSON.parse(localStorage.getItem(STORAGE_KEYS.CUSTOM_CSS) || '{}');
+    return cssData[pageId] || '';
+  },
+
+  saveCustomCSS: (pageId: number, css: string): void => {
+    const cssData = JSON.parse(localStorage.getItem(STORAGE_KEYS.CUSTOM_CSS) || '{}');
+    cssData[pageId] = css;
+    localStorage.setItem(STORAGE_KEYS.CUSTOM_CSS, JSON.stringify(cssData));
   },
 
   // Clear all data
