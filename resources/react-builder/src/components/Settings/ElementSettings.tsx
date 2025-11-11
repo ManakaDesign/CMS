@@ -297,6 +297,58 @@ export const ElementSettings: React.FC = () => {
           </>
         )}
 
+        {/* Video Settings */}
+        {element.type === 'video' && (
+          <>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-light-text mb-2">Video Provider</label>
+              <select
+                value={element.settings.provider || 'youtube'}
+                onChange={(e) => updateSetting('provider', e.target.value)}
+                className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text"
+              >
+                <option value="youtube">YouTube</option>
+                <option value="vimeo">Vimeo</option>
+                <option value="direct">Direct URL</option>
+              </select>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-light-text mb-2">Video URL</label>
+              <input
+                type="text"
+                value={element.settings.src || ''}
+                onChange={(e) => updateSetting('src', e.target.value)}
+                className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                placeholder={
+                  element.settings.provider === 'youtube'
+                    ? 'https://www.youtube.com/watch?v=...'
+                    : element.settings.provider === 'vimeo'
+                    ? 'https://vimeo.com/...'
+                    : 'https://example.com/video.mp4'
+                }
+              />
+              <p className="text-xs text-light-muted mt-1">
+                {element.settings.provider === 'youtube' && 'Enter YouTube video URL'}
+                {element.settings.provider === 'vimeo' && 'Enter Vimeo video URL'}
+                {(!element.settings.provider || element.settings.provider === 'direct') && 'Direct MP4, WebM, or Ogg video URL'}
+              </p>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-light-text mb-2">Aspect Ratio</label>
+              <select
+                value={element.settings.aspectRatio || '16/9'}
+                onChange={(e) => updateSetting('aspectRatio', e.target.value)}
+                className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text"
+              >
+                <option value="16/9">16:9 (Widescreen)</option>
+                <option value="4/3">4:3 (Standard)</option>
+                <option value="1/1">1:1 (Square)</option>
+                <option value="21/9">21:9 (Ultrawide)</option>
+              </select>
+            </div>
+          </>
+        )}
+
         {/* Row Columns - Breakpoint specific */}
         {element.type === 'row' && (() => {
           // Get columns for current breakpoint

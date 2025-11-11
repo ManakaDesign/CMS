@@ -14,7 +14,7 @@ interface VideoProps {
 export const Video: React.FC<VideoProps> = (props) => {
   const { element, ...baseProps } = props;
 
-  const url = element.settings.url || '';
+  const url = element.settings.src || element.settings.url || '';
   const provider = element.settings.provider || 'youtube';
   const width = element.settings.width || '100%';
   const aspectRatio = element.settings.aspectRatio || '16/9';
@@ -35,28 +35,54 @@ export const Video: React.FC<VideoProps> = (props) => {
     return url;
   };
 
+  const renderVideo = () => {
+    if (!url) {
+      return (
+        <div className="flex items-center justify-center h-full bg-gray-200 text-gray-400">
+          No video URL provided
+        </div>
+      );
+    }
+
+    // For direct video URLs, use HTML5 video element
+    if (provider === 'direct' || (!provider && (url.endsWith('.mp4') || url.endsWith('.webm') || url.endsWith('.ogg')))) {
+      return (
+        <video
+          controls
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+          }}
+        >
+          <source src={url} />
+          Your browser does not support the video tag.
+        </video>
+      );
+    }
+
+    // For YouTube and Vimeo, use iframe embed
+    return (
+      <iframe
+        src={getEmbedUrl()}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          border: 'none',
+        }}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      />
+    );
+  };
+
   return (
     <BaseElement element={element} {...baseProps}>
       <div style={{ width, aspectRatio, position: 'relative' }}>
-        {url ? (
-          <iframe
-            src={getEmbedUrl()}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              border: 'none',
-            }}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-        ) : (
-          <div className="flex items-center justify-center h-full bg-gray-200 text-gray-400">
-            No video URL provided
-          </div>
-        )}
+        {renderVideo()}
       </div>
     </BaseElement>
   );
