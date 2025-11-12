@@ -42,7 +42,7 @@ export const CSSEditor: React.FC = () => {
       // Extract element classes
       if (element.settings.elementClass) {
         const classList = element.settings.elementClass.split(' ').filter(Boolean);
-        classList.forEach((cls) => {
+        classList.forEach((cls: string) => {
           if (!usedSelectors.classes.has(cls)) {
             classes.add(cls);
           }

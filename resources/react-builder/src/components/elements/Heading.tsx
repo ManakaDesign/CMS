@@ -14,7 +14,7 @@ interface HeadingProps {
 
 export const Heading: React.FC<HeadingProps> = (props) => {
   const { element, isSelected, onClick, ...baseProps } = props;
-  const { updateElement } = useBuilderStore();
+  const { updateElement, toggleElementSelection } = useBuilderStore();
   const [isEditing, setIsEditing] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const wasSelectedRef = useRef(false);
@@ -26,7 +26,10 @@ export const Heading: React.FC<HeadingProps> = (props) => {
   const handleTextClick = (e: React.MouseEvent) => {
     e.stopPropagation();
 
-    if (isSelected && wasSelectedRef.current && !isEditing) {
+    // Check if Shift key is pressed for multi-select
+    if (e.shiftKey) {
+      toggleElementSelection(element.id);
+    } else if (isSelected && wasSelectedRef.current && !isEditing) {
       // Second click on already selected element -> start editing
       setIsEditing(true);
     } else {

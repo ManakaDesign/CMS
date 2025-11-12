@@ -15,7 +15,7 @@ interface ButtonProps {
 
 export const Button: React.FC<ButtonProps> = (props) => {
   const { element, onClick, ...baseProps } = props;
-  const { activeBreakpoint } = useBuilderStore();
+  const { activeBreakpoint, toggleElementSelection } = useBuilderStore();
 
   const text = element.settings.text || 'Click Me';
   const url = element.settings.url || '#';
@@ -24,7 +24,13 @@ export const Button: React.FC<ButtonProps> = (props) => {
   const handleButtonClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    onClick?.();
+
+    // Check if Shift key is pressed for multi-select
+    if (e.shiftKey) {
+      toggleElementSelection(element.id);
+    } else {
+      onClick?.();
+    }
   };
 
   // Get button styles with proper inheritance: desktop → tablet → mobile

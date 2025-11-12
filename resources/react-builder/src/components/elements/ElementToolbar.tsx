@@ -43,11 +43,23 @@ const getToolbarPosition = (type: string): string => {
 };
 
 export const ElementToolbar: React.FC<ElementToolbarProps> = ({ elementId, elementType }) => {
-  const { duplicateElement, deleteElement, getElementById } = useBuilderStore();
+  const { duplicateElement, deleteElement, getElementById, selectedElementIds } = useBuilderStore();
 
   const element = getElementById(elementId);
   const type = element?.type || elementType || '';
-  const colors = getElementColors(type);
+
+  // Check if this element is part of multi-selection
+  const isMultiSelected = selectedElementIds.includes(elementId);
+  const isMultiSelectMode = selectedElementIds.length > 1;
+
+  // Use orange colors for multi-select, otherwise type-based colors
+  const colors = isMultiSelected ? {
+    bg: 'bg-orange-50',
+    border: 'border-orange-400',
+    text: 'text-orange-700',
+    hover: 'hover:bg-orange-100',
+  } : getElementColors(type);
+
   const position = getToolbarPosition(type);
 
   // Setup draggable for the move button only
@@ -62,13 +74,34 @@ export const ElementToolbar: React.FC<ElementToolbarProps> = ({ elementId, eleme
 
   const handleDuplicate = (e: React.MouseEvent) => {
     e.stopPropagation();
-    duplicateElement(elementId);
+
+    if (isMultiSelectMode && isMultiSelected) {
+      // Duplicate all selected elements
+      selectedElementIds.forEach(id => {
+        duplicateElement(id);
+      });
+    } else {
+      // Single element duplicate
+      duplicateElement(elementId);
+    }
   };
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm('Are you sure you want to delete this element?')) {
-      deleteElement(elementId);
+
+    if (isMultiSelectMode && isMultiSelected) {
+      // Delete all selected elements
+      const count = selectedElementIds.length;
+      if (window.confirm(`Are you sure you want to delete ${count} selected elements?`)) {
+        selectedElementIds.forEach(id => {
+          deleteElement(id);
+        });
+      }
+    } else {
+      // Single element delete
+      if (window.confirm('Are you sure you want to delete this element?')) {
+        deleteElement(elementId);
+      }
     }
   };
 
@@ -92,7 +125,7 @@ export const ElementToolbar: React.FC<ElementToolbarProps> = ({ elementId, eleme
       {/* Duplicate button */}
       <button
         className={`p-1.5 ${colors.hover} rounded transition-colors cursor-pointer`}
-        title="Duplicate"
+        title={isMultiSelectMode && isMultiSelected ? `Duplicate ${selectedElementIds.length} elements` : 'Duplicate'}
         onClick={handleDuplicate}
       >
         <Copy className={`w-4 h-4 ${colors.text}`} />
@@ -101,7 +134,7 @@ export const ElementToolbar: React.FC<ElementToolbarProps> = ({ elementId, eleme
       {/* Delete button */}
       <button
         className="p-1.5 hover:bg-red-100 rounded transition-colors cursor-pointer"
-        title="Delete"
+        title={isMultiSelectMode && isMultiSelected ? `Delete ${selectedElementIds.length} elements` : 'Delete'}
         onClick={handleDelete}
       >
         <Trash2 className="w-4 h-4 text-red-600" />

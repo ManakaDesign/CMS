@@ -14,15 +14,14 @@ import { pagesApi } from '../api/services';
 import { DragContextProvider } from '../contexts/DragContext';
 
 export const Builder: React.FC = () => {
-  console.log('[DEBUG] Builder component loaded - NEW VERSION with layout fixes');
   const { pageId } = useParams<{ pageId: string }>();
   const navigate = useNavigate();
-  console.log('[DEBUG] Builder pageId:', pageId);
 
   const {
     page,
     elements,
     selectedElementId,
+    selectedElementIds,
     activeBreakpoint,
     breakpointWidths,
     isPreviewMode,
@@ -136,8 +135,6 @@ export const Builder: React.FC = () => {
       </div>
     );
   }
-
-  console.log('[DEBUG] Builder rendering with layout classes: outer=min-h-screen, toolbar=fixed top-0, main=flex pt-16 h-screen');
 
   return (
     <DragContextProvider>
@@ -331,7 +328,7 @@ export const Builder: React.FC = () => {
           </div>
 
           {/* Right Sidebar - Element Settings */}
-          {!isPreviewMode && selectedElementId && (
+          {!isPreviewMode && (selectedElementId || selectedElementIds.length > 0) && (
             <div className="w-80 bg-dark-surface border-l border-dark-border overflow-y-auto flex-shrink-0">
               <ElementSettings />
             </div>
