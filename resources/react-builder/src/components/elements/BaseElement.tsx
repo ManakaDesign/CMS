@@ -152,7 +152,8 @@ export const BaseElement: React.FC<BaseElementProps> = ({
       if (activeStyles.height) wrapperStyles.height = activeStyles.height;
       if (activeStyles.maxHeight) wrapperStyles.maxHeight = activeStyles.maxHeight;
 
-      // Margin properties (all 4 sides)
+      // Margin properties (all 4 sides + shorthand)
+      if (activeStyles.margin) wrapperStyles.margin = activeStyles.margin;
       if (activeStyles.marginLeft) wrapperStyles.marginLeft = activeStyles.marginLeft;
       if (activeStyles.marginRight) wrapperStyles.marginRight = activeStyles.marginRight;
       if (activeStyles.marginTop) wrapperStyles.marginTop = activeStyles.marginTop;
