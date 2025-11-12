@@ -48,6 +48,30 @@ export const CSSEditor: React.FC = () => {
           }
         });
       }
+
+      // Extract column IDs and classes from Row elements
+      if (element.type === 'row') {
+        // Column IDs
+        const columnIds = element.settings.columnIds || [];
+        columnIds.forEach((columnId: string) => {
+          if (columnId && !usedSelectors.ids.has(columnId)) {
+            ids.add(columnId);
+          }
+        });
+
+        // Column classes
+        const columnClasses = element.settings.columnClasses || [];
+        columnClasses.forEach((columnClass: string) => {
+          if (columnClass) {
+            const classList = columnClass.split(' ').filter(Boolean);
+            classList.forEach((cls: string) => {
+              if (!usedSelectors.classes.has(cls)) {
+                classes.add(cls);
+              }
+            });
+          }
+        });
+      }
     });
 
     return {

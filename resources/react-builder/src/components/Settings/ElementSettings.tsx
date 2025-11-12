@@ -6,6 +6,40 @@ import { SpacingControl } from './SpacingControl';
 
 type BackgroundType = 'color' | 'gradient' | 'image' | 'video' | 'none';
 
+// Element type groups for multiselect logic
+const ELEMENT_GROUPS = {
+  container: ['section', 'row'],
+  content: ['text', 'heading', 'button', 'image', 'video', 'spacer', 'divider', 'code'],
+} as const;
+
+// Helper to get element group
+const getElementGroup = (type: string): 'container' | 'content' | 'unknown' => {
+  if (ELEMENT_GROUPS.container.includes(type as any)) return 'container';
+  if (ELEMENT_GROUPS.content.includes(type as any)) return 'content';
+  return 'unknown';
+};
+
+// Helper to check multiselect compatibility
+const checkMultiSelectCompatibility = (elements: any[]): {
+  compatible: boolean;
+  allSameType: boolean;
+  allSameGroup: boolean;
+  types: string[];
+} => {
+  if (elements.length <= 1) {
+    return { compatible: true, allSameType: true, allSameGroup: true, types: [] };
+  }
+
+  const types = [...new Set(elements.map(el => el.type))];
+  const groups = [...new Set(elements.map(el => getElementGroup(el.type)))];
+
+  const allSameType = types.length === 1;
+  const allSameGroup = groups.length === 1 && groups[0] !== 'unknown';
+  const compatible = allSameType || allSameGroup;
+
+  return { compatible, allSameType, allSameGroup, types };
+};
+
 export const ElementSettings: React.FC = () => {
   const { selectedElementId, selectedElementIds, selectedColumnIndex, selectColumn, getElementById, updateElement, deleteElement, duplicateElement, activeBreakpoint, elements } =
     useBuilderStore();
@@ -17,6 +51,9 @@ export const ElementSettings: React.FC = () => {
 
   // Check if we're in multi-select mode
   const isMultiSelect = selectedElementIds.length > 1;
+
+  // Check multiselect compatibility
+  const multiSelectInfo = checkMultiSelectCompatibility(selectedElements);
 
   const element = selectedElementId ? getElementById(selectedElementId) : (isMultiSelect ? selectedElements[0] : null);
   const [settingsTab, setSettingsTab] = useState<'design' | 'element'>('element');
@@ -366,13 +403,28 @@ export const ElementSettings: React.FC = () => {
       {isMultiSelect && (
         <div className="bg-orange-900/30 border-b-2 border-brand-orange p-4">
           <div className="flex items-center justify-between">
-            <div>
+            <div className="w-full">
               <h3 className="text-sm font-semibold text-orange-300 flex items-center gap-2">
                 {selectedElementIds.length} Elements Selected
               </h3>
-              <p className="text-xs text-orange-400/70 mt-1">
-                Editing {selectedElements[0]?.type || 'elements'} elements - Changes apply to all
-              </p>
+              {multiSelectInfo.allSameType ? (
+                <p className="text-xs text-orange-400/70 mt-1">
+                  Editing {selectedElements[0]?.type || 'elements'} elements - Changes apply to all
+                </p>
+              ) : multiSelectInfo.allSameGroup ? (
+                <p className="text-xs text-orange-400/70 mt-1">
+                  Mixed types ({multiSelectInfo.types.join(', ')}) - Only common properties available
+                </p>
+              ) : (
+                <div className="mt-2 p-2 bg-red-900/30 border border-red-700/50 rounded">
+                  <p className="text-xs text-red-300">
+                    ⚠️ Unterschiedliche Elemente ausgewählt. Globale Bearbeitung nur für gleiche Elementtypen verfügbar.
+                  </p>
+                  <p className="text-xs text-red-400/70 mt-1">
+                    Ausgewählte Typen: {multiSelectInfo.types.join(', ')}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -681,6 +733,21 @@ export const ElementSettings: React.FC = () => {
                       Column {selectedColumnIndex + 1} selected - edit in Design tab
                     </p>
                   )}
+                </div>
+              )}
+
+              {/* Gap between Columns */}
+              {currentColumns > 1 && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-light-text mb-2">Column Gap</label>
+                  <input
+                    type="text"
+                    value={element.settings.gap || '16px'}
+                    onChange={(e) => updateSetting('gap', e.target.value)}
+                    className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                    placeholder="16px"
+                  />
+                  <p className="text-xs text-light-muted mt-1">Space between columns (e.g., 0px, 16px, 2rem)</p>
                 </div>
               )}
             </div>

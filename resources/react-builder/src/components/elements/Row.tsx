@@ -224,11 +224,10 @@ const RowColumn: React.FC<RowColumnProps> = ({ rowId, rowElementId, columnIndex,
     );
   };
 
-  // Show dashed border on right for all but the last column when row is selected
+  // Show dashed border for all columns when row is selected
   const borderStyle: React.CSSProperties = {};
-  if (isRowSelected && columnIndex < columnCount - 1) {
-    borderStyle.borderRight = '2px dashed #10b981'; // Green dashed border
-    borderStyle.marginRight = '8px';
+  if (isRowSelected) {
+    borderStyle.border = '2px dashed #10b981'; // Green dashed border for all sides
   }
 
   // Convert styles to CSS string for hover styles
