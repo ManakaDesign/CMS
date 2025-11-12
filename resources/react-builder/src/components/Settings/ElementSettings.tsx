@@ -50,9 +50,56 @@ export const ElementSettings: React.FC = () => {
 
   // Handle background type change - clear other background types
   const handleBackgroundTypeChange = (newType: BackgroundType) => {
-    if (!element) return;
+    // Get fresh store data
+    const store = useBuilderStore.getState();
+    const currentElements = store.elements;
+    const currentSelectedIds = store.selectedElementIds;
+    const isCurrentlyMultiSelect = currentSelectedIds.length > 1;
 
     setBackgroundType(newType);
+
+    if (isCurrentlyMultiSelect) {
+      // Multi-select: batch update all selected elements
+      const elementIdsSet = new Set(currentSelectedIds);
+
+      const updatedElements = currentElements.map(el => {
+        if (!elementIdsSet.has(el.id)) return el;
+
+        // Clear all background types
+        const newSettings = { ...el.settings };
+        delete newSettings.backgroundGradient;
+        delete newSettings.backgroundImage;
+        delete newSettings.backgroundVideo;
+
+        // Also clear backgroundColor style if switching away from color
+        if (newType !== 'color') {
+          const breakpointStyles = el.styles[activeBreakpoint] || {};
+          const updatedBreakpointStyles = { ...breakpointStyles };
+          delete updatedBreakpointStyles.backgroundColor;
+
+          return {
+            ...el,
+            settings: newSettings,
+            styles: {
+              ...el.styles,
+              [activeBreakpoint]: updatedBreakpointStyles,
+            },
+          };
+        }
+
+        return {
+          ...el,
+          settings: newSettings,
+        };
+      });
+
+      useBuilderStore.setState({ elements: updatedElements });
+      useBuilderStore.getState().addToHistory();
+      return;
+    }
+
+    // Single element mode
+    if (!element) return;
 
     // Clear all background types
     const newSettings = { ...element.settings };
@@ -78,6 +125,31 @@ export const ElementSettings: React.FC = () => {
   };
 
   const updateSetting = (key: string, value: any) => {
+    // Get fresh store data
+    const store = useBuilderStore.getState();
+    const currentElements = store.elements;
+    const currentSelectedIds = store.selectedElementIds;
+    const isCurrentlyMultiSelect = currentSelectedIds.length > 1;
+
+    if (isCurrentlyMultiSelect) {
+      // Multi-select: batch update all selected elements
+      const elementIdsSet = new Set(currentSelectedIds);
+
+      const updatedElements = currentElements.map(el => {
+        if (!elementIdsSet.has(el.id)) return el;
+
+        return {
+          ...el,
+          settings: { ...el.settings, [key]: value },
+        };
+      });
+
+      useBuilderStore.setState({ elements: updatedElements });
+      useBuilderStore.getState().addToHistory();
+      return;
+    }
+
+    // Single element mode
     if (!element) return;
     updateElement(element.id, {
       settings: { ...element.settings, [key]: value },
