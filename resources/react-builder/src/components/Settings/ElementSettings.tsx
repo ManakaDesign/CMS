@@ -293,25 +293,12 @@ export const ElementSettings: React.FC = () => {
     const currentSelectedIds = store.selectedElementIds;
     const isCurrentlyMultiSelect = currentSelectedIds.length > 1;
 
-    console.log('[DEBUG updateStyle]', {
-      property,
-      value: finalValue,
-      breakpoint,
-      currentSelectedIds,
-      isCurrentlyMultiSelect,
-      elementCount: currentElements.length
-    });
-
     if (isCurrentlyMultiSelect) {
       // Multi-select: batch update all selected elements
       const elementIdsSet = new Set(currentSelectedIds);
 
-      console.log('[DEBUG] Multi-select mode - updating elements:', Array.from(elementIdsSet));
-
       const updatedElements = currentElements.map(el => {
         if (!elementIdsSet.has(el.id)) return el;
-
-        console.log('[DEBUG] Updating element:', el.id, 'with', property, '=', finalValue);
 
         if (styleMode === 'hover') {
           const hoverStyles = (el as any).hoverStyles || {};
@@ -339,22 +326,11 @@ export const ElementSettings: React.FC = () => {
         }
       });
 
-      console.log('[DEBUG] Updated elements count:', updatedElements.filter((el, i) => el !== currentElements[i]).length);
-
-      // Log the actual updated elements to verify
-      const changedElements = updatedElements.filter((el, i) => el !== currentElements[i]);
-      console.log('[DEBUG] Changed elements:', changedElements.map(el => ({ id: el.id, styles: el.styles })));
-
       // Update all elements in a single operation
-      console.log('[DEBUG] About to call setState with', updatedElements.length, 'elements');
       useBuilderStore.setState({ elements: updatedElements });
-      console.log('[DEBUG] setState called, now calling addToHistory');
       useBuilderStore.getState().addToHistory();
-      console.log('[DEBUG] addToHistory called - done!');
       return;
     }
-
-    console.log('[DEBUG] Single element mode - element:', element?.id);
 
     if (!element) return;
 
@@ -1162,7 +1138,6 @@ export const ElementSettings: React.FC = () => {
               <div className="flex items-center gap-1 bg-dark-panel border border-dark-border rounded p-1">
                 <button
                   onClick={() => {
-                    console.log('[DEBUG] Alignment LEFT button clicked!');
                     updateStyle('textAlign', 'left', activeBreakpoint);
                   }}
                   className={`flex-1 p-2 rounded transition-colors flex items-center justify-center ${
@@ -1176,7 +1151,6 @@ export const ElementSettings: React.FC = () => {
                 </button>
                 <button
                   onClick={() => {
-                    console.log('[DEBUG] Alignment CENTER button clicked!');
                     updateStyle('textAlign', 'center', activeBreakpoint);
                   }}
                   className={`flex-1 p-2 rounded transition-colors flex items-center justify-center ${
@@ -1190,7 +1164,6 @@ export const ElementSettings: React.FC = () => {
                 </button>
                 <button
                   onClick={() => {
-                    console.log('[DEBUG] Alignment RIGHT button clicked!');
                     updateStyle('textAlign', 'right', activeBreakpoint);
                   }}
                   className={`flex-1 p-2 rounded transition-colors flex items-center justify-center ${
@@ -1256,16 +1229,12 @@ export const ElementSettings: React.FC = () => {
             const currentSelectedIds = store.selectedElementIds;
             const isCurrentlyMultiSelect = currentSelectedIds.length > 1;
 
-            console.log('[DEBUG handleAlignment]', { left, right, isCurrentlyMultiSelect, currentSelectedIds });
-
             if (isCurrentlyMultiSelect) {
               // Multi-select: batch update all selected elements
               const elementIdsSet = new Set(currentSelectedIds);
 
               const updatedElements = currentElements.map(el => {
                 if (!elementIdsSet.has(el.id)) return el;
-
-                console.log('[DEBUG] Updating alignment for element:', el.id);
 
                 if (styleMode === 'hover') {
                   const hoverStyles = (el as any).hoverStyles || {};
@@ -1295,10 +1264,8 @@ export const ElementSettings: React.FC = () => {
                 }
               });
 
-              console.log('[DEBUG] About to setState for alignment');
               useBuilderStore.setState({ elements: updatedElements });
               useBuilderStore.getState().addToHistory();
-              console.log('[DEBUG] Alignment update complete');
               return;
             }
 

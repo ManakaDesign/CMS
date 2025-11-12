@@ -14,10 +14,8 @@ import { pagesApi } from '../api/services';
 import { DragContextProvider } from '../contexts/DragContext';
 
 export const Builder: React.FC = () => {
-  console.log('[DEBUG] Builder component loaded - NEW VERSION with layout fixes');
   const { pageId } = useParams<{ pageId: string }>();
   const navigate = useNavigate();
-  console.log('[DEBUG] Builder pageId:', pageId);
 
   const {
     page,
@@ -137,8 +135,6 @@ export const Builder: React.FC = () => {
       </div>
     );
   }
-
-  console.log('[DEBUG] Builder rendering with layout classes: outer=min-h-screen, toolbar=fixed top-0, main=flex pt-16 h-screen');
 
   return (
     <DragContextProvider>
