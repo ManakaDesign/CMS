@@ -68,17 +68,20 @@ export const Button: React.FC<ButtonProps> = (props) => {
     cursor: 'pointer',
   } as React.CSSProperties;
 
-  // Styles for the <span> element (visual appearance only, no margins)
-  const buttonContentStyles: Record<string, any> = { ...breakpointStyles };
-  delete buttonContentStyles.width;
-  delete buttonContentStyles.maxWidth;
-  delete buttonContentStyles.height;
-  delete buttonContentStyles.maxHeight;
-  delete buttonContentStyles.marginLeft;
-  delete buttonContentStyles.marginRight;
-  delete buttonContentStyles.marginTop;
-  delete buttonContentStyles.marginBottom;
-  delete buttonContentStyles.display;
+  // Styles for the <span> element (visual appearance only, no margins/sizing)
+  // Build content styles by explicitly excluding box-model properties
+  const {
+    width: _width,
+    maxWidth: _maxWidth,
+    height: _height,
+    maxHeight: _maxHeight,
+    marginLeft: _marginLeft,
+    marginRight: _marginRight,
+    marginTop: _marginTop,
+    marginBottom: _marginBottom,
+    display: _display,
+    ...buttonContentStyles
+  } = breakpointStyles;
 
   const buttonStyles = {
     display: 'block',
