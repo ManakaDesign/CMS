@@ -20,6 +20,7 @@ export const Button: React.FC<ButtonProps> = (props) => {
   const text = element.settings.text || 'Click Me';
   const url = element.settings.url || '#';
   const target = element.settings.openInNewTab ? '_blank' : '_self';
+  const customClasses = element.settings.elementClass || '';
 
   const handleButtonClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -46,36 +47,52 @@ export const Button: React.FC<ButtonProps> = (props) => {
     breakpointStyles = { ...breakpointStyles, ...element.styles.mobile };
   }
 
-  // Get content styles (everything except sizing and alignment - those go on BaseElement wrapper)
-  const buttonContentStyles: Record<string, any> = { ...breakpointStyles };
-  delete buttonContentStyles.width;
-  delete buttonContentStyles.maxWidth;
-  delete buttonContentStyles.height;
-  delete buttonContentStyles.maxHeight;
-  delete buttonContentStyles.marginLeft;
-  delete buttonContentStyles.marginRight;
-
-  // Handle display: block with fit-content width
-  const displayValue = buttonContentStyles.display || 'inline-block';
-  const shouldUseFitContent = displayValue === 'block' && !breakpointStyles.width;
-
-  const buttonStyles = {
-    display: displayValue,
-    width: shouldUseFitContent ? 'fit-content' : undefined,
-    padding: '12px 24px',
-    cursor: 'pointer',
+  // Styles for the <a> element (visual styles only)
+  // Box model (display, width, height, margins) is handled by BaseElement wrapper
+  const linkStyles = {
+    // Fill the wrapper completely
+    display: 'block',
+    width: '100%',
+    height: '100%',
+    // Visual styles
+    padding: breakpointStyles.padding || '12px 24px',
+    backgroundColor: breakpointStyles.backgroundColor,
+    color: breakpointStyles.color,
+    fontSize: breakpointStyles.fontSize,
+    fontWeight: breakpointStyles.fontWeight,
+    fontFamily: breakpointStyles.fontFamily,
+    textAlign: breakpointStyles.textAlign,
+    lineHeight: breakpointStyles.lineHeight,
+    letterSpacing: breakpointStyles.letterSpacing,
+    borderRadius: breakpointStyles.borderRadius,
+    border: breakpointStyles.border,
+    borderWidth: breakpointStyles.borderWidth,
+    borderColor: breakpointStyles.borderColor,
+    borderStyle: breakpointStyles.borderStyle,
+    boxShadow: breakpointStyles.boxShadow,
+    opacity: breakpointStyles.opacity,
+    transition: breakpointStyles.transition,
+    transform: breakpointStyles.transform,
+    // Required for BackgroundRenderer positioning
+    position: 'relative',
+    overflow: 'hidden',
     textDecoration: 'none',
-    ...buttonContentStyles,
+    cursor: 'pointer',
   } as React.CSSProperties;
+
+  // Styles for the <span> element (text layer above background)
+  // Minimal - just for positioning above BackgroundRenderer
+  const buttonStyles: React.CSSProperties = {
+    position: 'relative',
+    zIndex: 10,
+    display: 'block',
+  };
 
   // Get hover styles with inheritance
   const getHoverStyles = (): React.CSSProperties => {
     const hoverStyles = (element as any).hoverStyles || {};
 
-    // Start with normal button styles
-    let styles = { ...buttonStyles };
-
-    // Apply hover overrides with inheritance
+    // Build hover styles with inheritance
     let hoverOverrides: Record<string, any> = { ...hoverStyles.desktop };
 
     if (activeBreakpoint === 'tablet' || activeBreakpoint === 'mobile') {
@@ -86,10 +103,16 @@ export const Button: React.FC<ButtonProps> = (props) => {
       hoverOverrides = { ...hoverOverrides, ...hoverStyles.mobile };
     }
 
-    // Merge with hover overrides
-    styles = { ...styles, ...hoverOverrides };
-
-    return styles as React.CSSProperties;
+    // Merge normal link styles with hover overrides
+    return {
+      ...linkStyles,
+      backgroundColor: hoverOverrides.backgroundColor || linkStyles.backgroundColor,
+      color: hoverOverrides.color || linkStyles.color,
+      borderColor: hoverOverrides.borderColor || linkStyles.borderColor,
+      boxShadow: hoverOverrides.boxShadow || linkStyles.boxShadow,
+      opacity: hoverOverrides.opacity || linkStyles.opacity,
+      transform: hoverOverrides.transform || linkStyles.transform,
+    } as React.CSSProperties;
   };
 
   // Convert styles to CSS string
@@ -114,7 +137,7 @@ export const Button: React.FC<ButtonProps> = (props) => {
       {/* Inject hover styles for button */}
       {hasHoverStyles && (
         <style>
-          {`[data-element-id="${element.id}"] a .button-content:hover { ${stylesToCSS(getHoverStyles())} }`}
+          {`[data-element-id="${element.id}"] a:hover { ${stylesToCSS(getHoverStyles())} }`}
         </style>
       )}
 
@@ -123,14 +146,14 @@ export const Button: React.FC<ButtonProps> = (props) => {
         target={target}
         rel={target === '_blank' ? 'noopener noreferrer' : undefined}
         onClick={handleButtonClick}
-        className="block relative overflow-hidden"
-        style={{ width: '100%', height: '100%' }}
+        className={customClasses}
+        style={linkStyles}
       >
         {/* Background Layer - fills entire button */}
         <BackgroundRenderer element={element} />
 
-        {/* Content Layer - padding and styles applied here */}
-        <span className="relative z-10 block button-content" style={buttonStyles}>{text}</span>
+        {/* Text Layer - positioned above background */}
+        <span className="button-content" style={buttonStyles}>{text}</span>
       </a>
     </BaseElement>
   );
