@@ -20,6 +20,7 @@ export const Button: React.FC<ButtonProps> = (props) => {
   const text = element.settings.text || 'Click Me';
   const url = element.settings.url || '#';
   const target = element.settings.openInNewTab ? '_blank' : '_self';
+  const customClasses = element.settings.elementClass || '';
 
   const handleButtonClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -46,7 +47,28 @@ export const Button: React.FC<ButtonProps> = (props) => {
     breakpointStyles = { ...breakpointStyles, ...element.styles.mobile };
   }
 
-  // Get content styles (everything except sizing and alignment - those go on BaseElement wrapper)
+  // Split styles: link styles (margins, display, width) vs content styles (padding, colors, etc)
+  const displayValue = breakpointStyles.display || 'inline-block';
+  const shouldUseFitContent = displayValue === 'block' && !breakpointStyles.width;
+
+  // Styles for the <a> element (box model, positioning)
+  const linkStyles = {
+    display: displayValue,
+    width: breakpointStyles.width || (shouldUseFitContent ? 'fit-content' : undefined),
+    maxWidth: breakpointStyles.maxWidth,
+    height: breakpointStyles.height,
+    maxHeight: breakpointStyles.maxHeight,
+    marginLeft: breakpointStyles.marginLeft,
+    marginRight: breakpointStyles.marginRight,
+    marginTop: breakpointStyles.marginTop,
+    marginBottom: breakpointStyles.marginBottom,
+    position: 'relative',
+    overflow: 'hidden',
+    textDecoration: 'none',
+    cursor: 'pointer',
+  } as React.CSSProperties;
+
+  // Styles for the <span> element (visual appearance only, no margins)
   const buttonContentStyles: Record<string, any> = { ...breakpointStyles };
   delete buttonContentStyles.width;
   delete buttonContentStyles.maxWidth;
@@ -54,17 +76,13 @@ export const Button: React.FC<ButtonProps> = (props) => {
   delete buttonContentStyles.maxHeight;
   delete buttonContentStyles.marginLeft;
   delete buttonContentStyles.marginRight;
-
-  // Handle display: block with fit-content width
-  const displayValue = buttonContentStyles.display || 'inline-block';
-  const shouldUseFitContent = displayValue === 'block' && !breakpointStyles.width;
+  delete buttonContentStyles.marginTop;
+  delete buttonContentStyles.marginBottom;
+  delete buttonContentStyles.display;
 
   const buttonStyles = {
-    display: displayValue,
-    width: shouldUseFitContent ? 'fit-content' : undefined,
+    display: 'block',
     padding: '12px 24px',
-    cursor: 'pointer',
-    textDecoration: 'none',
     ...buttonContentStyles,
   } as React.CSSProperties;
 
@@ -123,8 +141,8 @@ export const Button: React.FC<ButtonProps> = (props) => {
         target={target}
         rel={target === '_blank' ? 'noopener noreferrer' : undefined}
         onClick={handleButtonClick}
-        className="block relative overflow-hidden"
-        style={{ width: '100%', height: '100%' }}
+        className={customClasses}
+        style={linkStyles}
       >
         {/* Background Layer - fills entire button */}
         <BackgroundRenderer element={element} />
