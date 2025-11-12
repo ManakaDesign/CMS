@@ -1,25 +1,37 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useBuilderStore } from '../../store/builderStore';
 import { FiCopy, FiRefreshCw } from 'react-icons/fi';
+import { HexColorPicker } from 'react-colorful';
+import { CSS_PROPERTIES, COLOR_PROPERTIES } from './cssProperties';
 
 export const CSSEditor: React.FC = () => {
   const { customCSS, setCustomCSS, elements } = useBuilderStore();
   const [cssValue, setCssValue] = useState(customCSS || '');
-  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-  const highlightRef = React.useRef<HTMLPreElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const highlightRef = useRef<HTMLPreElement>(null);
+  
+  // Autocomplete state
+  const [autocompleteShow, setAutocompleteShow] = useState(false);
+  const [autocompletePosition, setAutocompletePosition] = useState({ top: 0, left: 0 });
+  const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<string[]>([]);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(0);
+  
+  // Color picker state
+  const [colorPickerShow, setColorPickerShow] = useState(false);
+  const [colorPickerPosition, setColorPickerPosition] = useState({ top: 0, left: 0 });
+  const [currentColor, setCurrentColor] = useState('#000000');
+  const [colorProperty, setColorProperty] = useState<string>('');
 
   // Parse already used selectors from CSS
   const usedSelectors = useMemo(() => {
     const ids = new Set<string>();
     const classes = new Set<string>();
 
-    // Match ID selectors (#id)
     const idMatches = cssValue.matchAll(/#([a-zA-Z0-9_-]+)/g);
     for (const match of idMatches) {
       ids.add(match[1]);
     }
 
-    // Match class selectors (.class)
     const classMatches = cssValue.matchAll(/\.([a-zA-Z0-9_-]+)/g);
     for (const match of classMatches) {
       classes.add(match[1]);
@@ -28,18 +40,16 @@ export const CSSEditor: React.FC = () => {
     return { ids, classes };
   }, [cssValue]);
 
-  // Extract all IDs and Classes from elements and filter out already used ones
+  // Extract all IDs and Classes from elements
   const extractedSelectors = useMemo(() => {
     const ids = new Set<string>();
     const classes = new Set<string>();
 
     elements.forEach((element) => {
-      // Extract element ID
       if (element.settings.elementId && !usedSelectors.ids.has(element.settings.elementId)) {
         ids.add(element.settings.elementId);
       }
 
-      // Extract element classes
       if (element.settings.elementClass) {
         const classList = element.settings.elementClass.split(' ').filter(Boolean);
         classList.forEach((cls: string) => {
@@ -49,9 +59,8 @@ export const CSSEditor: React.FC = () => {
         });
       }
 
-      // Extract column IDs and classes from Row elements
+      // Extract column IDs and classes
       if (element.type === 'row') {
-        // Column IDs
         const columnIds = element.settings.columnIds || [];
         columnIds.forEach((columnId: string) => {
           if (columnId && !usedSelectors.ids.has(columnId)) {
@@ -59,7 +68,6 @@ export const CSSEditor: React.FC = () => {
           }
         });
 
-        // Column classes
         const columnClasses = element.settings.columnClasses || [];
         columnClasses.forEach((columnClass: string) => {
           if (columnClass) {
@@ -94,6 +102,126 @@ export const CSSEditor: React.FC = () => {
     return () => clearTimeout(timer);
   }, [cssValue, setCustomCSS]);
 
+  // Handle autocomplete
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value;
+    setCssValue(newValue);
+
+    // Get cursor position
+    const cursorPos = e.target.selectionStart;
+    const textBeforeCursor = newValue.substring(0, cursorPos);
+    
+    // Check if we're typing a CSS property (after a '{' or ';' and before a ':')
+    const lastBrace = Math.max(textBeforeCursor.lastIndexOf('{'), textBeforeCursor.lastIndexOf(';'));
+    const lastColon = textBeforeCursor.lastIndexOf(':');
+    
+    if (lastBrace > lastColon || lastColon === -1) {
+      // We're potentially typing a property name
+      const propertyMatch = textBeforeCursor.substring(lastBrace + 1).trim().match(/([a-z-]+)$/i);
+      
+      if (propertyMatch && propertyMatch[1].length > 0) {
+        const query = propertyMatch[1].toLowerCase();
+        const matches = CSS_PROPERTIES.filter(prop => prop.startsWith(query)).slice(0, 10);
+        
+        if (matches.length > 0) {
+          setAutocompleteSuggestions(matches);
+          setSelectedSuggestionIndex(0);
+          
+          // Calculate position
+          if (textareaRef.current) {
+            const { lineHeight } = window.getComputedStyle(textareaRef.current);
+            const lines = textBeforeCursor.split('\n').length;
+            const top = parseInt(lineHeight) * lines;
+            
+            setAutocompletePosition({ top, left: 20 });
+            setAutocompleteShow(true);
+          }
+          return;
+        }
+      }
+    }
+    
+    // Check if we're on a color property
+    if (lastColon > lastBrace) {
+      const propertyText = newValue.substring(lastBrace + 1, lastColon).trim();
+      if (COLOR_PROPERTIES.includes(propertyText)) {
+        // Extract current color value
+        const valueAfterColon = newValue.substring(lastColon + 1, cursorPos).trim();
+        const colorMatch = valueAfterColon.match(/#[0-9a-fA-F]{3,6}|rgb\([^)]+\)|rgba\([^)]+\)/);
+        
+        if (colorMatch) {
+          setCurrentColor(colorMatch[0].startsWith('#') ? colorMatch[0] : '#000000');
+          setColorProperty(propertyText);
+          
+          if (textareaRef.current) {
+            const { lineHeight } = window.getComputedStyle(textareaRef.current);
+            const lines = textBeforeCursor.split('\n').length;
+            const top = parseInt(lineHeight) * lines;
+            
+            setColorPickerPosition({ top, left: 200 });
+            setColorPickerShow(true);
+          }
+          return;
+        }
+      }
+    }
+    
+    setAutocompleteShow(false);
+    setColorPickerShow(false);
+  };
+
+  // Handle autocomplete selection
+  const selectSuggestion = (suggestion: string) => {
+    if (!textareaRef.current) return;
+    
+    const cursorPos = textareaRef.current.selectionStart;
+    const textBeforeCursor = cssValue.substring(0, cursorPos);
+    const textAfterCursor = cssValue.substring(cursorPos);
+    
+    const lastBrace = Math.max(textBeforeCursor.lastIndexOf('{'), textBeforeCursor.lastIndexOf(';'));
+    const propertyStart = textBeforeCursor.substring(lastBrace + 1).search(/[a-z-]/i);
+    
+    if (propertyStart !== -1) {
+      const replaceStart = lastBrace + 1 + propertyStart;
+      const newValue = cssValue.substring(0, replaceStart) + suggestion + ': ' + textAfterCursor;
+      setCssValue(newValue);
+      
+      setTimeout(() => {
+        if (textareaRef.current) {
+          const newCursorPos = replaceStart + suggestion.length + 2;
+          textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+          textareaRef.current.focus();
+        }
+      }, 0);
+    }
+    
+    setAutocompleteShow(false);
+  };
+
+  // Handle keyboard navigation in autocomplete
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (autocompleteShow) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedSuggestionIndex((prev) => 
+          Math.min(prev + 1, autocompleteSuggestions.length - 1)
+        );
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedSuggestionIndex((prev) => Math.max(prev - 1, 0));
+      } else if (e.key === 'Enter' && autocompleteSuggestions.length > 0) {
+        e.preventDefault();
+        selectSuggestion(autocompleteSuggestions[selectedSuggestionIndex]);
+      } else if (e.key === 'Escape') {
+        setAutocompleteShow(false);
+      }
+    }
+    
+    if (colorPickerShow && e.key === 'Escape') {
+      setColorPickerShow(false);
+    }
+  };
+
   const handleCopySelectors = () => {
     let text = '/* Available IDs */\n';
     extractedSelectors.ids.forEach((id) => {
@@ -115,25 +243,19 @@ export const CSSEditor: React.FC = () => {
     }
   };
 
-  // Syntax highlighting for CSS
   const highlightCSS = (css: string) => {
     if (!css) return '';
 
-    // Highlight selectors (IDs and Classes)
     let highlighted = css
-      // Escape HTML
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
-      // Highlight ID selectors
       .replace(/(#[a-zA-Z0-9_-]+)/g, '<span style="color: #3b82f6;">$1</span>')
-      // Highlight class selectors
       .replace(/(\.[a-zA-Z0-9_-]+)/g, '<span style="color: #3b82f6;">$1</span>');
 
     return highlighted;
   };
 
-  // Sync scroll between textarea and highlight overlay
   const handleScroll = () => {
     if (textareaRef.current && highlightRef.current) {
       highlightRef.current.scrollTop = textareaRef.current.scrollTop;
@@ -142,7 +264,7 @@ export const CSSEditor: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-dark-surface">
+    <div className="h-full flex flex-col bg-dark-surface relative">
       {/* Header */}
       <div className="p-4 border-b border-dark-border">
         <div className="flex items-center justify-between mb-3">
@@ -165,7 +287,7 @@ export const CSSEditor: React.FC = () => {
           </div>
         </div>
         <p className="text-xs text-light-muted">
-          Live preview - Changes apply automatically
+          Live preview with autocomplete - Type to get suggestions
         </p>
       </div>
 
@@ -220,9 +342,8 @@ export const CSSEditor: React.FC = () => {
         </div>
       )}
 
-      {/* CSS Editor with Syntax Highlighting */}
+      {/* CSS Editor with Autocomplete */}
       <div className="flex-1 overflow-hidden relative bg-dark-bg">
-        {/* Highlighted overlay */}
         <pre
           ref={highlightRef}
           className="absolute inset-0 p-4 bg-transparent font-mono text-sm pointer-events-none overflow-auto whitespace-pre-wrap break-words"
@@ -238,11 +359,11 @@ export const CSSEditor: React.FC = () => {
           }}
         />
 
-        {/* Actual textarea */}
         <textarea
           ref={textareaRef}
           value={cssValue}
-          onChange={(e) => setCssValue(e.target.value)}
+          onChange={handleTextChange}
+          onKeyDown={handleKeyDown}
           onScroll={handleScroll}
           className="absolute inset-0 w-full h-full p-4 bg-transparent font-mono text-sm resize-none focus:outline-none"
           style={{
@@ -265,6 +386,71 @@ export const CSSEditor: React.FC = () => {
 }"
           spellCheck={false}
         />
+
+        {/* Autocomplete dropdown */}
+        {autocompleteShow && (
+          <div
+            className="absolute bg-dark-surface border border-dark-border rounded shadow-lg z-50"
+            style={{
+              top: `${autocompletePosition.top}px`,
+              left: `${autocompletePosition.left}px`,
+              maxWidth: '300px',
+            }}
+          >
+            {autocompleteSuggestions.map((suggestion, index) => (
+              <button
+                key={suggestion}
+                onClick={() => selectSuggestion(suggestion)}
+                className={`block w-full text-left px-3 py-1.5 text-sm font-mono transition-colors ${
+                  index === selectedSuggestionIndex
+                    ? 'bg-brand-primary text-white'
+                    : 'text-light-text hover:bg-dark-hover'
+                }`}
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Color picker */}
+        {colorPickerShow && (
+          <div
+            className="absolute bg-dark-surface border border-dark-border rounded shadow-lg p-3 z-50"
+            style={{
+              top: `${colorPickerPosition.top}px`,
+              left: `${colorPickerPosition.left}px`,
+            }}
+          >
+            <div className="mb-2 text-xs text-light-text font-mono">{colorProperty}</div>
+            <HexColorPicker color={currentColor} onChange={setCurrentColor} />
+            <div className="mt-2 flex items-center gap-2">
+              <input
+                type="text"
+                value={currentColor}
+                onChange={(e) => setCurrentColor(e.target.value)}
+                className="flex-1 px-2 py-1 bg-dark-panel border border-dark-border rounded text-xs font-mono text-light-text"
+              />
+              <button
+                onClick={() => {
+                  // Insert color at cursor position
+                  if (textareaRef.current) {
+                    const cursorPos = textareaRef.current.selectionStart;
+                    const newValue = 
+                      cssValue.substring(0, cursorPos) +
+                      currentColor +
+                      cssValue.substring(cursorPos);
+                    setCssValue(newValue);
+                    setColorPickerShow(false);
+                  }
+                }}
+                className="px-2 py-1 bg-brand-primary text-white rounded text-xs hover:bg-primary-600"
+              >
+                Insert
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Footer Info */}

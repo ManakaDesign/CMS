@@ -128,16 +128,7 @@ export const useBuilderStore = create<BuilderStore>()(
           return;
         }
 
-        // Check if all currently selected elements are of the same type
-        const selectedElements = elements.filter((el) => selectedElementIds.includes(el.id));
-        const firstType = selectedElements[0]?.type;
-
-        // Only allow selecting elements of the same type
-        if (element.type !== firstType) {
-          return; // Ignore selection if type doesn't match
-        }
-
-        // Toggle selection
+        // Toggle selection - allow any element type combination
         if (selectedElementIds.includes(elementId)) {
           // Remove from selection
           const newSelection = selectedElementIds.filter((id) => id !== elementId);
