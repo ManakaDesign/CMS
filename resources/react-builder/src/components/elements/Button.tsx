@@ -47,40 +47,21 @@ export const Button: React.FC<ButtonProps> = (props) => {
     breakpointStyles = { ...breakpointStyles, ...element.styles.mobile };
   }
 
-  // Split styles: link styles (margins, display, width) vs content styles (padding, colors, etc)
-  const displayValue = breakpointStyles.display || 'inline-block';
-  const shouldUseFitContent = displayValue === 'block' && !breakpointStyles.width;
-
-  // Styles for the <a> element (box model, positioning)
+  // Styles for the <a> element (visual styles only)
+  // Box model (display, width, height, margins) is handled by BaseElement wrapper
   const linkStyles = {
-    display: displayValue,
-    width: breakpointStyles.width || (shouldUseFitContent ? 'fit-content' : undefined),
-    maxWidth: breakpointStyles.maxWidth,
-    height: breakpointStyles.height,
-    maxHeight: breakpointStyles.maxHeight,
-    marginLeft: breakpointStyles.marginLeft,
-    marginRight: breakpointStyles.marginRight,
-    marginTop: breakpointStyles.marginTop,
-    marginBottom: breakpointStyles.marginBottom,
-    position: 'relative',
-    overflow: 'hidden',
-    textDecoration: 'none',
-    cursor: 'pointer',
-  } as React.CSSProperties;
-
-  // Styles for the <span> element (visual appearance only)
-  // Explicitly build with only allowed properties - NO margins, width, height, or display
-  const buttonStyles: React.CSSProperties = {
+    // Fill the wrapper completely
     display: 'block',
+    width: '100%',
+    height: '100%',
+    // Visual styles
     padding: breakpointStyles.padding || '12px 24px',
-    // Visual styles only
     backgroundColor: breakpointStyles.backgroundColor,
     color: breakpointStyles.color,
     fontSize: breakpointStyles.fontSize,
     fontWeight: breakpointStyles.fontWeight,
     fontFamily: breakpointStyles.fontFamily,
     textAlign: breakpointStyles.textAlign,
-    textDecoration: breakpointStyles.textDecoration,
     lineHeight: breakpointStyles.lineHeight,
     letterSpacing: breakpointStyles.letterSpacing,
     borderRadius: breakpointStyles.borderRadius,
@@ -92,9 +73,22 @@ export const Button: React.FC<ButtonProps> = (props) => {
     opacity: breakpointStyles.opacity,
     transition: breakpointStyles.transition,
     transform: breakpointStyles.transform,
+    // Required for BackgroundRenderer positioning
+    position: 'relative',
+    overflow: 'hidden',
+    textDecoration: 'none',
+    cursor: 'pointer',
+  } as React.CSSProperties;
+
+  // Styles for the <span> element (text layer above background)
+  // Minimal - just for positioning above BackgroundRenderer
+  const buttonStyles: React.CSSProperties = {
+    position: 'relative',
+    zIndex: 10,
+    display: 'block',
   };
 
-  // Get hover styles with inheritance (same approach - only visual properties)
+  // Get hover styles with inheritance
   const getHoverStyles = (): React.CSSProperties => {
     const hoverStyles = (element as any).hoverStyles || {};
 
@@ -109,16 +103,15 @@ export const Button: React.FC<ButtonProps> = (props) => {
       hoverOverrides = { ...hoverOverrides, ...hoverStyles.mobile };
     }
 
-    // Start with normal button styles and merge with hover overrides
-    // Only include visual properties, never margins/sizing
+    // Merge normal link styles with hover overrides
     return {
-      ...buttonStyles,
-      backgroundColor: hoverOverrides.backgroundColor || buttonStyles.backgroundColor,
-      color: hoverOverrides.color || buttonStyles.color,
-      borderColor: hoverOverrides.borderColor || buttonStyles.borderColor,
-      boxShadow: hoverOverrides.boxShadow || buttonStyles.boxShadow,
-      opacity: hoverOverrides.opacity || buttonStyles.opacity,
-      transform: hoverOverrides.transform || buttonStyles.transform,
+      ...linkStyles,
+      backgroundColor: hoverOverrides.backgroundColor || linkStyles.backgroundColor,
+      color: hoverOverrides.color || linkStyles.color,
+      borderColor: hoverOverrides.borderColor || linkStyles.borderColor,
+      boxShadow: hoverOverrides.boxShadow || linkStyles.boxShadow,
+      opacity: hoverOverrides.opacity || linkStyles.opacity,
+      transform: hoverOverrides.transform || linkStyles.transform,
     } as React.CSSProperties;
   };
 
@@ -144,7 +137,7 @@ export const Button: React.FC<ButtonProps> = (props) => {
       {/* Inject hover styles for button */}
       {hasHoverStyles && (
         <style>
-          {`[data-element-id="${element.id}"] a .button-content:hover { ${stylesToCSS(getHoverStyles())} }`}
+          {`[data-element-id="${element.id}"] a:hover { ${stylesToCSS(getHoverStyles())} }`}
         </style>
       )}
 
@@ -159,8 +152,8 @@ export const Button: React.FC<ButtonProps> = (props) => {
         {/* Background Layer - fills entire button */}
         <BackgroundRenderer element={element} />
 
-        {/* Content Layer - padding and styles applied here */}
-        <span className="relative z-10 block button-content" style={buttonStyles}>{text}</span>
+        {/* Text Layer - positioned above background */}
+        <span className="button-content" style={buttonStyles}>{text}</span>
       </a>
     </BaseElement>
   );
