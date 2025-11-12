@@ -68,35 +68,37 @@ export const Button: React.FC<ButtonProps> = (props) => {
     cursor: 'pointer',
   } as React.CSSProperties;
 
-  // Styles for the <span> element (visual appearance only, no margins/sizing)
-  // Build content styles by explicitly excluding box-model properties
-  const {
-    width: _width,
-    maxWidth: _maxWidth,
-    height: _height,
-    maxHeight: _maxHeight,
-    marginLeft: _marginLeft,
-    marginRight: _marginRight,
-    marginTop: _marginTop,
-    marginBottom: _marginBottom,
-    display: _display,
-    ...buttonContentStyles
-  } = breakpointStyles;
-
-  const buttonStyles = {
+  // Styles for the <span> element (visual appearance only)
+  // Explicitly build with only allowed properties - NO margins, width, height, or display
+  const buttonStyles: React.CSSProperties = {
     display: 'block',
-    padding: '12px 24px',
-    ...buttonContentStyles,
-  } as React.CSSProperties;
+    padding: breakpointStyles.padding || '12px 24px',
+    // Visual styles only
+    backgroundColor: breakpointStyles.backgroundColor,
+    color: breakpointStyles.color,
+    fontSize: breakpointStyles.fontSize,
+    fontWeight: breakpointStyles.fontWeight,
+    fontFamily: breakpointStyles.fontFamily,
+    textAlign: breakpointStyles.textAlign,
+    textDecoration: breakpointStyles.textDecoration,
+    lineHeight: breakpointStyles.lineHeight,
+    letterSpacing: breakpointStyles.letterSpacing,
+    borderRadius: breakpointStyles.borderRadius,
+    border: breakpointStyles.border,
+    borderWidth: breakpointStyles.borderWidth,
+    borderColor: breakpointStyles.borderColor,
+    borderStyle: breakpointStyles.borderStyle,
+    boxShadow: breakpointStyles.boxShadow,
+    opacity: breakpointStyles.opacity,
+    transition: breakpointStyles.transition,
+    transform: breakpointStyles.transform,
+  };
 
-  // Get hover styles with inheritance
+  // Get hover styles with inheritance (same approach - only visual properties)
   const getHoverStyles = (): React.CSSProperties => {
     const hoverStyles = (element as any).hoverStyles || {};
 
-    // Start with normal button styles
-    let styles = { ...buttonStyles };
-
-    // Apply hover overrides with inheritance
+    // Build hover styles with inheritance
     let hoverOverrides: Record<string, any> = { ...hoverStyles.desktop };
 
     if (activeBreakpoint === 'tablet' || activeBreakpoint === 'mobile') {
@@ -107,10 +109,17 @@ export const Button: React.FC<ButtonProps> = (props) => {
       hoverOverrides = { ...hoverOverrides, ...hoverStyles.mobile };
     }
 
-    // Merge with hover overrides
-    styles = { ...styles, ...hoverOverrides };
-
-    return styles as React.CSSProperties;
+    // Start with normal button styles and merge with hover overrides
+    // Only include visual properties, never margins/sizing
+    return {
+      ...buttonStyles,
+      backgroundColor: hoverOverrides.backgroundColor || buttonStyles.backgroundColor,
+      color: hoverOverrides.color || buttonStyles.color,
+      borderColor: hoverOverrides.borderColor || buttonStyles.borderColor,
+      boxShadow: hoverOverrides.boxShadow || buttonStyles.boxShadow,
+      opacity: hoverOverrides.opacity || buttonStyles.opacity,
+      transform: hoverOverrides.transform || buttonStyles.transform,
+    } as React.CSSProperties;
   };
 
   // Convert styles to CSS string
