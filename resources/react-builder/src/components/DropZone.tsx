@@ -9,6 +9,7 @@ interface DropZoneProps {
   position: 'before' | 'after' | 'inside';
   accepts: string[];
   index?: number;
+  columnIndex?: number;
   orientation?: 'horizontal' | 'vertical';
 }
 
@@ -25,6 +26,7 @@ export const DropZone: React.FC<DropZoneProps> = ({
   position,
   accepts,
   index,
+  columnIndex,
   orientation = 'horizontal',
 }) => {
   const { activeElementType } = useDragContext();
@@ -36,6 +38,7 @@ export const DropZone: React.FC<DropZoneProps> = ({
       parentId,
       position,
       index,
+      columnIndex,
     },
   });
 

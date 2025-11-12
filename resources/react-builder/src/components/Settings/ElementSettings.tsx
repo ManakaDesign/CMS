@@ -862,6 +862,53 @@ export const ElementSettings: React.FC = () => {
               </div>
             </div>
 
+            {/* Column Attributes */}
+            <div className="p-4 border-b border-green-400/30">
+              <h3 className="text-xs font-semibold text-green-300 uppercase mb-3">Column Attributes</h3>
+
+              {/* Column ID */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-light-text mb-2">Column ID</label>
+                <input
+                  type="text"
+                  value={(() => {
+                    const columnIds = element.settings.columnIds || [];
+                    return columnIds[selectedColumnIndex] || '';
+                  })()}
+                  onChange={(e) => {
+                    const columnIds = element.settings.columnIds || [];
+                    const newColumnIds = [...columnIds];
+                    newColumnIds[selectedColumnIndex] = e.target.value;
+                    updateSetting('columnIds', newColumnIds);
+                  }}
+                  className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                  placeholder="my-column-id"
+                />
+                <p className="text-xs text-light-muted mt-1">Unique identifier for this column</p>
+              </div>
+
+              {/* Column Class */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-light-text mb-2">CSS Classes</label>
+                <input
+                  type="text"
+                  value={(() => {
+                    const columnClasses = element.settings.columnClasses || [];
+                    return columnClasses[selectedColumnIndex] || '';
+                  })()}
+                  onChange={(e) => {
+                    const columnClasses = element.settings.columnClasses || [];
+                    const newColumnClasses = [...columnClasses];
+                    newColumnClasses[selectedColumnIndex] = e.target.value;
+                    updateSetting('columnClasses', newColumnClasses);
+                  }}
+                  className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                  placeholder="class-1 class-2 class-3"
+                />
+                <p className="text-xs text-light-muted mt-1">Space-separated CSS class names</p>
+              </div>
+            </div>
+
             {/* Column Style Controls */}
             <div className="p-4 space-y-4">
               {/* Background */}
@@ -1215,14 +1262,49 @@ export const ElementSettings: React.FC = () => {
         {/* Element Alignment - for elements with limited width */}
         {(isMultiSelect || element) && (element?.type === 'section' || element?.type === 'row' || element?.type === 'button') && (() => {
           if (!element && !isMultiSelect) return null;
-          const marginLeft = getStyleValue('marginLeft');
-          const marginRight = getStyleValue('marginRight');
 
-          const isLeft = (marginLeft === '0' || marginLeft === '0px' || !marginLeft) && marginRight === 'auto';
+          // Parse margin shorthand to get left/right values
+          const margin = getStyleValue('margin') || '0';
+          const parts = margin.trim().split(/\s+/);
+          let marginRight = '0', marginLeft = '0';
+
+          if (parts.length === 1) {
+            marginLeft = marginRight = parts[0];
+          } else if (parts.length === 2) {
+            marginRight = marginLeft = parts[1];
+          } else if (parts.length === 3) {
+            marginRight = marginLeft = parts[1];
+          } else if (parts.length >= 4) {
+            marginRight = parts[1];
+            marginLeft = parts[3];
+          }
+
+          const isLeft = (marginLeft === '0' || marginLeft === '0px') && marginRight === 'auto';
           const isCenter = marginLeft === 'auto' && marginRight === 'auto';
-          const isRight = marginLeft === 'auto' && (marginRight === '0' || marginRight === '0px' || !marginRight);
+          const isRight = marginLeft === 'auto' && (marginRight === '0' || marginRight === '0px');
 
           const handleAlignment = (left: string, right: string) => {
+            // Helper to parse existing margin shorthand and update left/right values
+            const updateMarginShorthand = (existingStyles: Record<string, any>) => {
+              const margin = existingStyles.margin || '0';
+              const parts = margin.trim().split(/\s+/);
+
+              let top = '0', bottom = '0';
+              if (parts.length === 1) {
+                top = bottom = parts[0];
+              } else if (parts.length === 2) {
+                top = bottom = parts[0];
+              } else if (parts.length === 3) {
+                top = parts[0];
+                bottom = parts[2];
+              } else if (parts.length >= 4) {
+                top = parts[0];
+                bottom = parts[2];
+              }
+
+              return `${top} ${right} ${bottom} ${left}`;
+            };
+
             // Get fresh store data
             const store = useBuilderStore.getState();
             const currentElements = store.elements;
@@ -1238,26 +1320,30 @@ export const ElementSettings: React.FC = () => {
 
                 if (styleMode === 'hover') {
                   const hoverStyles = (el as any).hoverStyles || {};
+                  const existingStyles = hoverStyles[activeBreakpoint] || {};
                   return {
                     ...el,
                     hoverStyles: {
                       ...hoverStyles,
                       [activeBreakpoint]: {
-                        ...hoverStyles[activeBreakpoint],
-                        marginLeft: left,
-                        marginRight: right,
+                        ...existingStyles,
+                        margin: updateMarginShorthand(existingStyles),
+                        marginLeft: undefined,
+                        marginRight: undefined,
                       },
                     },
                   };
                 } else {
+                  const existingStyles = el.styles[activeBreakpoint] || {};
                   return {
                     ...el,
                     styles: {
                       ...el.styles,
                       [activeBreakpoint]: {
-                        ...el.styles[activeBreakpoint],
-                        marginLeft: left,
-                        marginRight: right,
+                        ...existingStyles,
+                        margin: updateMarginShorthand(existingStyles),
+                        marginLeft: undefined,
+                        marginRight: undefined,
                       },
                     },
                   };
@@ -1274,24 +1360,28 @@ export const ElementSettings: React.FC = () => {
 
             if (styleMode === 'hover') {
               const hoverStyles = (element as any).hoverStyles || {};
+              const existingStyles = hoverStyles[activeBreakpoint] || {};
               updateElement(element.id, {
                 hoverStyles: {
                   ...hoverStyles,
                   [activeBreakpoint]: {
-                    ...hoverStyles[activeBreakpoint],
-                    marginLeft: left,
-                    marginRight: right,
+                    ...existingStyles,
+                    margin: updateMarginShorthand(existingStyles),
+                    marginLeft: undefined,
+                    marginRight: undefined,
                   },
                 },
               } as any);
             } else {
+              const existingStyles = element.styles[activeBreakpoint] || {};
               updateElement(element.id, {
                 styles: {
                   ...element.styles,
                   [activeBreakpoint]: {
-                    ...element.styles[activeBreakpoint],
-                    marginLeft: left,
-                    marginRight: right,
+                    ...existingStyles,
+                    margin: updateMarginShorthand(existingStyles),
+                    marginLeft: undefined,
+                    marginRight: undefined,
                   },
                 },
               });

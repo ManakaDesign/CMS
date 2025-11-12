@@ -25,34 +25,17 @@ export const Row: React.FC<RowProps> = (props) => {
   const columnsConfig = element.settings.columns || 1;
   const isLegacy = typeof columnsConfig === 'number';
 
+  // Get desktop column count (for rendering structure)
   let columnCount: number;
   if (isLegacy) {
-    // Legacy: single number, use as desktop, auto-responsive fallback
-    const desktopColumns = columnsConfig;
-    if (activeBreakpoint === 'mobile') {
-      columnCount = 1; // Always 1 column on mobile
-    } else if (activeBreakpoint === 'tablet') {
-      // Smart fallback for tablet
-      columnCount = desktopColumns >= 4 ? Math.ceil(desktopColumns / 2) : desktopColumns;
-    } else {
-      columnCount = desktopColumns;
-    }
+    columnCount = columnsConfig;
   } else {
-    // New format: breakpoint-specific with fallbacks
-    if (columnsConfig[activeBreakpoint]) {
-      columnCount = columnsConfig[activeBreakpoint];
-    } else if (activeBreakpoint === 'mobile') {
-      // Mobile fallback: use tablet or default to 1
-      columnCount = columnsConfig.tablet || 1;
-    } else if (activeBreakpoint === 'tablet') {
-      // Tablet fallback: use desktop with smart reduction
-      const desktopColumns = columnsConfig.desktop || 1;
-      columnCount = desktopColumns >= 4 ? Math.ceil(desktopColumns / 2) : desktopColumns;
-    } else {
-      // Desktop fallback
-      columnCount = columnsConfig.desktop || 1;
-    }
+    columnCount = columnsConfig.desktop || columnsConfig.tablet || 1;
   }
+
+  // Determine flex direction based on breakpoint
+  // On mobile, stack columns vertically instead of reducing column count
+  const flexDirection = activeBreakpoint === 'mobile' ? 'column' : 'row';
 
   // Get children elements
   const childElements = elements
@@ -150,7 +133,7 @@ export const Row: React.FC<RowProps> = (props) => {
         <BackgroundRenderer element={element} />
 
         {/* Content Layer - padding and other styles applied here */}
-        <div className="relative z-10 flex row-content" style={{ gap: element.settings.gap || '16px', width: '100%', ...getContentStyles() }}>
+        <div className="relative z-10 flex row-content" style={{ gap: element.settings.gap || '16px', width: '100%', flexDirection, ...getContentStyles() }}>
         {Array.from({ length: columnCount }).map((_, columnIndex) => {
           // Get column-specific styles
           const columnStyles = element.settings.columnStyles || [];
@@ -164,6 +147,12 @@ export const Row: React.FC<RowProps> = (props) => {
           const columnBackgrounds = element.settings.columnBackgrounds || [];
           const columnBackground = columnBackgrounds[columnIndex] || {};
 
+          // Get column ID and classes
+          const columnIds = element.settings.columnIds || [];
+          const columnId = columnIds[columnIndex] || undefined;
+          const columnClasses = element.settings.columnClasses || [];
+          const columnClass = columnClasses[columnIndex] || '';
+
           return (
           <RowColumn
             key={columnIndex}
@@ -176,6 +165,9 @@ export const Row: React.FC<RowProps> = (props) => {
             columnStyle={columnStyle}
             columnHoverStyle={columnHoverStyle}
             columnBackground={columnBackground}
+            activeBreakpoint={activeBreakpoint}
+            columnId={columnId}
+            columnClass={columnClass}
           />
         );
         })}
@@ -196,9 +188,12 @@ interface RowColumnProps {
   columnStyle?: React.CSSProperties;
   columnHoverStyle?: React.CSSProperties;
   columnBackground?: any;
+  activeBreakpoint: string;
+  columnId?: string;
+  columnClass?: string;
 }
 
-const RowColumn: React.FC<RowColumnProps> = ({ rowId, rowElementId, columnIndex, columnCount, isRowSelected, children, columnStyle, columnHoverStyle, columnBackground }) => {
+const RowColumn: React.FC<RowColumnProps> = ({ rowId, rowElementId, columnIndex, columnCount, isRowSelected, children, columnStyle, columnHoverStyle, columnBackground, activeBreakpoint, columnId, columnClass }) => {
   const { selectedElementId, hoveredElementId, selectElement, hoverElement, isPreviewMode } = useBuilderStore();
 
   // Make column droppable (empty state only)
@@ -233,7 +228,6 @@ const RowColumn: React.FC<RowColumnProps> = ({ rowId, rowElementId, columnIndex,
   const borderStyle: React.CSSProperties = {};
   if (isRowSelected && columnIndex < columnCount - 1) {
     borderStyle.borderRight = '2px dashed #10b981'; // Green dashed border
-    borderStyle.paddingRight = '8px';
     borderStyle.marginRight = '8px';
   }
 
@@ -319,9 +313,10 @@ const RowColumn: React.FC<RowColumnProps> = ({ rowId, rowElementId, columnIndex,
       )}
 
       <div
-        className={`${columnClassName} flex-1 min-h-[100px] relative transition-all overflow-hidden`}
+        id={columnId}
+        className={`${columnClassName} flex-1 min-h-[100px] relative transition-all overflow-hidden ${columnClass || ''}`.trim()}
         style={{
-          flex: `1 1 ${100 / columnCount}%`,
+          flex: activeBreakpoint === 'mobile' ? '1 1 100%' : `1 1 ${100 / columnCount}%`,
           ...borderStyle,
           ...columnStyle,
         }}
@@ -340,6 +335,7 @@ const RowColumn: React.FC<RowColumnProps> = ({ rowId, rowElementId, columnIndex,
             position="before"
             accepts={['text', 'heading', 'button', 'image', 'video', 'spacer', 'divider', 'code']}
             index={0}
+            columnIndex={columnIndex}
           />
 
           {children.map((child) => (
@@ -353,6 +349,7 @@ const RowColumn: React.FC<RowColumnProps> = ({ rowId, rowElementId, columnIndex,
                 position="after"
                 accepts={['text', 'heading', 'button', 'image', 'video', 'spacer', 'divider', 'code']}
                 index={child.order + 1}
+                columnIndex={columnIndex}
               />
             </React.Fragment>
           ))}

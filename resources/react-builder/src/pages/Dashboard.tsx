@@ -301,8 +301,8 @@ const CreatePageDialog: React.FC<CreatePageDialogProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-dark-surface rounded-lg shadow-xl max-w-md w-full p-6">
+    <div className="fixed inset-0 flex items-center justify-center p-4 z-50">
+      <div className="bg-dark-surface rounded-lg shadow-xl max-w-md w-full p-6 border border-dark-border">
         <h2 className="text-xl font-bold text-light-text mb-4">Neue Seite erstellen</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
