@@ -11,6 +11,8 @@
     RewriteCond %{REQUEST_URI} ^/public/admin
     RewriteCond %{REQUEST_URI} !^/public/admin/assets/
     RewriteCond %{REQUEST_URI} !^/public/admin/.*\.(js|css|svg|png|jpg|jpeg|gif|ico|woff|woff2|ttf|eot)$
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^(.*)$ public/index.php [L,QSA]
 
     # If the file exists in public/, serve it directly
