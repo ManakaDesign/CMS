@@ -656,7 +656,7 @@ export const ElementSettings: React.FC = () => {
 
             // Update responsive layout first to ensure valid values
             const newLayout = { ...responsiveLayout };
-            newLayout.desktop = Math.min(newLayout.desktop, newTotal);
+            newLayout.desktop = newTotal;  // Desktop always matches total columns
             newLayout.tablet = Math.min(newLayout.tablet, newTotal);
             newLayout.mobile = Math.min(newLayout.mobile, newTotal);
 
