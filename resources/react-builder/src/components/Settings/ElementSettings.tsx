@@ -1124,6 +1124,7 @@ export const ElementSettings: React.FC = () => {
                           <FiX size={14} />
                         </button>
                       </div>
+                      <GlobalColorSwatches onColorSelect={(color) => updateColumnBackgroundSetting('gradientColor1', color)} />
                     </div>
                     <div>
                       <label className="text-xs text-green-300 mb-1 block">Color 2</label>
@@ -1142,6 +1143,7 @@ export const ElementSettings: React.FC = () => {
                           <FiX size={14} />
                         </button>
                       </div>
+                      <GlobalColorSwatches onColorSelect={(color) => updateColumnBackgroundSetting('gradientColor2', color)} />
                     </div>
                     <div>
                       <label className="text-xs text-green-300 mb-1 block">Angle (deg)</label>
@@ -1737,6 +1739,10 @@ export const ElementSettings: React.FC = () => {
                       <FiX size={14} />
                     </button>
                   </div>
+                  <GlobalColorSwatches onColorSelect={(color) => updateSetting('backgroundGradient', {
+                    ...element.settings.backgroundGradient,
+                    color1: color
+                  })} />
                 </div>
                 <div>
                   <label className="text-xs text-light-muted mb-1 block">Color 2</label>
@@ -1761,6 +1767,10 @@ export const ElementSettings: React.FC = () => {
                       <FiX size={14} />
                     </button>
                   </div>
+                  <GlobalColorSwatches onColorSelect={(color) => updateSetting('backgroundGradient', {
+                    ...element.settings.backgroundGradient,
+                    color2: color
+                  })} />
                 </div>
                 <div>
                   <label className="text-xs text-light-muted mb-1 block">Angle (deg)</label>
