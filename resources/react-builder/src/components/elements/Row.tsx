@@ -133,7 +133,7 @@ export const Row: React.FC<RowProps> = (props) => {
         <BackgroundRenderer element={element} />
 
         {/* Content Layer - padding and other styles applied here */}
-        <div className="relative z-10 flex row-content" style={{ width: '100%', flexDirection, ...getContentStyles(), gap: element.settings.gap || '16px' }}>
+        <div className="relative z-10 flex row-content" style={{ width: '100%', flexDirection, ...getContentStyles(), gap: element.settings.gap || '16px', minHeight: element.settings.minHeight || 'auto' }}>
         {Array.from({ length: columnCount }).map((_, columnIndex) => {
           // Get column-specific styles
           const columnStyles = element.settings.columnStyles || [];

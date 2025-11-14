@@ -21,8 +21,8 @@ export const BreakpointSettings: React.FC<BreakpointSettingsProps> = ({ onClose 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-end p-4">
-      <div className="bg-dark-surface rounded-lg shadow-xl w-full max-w-md border border-dark-border mt-12">
+    <div className="fixed inset-0 z-50 flex items-start justify-center p-4">
+      <div className="bg-dark-surface rounded-lg shadow-xl w-full max-w-md border border-dark-border mt-20">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-dark-border">
           <h2 className="text-lg font-semibold text-light-text">Responsive Breakpoints</h2>

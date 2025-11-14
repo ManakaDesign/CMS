@@ -6,13 +6,15 @@ import {
   FiTrash2,
   FiCopy,
   FiEye,
-  FiEyeOff,
   FiLogOut,
   FiGlobe,
+  FiFileText,
+  FiSettings,
 } from 'react-icons/fi';
 import { pagesApi } from '../api/services';
 import { removeAuthToken } from '../api/client';
 import type { Page } from '../types';
+import { PageSettingsModal } from '../components/PageSettingsModal';
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -20,6 +22,7 @@ export const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [settingsPage, setSettingsPage] = useState<Page | null>(null);
 
   useEffect(() => {
     loadPages();
@@ -81,6 +84,15 @@ export const Dashboard: React.FC = () => {
     } catch (err: any) {
       alert('Fehler: ' + (err.response?.data?.message || 'Unbekannter Fehler'));
     }
+  };
+
+  const handlePreview = (page: Page) => {
+    // Open page preview in new tab
+    window.open(`/${page.slug}`, '_blank');
+  };
+
+  const handlePageSettings = (page: Page) => {
+    setSettingsPage(page);
   };
 
   const formatDate = (dateString: string) => {
@@ -212,13 +224,31 @@ export const Dashboard: React.FC = () => {
                           <FiEdit2 size={18} />
                         </button>
                         <button
-                          onClick={() => handlePublish(page)}
+                          onClick={() => handlePreview(page)}
                           className="p-2 text-light-text hover:text-white hover:bg-dark-hover rounded-lg transition-colors"
+                          title="Vorschau"
+                        >
+                          <FiEye size={18} />
+                        </button>
+                        <button
+                          onClick={() => handlePublish(page)}
+                          className={`p-2 hover:bg-dark-hover rounded-lg transition-colors ${
+                            page.status === 'published'
+                              ? 'text-green-400 hover:text-green-300'
+                              : 'text-yellow-400 hover:text-yellow-300'
+                          }`}
                           title={
-                            page.status === 'published' ? 'Veröffentlichung zurücknehmen' : 'Veröffentlichen'
+                            page.status === 'published' ? 'Zu Entwurf machen' : 'Veröffentlichen'
                           }
                         >
-                          {page.status === 'published' ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                          {page.status === 'published' ? <FiGlobe size={18} /> : <FiFileText size={18} />}
+                        </button>
+                        <button
+                          onClick={() => handlePageSettings(page)}
+                          className="p-2 text-light-text hover:text-white hover:bg-dark-hover rounded-lg transition-colors"
+                          title="Seiteneinstellungen"
+                        >
+                          <FiSettings size={18} />
                         </button>
                         <button
                           onClick={() => handleDuplicate(page)}
@@ -248,6 +278,18 @@ export const Dashboard: React.FC = () => {
       {showCreateDialog && (
         <CreatePageDialog
           onClose={() => setShowCreateDialog(false)}
+        />
+      )}
+
+      {/* Page Settings Modal */}
+      {settingsPage && (
+        <PageSettingsModal
+          page={settingsPage}
+          onClose={() => setSettingsPage(null)}
+          onSave={() => {
+            loadPages();
+            setSettingsPage(null);
+          }}
         />
       )}
     </div>
@@ -337,11 +379,11 @@ const CreatePageDialog: React.FC<CreatePageDialogProps> = ({ onClose }) => {
               type="text"
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
-              className="block w-full px-3 py-2 border border-dark-border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="block w-full px-3 py-2 bg-dark-panel border border-dark-border text-light-text placeholder-light-muted rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               placeholder="z.B. startseite"
               required
             />
-            <p className="mt-1 text-xs text-gray-500">Die Seite wird unter /{slug} erreichbar sein</p>
+            <p className="mt-1 text-xs text-light-muted">Die Seite wird unter /{slug} erreichbar sein</p>
           </div>
 
           <div className="flex justify-end gap-3 pt-4">

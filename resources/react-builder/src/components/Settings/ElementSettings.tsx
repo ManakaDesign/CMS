@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useBuilderStore } from '../../store/builderStore';
-import { FiTrash2, FiCopy, FiEye, FiEyeOff, FiDroplet, FiImage, FiVideo, FiAlignLeft, FiAlignCenter, FiAlignRight, FiSettings, FiColumns } from 'react-icons/fi';
+import { FiTrash2, FiCopy, FiEye, FiEyeOff, FiDroplet, FiImage, FiVideo, FiAlignLeft, FiAlignCenter, FiAlignRight, FiSettings, FiColumns, FiX } from 'react-icons/fi';
 import { RiAlignItemLeftFill, RiAlignItemHorizontalCenterFill, RiAlignItemRightFill } from 'react-icons/ri';
 import { SpacingControl } from './SpacingControl';
 
@@ -750,6 +750,19 @@ export const ElementSettings: React.FC = () => {
                   <p className="text-xs text-light-muted mt-1">Space between columns (e.g., 0px, 16px, 2rem)</p>
                 </div>
               )}
+
+              {/* Min Height */}
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-light-text mb-2">Min Height</label>
+                <input
+                  type="text"
+                  value={element.settings.minHeight || ''}
+                  onChange={(e) => updateSetting('minHeight', e.target.value)}
+                  className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                  placeholder="auto"
+                />
+                <p className="text-xs text-light-muted mt-1">Minimum height (e.g., 100px, 10vh, auto)</p>
+              </div>
             </div>
           );
         })()}
@@ -1034,12 +1047,21 @@ export const ElementSettings: React.FC = () => {
 
                 {/* Background Color */}
                 {columnBackgroundType === 'color' && (
-                  <input
-                    type="color"
-                    value={getColumnStyleValue('backgroundColor') || '#ffffff'}
-                    onChange={(e) => updateColumnStyle('backgroundColor', e.target.value)}
-                    className="w-full h-10 border border-green-400/30 rounded cursor-pointer"
-                  />
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="color"
+                      value={getColumnStyleValue('backgroundColor') || '#ffffff'}
+                      onChange={(e) => updateColumnStyle('backgroundColor', e.target.value)}
+                      className="flex-1 h-10 border border-green-400/30 rounded cursor-pointer"
+                    />
+                    <button
+                      onClick={() => updateColumnStyle('backgroundColor', '')}
+                      className="p-2 hover:bg-dark-hover rounded transition-colors text-light-muted hover:text-light-text"
+                      title="Clear color"
+                    >
+                      <FiX size={16} />
+                    </button>
+                  </div>
                 )}
 
                 {/* Background Gradient */}
@@ -1047,21 +1069,39 @@ export const ElementSettings: React.FC = () => {
                   <div className="space-y-2">
                     <div>
                       <label className="text-xs text-green-300 mb-1 block">Color 1</label>
-                      <input
-                        type="color"
-                        value={(columnBackground.gradientColor1 as string) || '#ffffff'}
-                        onChange={(e) => updateColumnBackgroundSetting('gradientColor1', e.target.value)}
-                        className="w-full h-8 border border-green-400/30 rounded"
-                      />
+                      <div className="flex gap-2 items-center">
+                        <input
+                          type="color"
+                          value={(columnBackground.gradientColor1 as string) || '#ffffff'}
+                          onChange={(e) => updateColumnBackgroundSetting('gradientColor1', e.target.value)}
+                          className="flex-1 h-8 border border-green-400/30 rounded"
+                        />
+                        <button
+                          onClick={() => updateColumnBackgroundSetting('gradientColor1', '')}
+                          className="p-1.5 hover:bg-dark-hover rounded transition-colors text-light-muted hover:text-light-text"
+                          title="Clear color"
+                        >
+                          <FiX size={14} />
+                        </button>
+                      </div>
                     </div>
                     <div>
                       <label className="text-xs text-green-300 mb-1 block">Color 2</label>
-                      <input
-                        type="color"
-                        value={(columnBackground.gradientColor2 as string) || '#000000'}
-                        onChange={(e) => updateColumnBackgroundSetting('gradientColor2', e.target.value)}
-                        className="w-full h-8 border border-green-400/30 rounded"
-                      />
+                      <div className="flex gap-2 items-center">
+                        <input
+                          type="color"
+                          value={(columnBackground.gradientColor2 as string) || '#000000'}
+                          onChange={(e) => updateColumnBackgroundSetting('gradientColor2', e.target.value)}
+                          className="flex-1 h-8 border border-green-400/30 rounded"
+                        />
+                        <button
+                          onClick={() => updateColumnBackgroundSetting('gradientColor2', '')}
+                          className="p-1.5 hover:bg-dark-hover rounded transition-colors text-light-muted hover:text-light-text"
+                          title="Clear color"
+                        >
+                          <FiX size={14} />
+                        </button>
+                      </div>
                     </div>
                     <div>
                       <label className="text-xs text-green-300 mb-1 block">Angle (deg)</label>
@@ -1237,12 +1277,21 @@ export const ElementSettings: React.FC = () => {
             </div>
             <div className="mb-4">
               <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Text Color</label>
-              <input
-                type="color"
-                value={getStyleValue('color') || '#000000'}
-                onChange={(e) => updateStyle('color', e.target.value, activeBreakpoint)}
-                className={`w-full h-10 rounded cursor-pointer ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
-              />
+              <div className="flex gap-2 items-center">
+                <input
+                  type="color"
+                  value={getStyleValue('color') || '#000000'}
+                  onChange={(e) => updateStyle('color', e.target.value, activeBreakpoint)}
+                  className={`flex-1 h-10 rounded cursor-pointer ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
+                />
+                <button
+                  onClick={() => updateStyle('color', '', activeBreakpoint)}
+                  className="p-2 hover:bg-dark-hover rounded transition-colors text-light-muted hover:text-light-text"
+                  title="Clear color"
+                >
+                  <FiX size={16} />
+                </button>
+              </div>
               {isMultiSelect && hasMultiSelectMixedValues('color') && (
                 <p className="text-xs text-orange-400 mt-1">Mixed Values</p>
               )}
@@ -1599,12 +1648,21 @@ export const ElementSettings: React.FC = () => {
             {/* Background Color */}
             {backgroundType === 'color' && (
               <>
-                <input
-                  type="color"
-                  value={getStyleValue('backgroundColor') || '#ffffff'}
-                  onChange={(e) => updateStyle('backgroundColor', e.target.value, activeBreakpoint)}
-                  className={`w-full h-10 rounded cursor-pointer ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
-                />
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="color"
+                    value={getStyleValue('backgroundColor') || '#ffffff'}
+                    onChange={(e) => updateStyle('backgroundColor', e.target.value, activeBreakpoint)}
+                    className={`flex-1 h-10 rounded cursor-pointer ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
+                  />
+                  <button
+                    onClick={() => updateStyle('backgroundColor', '', activeBreakpoint)}
+                    className="p-2 hover:bg-dark-hover rounded transition-colors text-light-muted hover:text-light-text"
+                    title="Clear color"
+                  >
+                    <FiX size={16} />
+                  </button>
+                </div>
                 {isMultiSelect && hasMultiSelectMixedValues('backgroundColor') && (
                   <p className="text-xs text-orange-400 mt-1">Mixed Values</p>
                 )}
@@ -1616,27 +1674,51 @@ export const ElementSettings: React.FC = () => {
               <div className="space-y-2">
                 <div>
                   <label className="text-xs text-light-muted mb-1 block">Color 1</label>
-                  <input
-                    type="color"
-                    value={(element.settings.backgroundGradient?.color1 as string) || '#ffffff'}
-                    onChange={(e) => updateSetting('backgroundGradient', {
-                      ...element.settings.backgroundGradient,
-                      color1: e.target.value
-                    })}
-                    className="w-full h-8 border border-dark-border rounded"
-                  />
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="color"
+                      value={(element.settings.backgroundGradient?.color1 as string) || '#ffffff'}
+                      onChange={(e) => updateSetting('backgroundGradient', {
+                        ...element.settings.backgroundGradient,
+                        color1: e.target.value
+                      })}
+                      className="flex-1 h-8 border border-dark-border rounded"
+                    />
+                    <button
+                      onClick={() => updateSetting('backgroundGradient', {
+                        ...element.settings.backgroundGradient,
+                        color1: ''
+                      })}
+                      className="p-1.5 hover:bg-dark-hover rounded transition-colors text-light-muted hover:text-light-text"
+                      title="Clear color"
+                    >
+                      <FiX size={14} />
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="text-xs text-light-muted mb-1 block">Color 2</label>
-                  <input
-                    type="color"
-                    value={(element.settings.backgroundGradient?.color2 as string) || '#000000'}
-                    onChange={(e) => updateSetting('backgroundGradient', {
-                      ...element.settings.backgroundGradient,
-                      color2: e.target.value
-                    })}
-                    className="w-full h-8 border border-dark-border rounded"
-                  />
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="color"
+                      value={(element.settings.backgroundGradient?.color2 as string) || '#000000'}
+                      onChange={(e) => updateSetting('backgroundGradient', {
+                        ...element.settings.backgroundGradient,
+                        color2: e.target.value
+                      })}
+                      className="flex-1 h-8 border border-dark-border rounded"
+                    />
+                    <button
+                      onClick={() => updateSetting('backgroundGradient', {
+                        ...element.settings.backgroundGradient,
+                        color2: ''
+                      })}
+                      className="p-1.5 hover:bg-dark-hover rounded transition-colors text-light-muted hover:text-light-text"
+                      title="Clear color"
+                    >
+                      <FiX size={14} />
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="text-xs text-light-muted mb-1 block">Angle (deg)</label>
