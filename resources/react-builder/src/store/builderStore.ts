@@ -8,11 +8,20 @@ interface BreakpointWidths {
   mobile: number;
 }
 
+export interface GlobalColor {
+  id: string;
+  name: string;
+  value: string;
+}
+
 interface BuilderStore {
   // Current page
   page: Page | null;
   elements: Element[];
   customCSS: string;
+
+  // Global Settings
+  globalColors: GlobalColor[];
 
   // UI State
   selectedElementId: number | null;
@@ -49,6 +58,12 @@ interface BuilderStore {
   moveElement: (elementId: number, newParentId: number | null, newOrder: number) => void;
   duplicateElement: (elementId: number) => void;
 
+  // Actions - Global Settings
+  addGlobalColor: (color: Omit<GlobalColor, 'id'>) => void;
+  updateGlobalColor: (id: string, updates: Partial<GlobalColor>) => void;
+  deleteGlobalColor: (id: string) => void;
+  setGlobalColors: (colors: GlobalColor[]) => void;
+
   // Actions - UI
   setActiveBreakpoint: (breakpoint: Breakpoint) => void;
   setBreakpointWidths: (widths: BreakpointWidths) => void;
@@ -79,6 +94,7 @@ export const useBuilderStore = create<BuilderStore>()(
       page: null,
       elements: [],
       customCSS: '',
+      globalColors: [],
       selectedElementId: null,
       selectedElementIds: [],
       selectedColumnIndex: null,
@@ -128,16 +144,7 @@ export const useBuilderStore = create<BuilderStore>()(
           return;
         }
 
-        // Check if all currently selected elements are of the same type
-        const selectedElements = elements.filter((el) => selectedElementIds.includes(el.id));
-        const firstType = selectedElements[0]?.type;
-
-        // Only allow selecting elements of the same type
-        if (element.type !== firstType) {
-          return; // Ignore selection if type doesn't match
-        }
-
-        // Toggle selection
+        // Toggle selection - allow any element type combination
         if (selectedElementIds.includes(elementId)) {
           // Remove from selection
           const newSelection = selectedElementIds.filter((id) => id !== elementId);
@@ -299,6 +306,31 @@ export const useBuilderStore = create<BuilderStore>()(
         get().addToHistory();
         get().selectElement(allDuplicated[0].id);
       },
+
+      // Global Settings Actions
+      addGlobalColor: (color) => {
+        const newColor: GlobalColor = {
+          ...color,
+          id: `color-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        };
+        set((state) => ({ globalColors: [...state.globalColors, newColor] }));
+      },
+
+      updateGlobalColor: (id, updates) => {
+        set((state) => ({
+          globalColors: state.globalColors.map((color) =>
+            color.id === id ? { ...color, ...updates } : color
+          ),
+        }));
+      },
+
+      deleteGlobalColor: (id) => {
+        set((state) => ({
+          globalColors: state.globalColors.filter((color) => color.id !== id),
+        }));
+      },
+
+      setGlobalColors: (colors) => set({ globalColors: colors }),
 
       // UI Actions
       setActiveBreakpoint: (breakpoint) => set({ activeBreakpoint: breakpoint }),

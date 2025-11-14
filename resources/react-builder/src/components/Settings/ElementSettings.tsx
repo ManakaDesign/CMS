@@ -1,10 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import { useBuilderStore } from '../../store/builderStore';
-import { FiTrash2, FiCopy, FiEye, FiEyeOff, FiDroplet, FiImage, FiVideo, FiAlignLeft, FiAlignCenter, FiAlignRight, FiSettings, FiColumns } from 'react-icons/fi';
+import { FiTrash2, FiCopy, FiEye, FiEyeOff, FiDroplet, FiImage, FiVideo, FiAlignLeft, FiAlignCenter, FiAlignRight, FiSettings, FiColumns, FiX } from 'react-icons/fi';
 import { RiAlignItemLeftFill, RiAlignItemHorizontalCenterFill, RiAlignItemRightFill } from 'react-icons/ri';
 import { SpacingControl } from './SpacingControl';
+import { GlobalColorSwatches } from './GlobalColorSwatches';
 
 type BackgroundType = 'color' | 'gradient' | 'image' | 'video' | 'none';
+
+// Element type groups for multiselect logic
+const ELEMENT_GROUPS = {
+  container: ['section', 'row'],
+  content: ['text', 'heading', 'button', 'image', 'video', 'spacer', 'divider', 'code'],
+} as const;
+
+// Helper to get element group
+const getElementGroup = (type: string): 'container' | 'content' | 'unknown' => {
+  if (ELEMENT_GROUPS.container.includes(type as any)) return 'container';
+  if (ELEMENT_GROUPS.content.includes(type as any)) return 'content';
+  return 'unknown';
+};
+
+// Helper to check multiselect compatibility
+const checkMultiSelectCompatibility = (elements: any[]): {
+  compatible: boolean;
+  allSameType: boolean;
+  allSameGroup: boolean;
+  types: string[];
+} => {
+  if (elements.length <= 1) {
+    return { compatible: true, allSameType: true, allSameGroup: true, types: [] };
+  }
+
+  const types = [...new Set(elements.map(el => el.type))];
+  const groups = [...new Set(elements.map(el => getElementGroup(el.type)))];
+
+  const allSameType = types.length === 1;
+  const allSameGroup = groups.length === 1 && groups[0] !== 'unknown';
+  const compatible = allSameType || allSameGroup;
+
+  return { compatible, allSameType, allSameGroup, types };
+};
 
 export const ElementSettings: React.FC = () => {
   const { selectedElementId, selectedElementIds, selectedColumnIndex, selectColumn, getElementById, updateElement, deleteElement, duplicateElement, activeBreakpoint, elements } =
@@ -17,6 +52,9 @@ export const ElementSettings: React.FC = () => {
 
   // Check if we're in multi-select mode
   const isMultiSelect = selectedElementIds.length > 1;
+
+  // Check multiselect compatibility
+  const multiSelectInfo = checkMultiSelectCompatibility(selectedElements);
 
   const element = selectedElementId ? getElementById(selectedElementId) : (isMultiSelect ? selectedElements[0] : null);
   const [settingsTab, setSettingsTab] = useState<'design' | 'element'>('element');
@@ -366,13 +404,28 @@ export const ElementSettings: React.FC = () => {
       {isMultiSelect && (
         <div className="bg-orange-900/30 border-b-2 border-brand-orange p-4">
           <div className="flex items-center justify-between">
-            <div>
+            <div className="w-full">
               <h3 className="text-sm font-semibold text-orange-300 flex items-center gap-2">
                 {selectedElementIds.length} Elements Selected
               </h3>
-              <p className="text-xs text-orange-400/70 mt-1">
-                Editing {selectedElements[0]?.type || 'elements'} elements - Changes apply to all
-              </p>
+              {multiSelectInfo.allSameType ? (
+                <p className="text-xs text-orange-400/70 mt-1">
+                  Editing {selectedElements[0]?.type || 'elements'} elements - Changes apply to all
+                </p>
+              ) : multiSelectInfo.allSameGroup ? (
+                <p className="text-xs text-orange-400/70 mt-1">
+                  Mixed types ({multiSelectInfo.types.join(', ')}) - Only common properties available
+                </p>
+              ) : (
+                <div className="mt-2 p-2 bg-red-900/30 border border-red-700/50 rounded">
+                  <p className="text-xs text-red-300">
+                    ⚠️ Unterschiedliche Elemente ausgewählt. Globale Bearbeitung nur für gleiche Elementtypen verfügbar.
+                  </p>
+                  <p className="text-xs text-red-400/70 mt-1">
+                    Ausgewählte Typen: {multiSelectInfo.types.join(', ')}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -584,37 +637,48 @@ export const ElementSettings: React.FC = () => {
           </>
         )}
 
-        {/* Row Columns - Breakpoint specific */}
+        {/* Row Columns - Total count and responsive layout */}
         {element.type === 'row' && (() => {
-          // Get columns for current breakpoint
-          const columnsConfig = element.settings.columns || {};
-          const isLegacy = typeof columnsConfig === 'number';
+          // Get total column count (always a number now)
+          const totalColumns = typeof element.settings.columns === 'number' ? element.settings.columns : 1;
 
-          // Legacy support: if columns is a number, treat it as desktop value
-          const currentColumns = isLegacy
-            ? (activeBreakpoint === 'desktop' ? columnsConfig : 1)
-            : (columnsConfig[activeBreakpoint] || columnsConfig.desktop || 1);
+          // Get responsive layout (columns per row for each breakpoint)
+          const responsiveLayout = element.settings.responsiveLayout || {
+            desktop: totalColumns,
+            tablet: Math.min(totalColumns, 2),
+            mobile: 1,
+          };
 
-          const handleColumnChange = (newColumns: number) => {
-            // Get old columns to redistribute elements
-            const oldColumns = currentColumns;
+          const handleTotalColumnsChange = (newTotal: number) => {
+            if (!element) return;
 
-            // Update columns config
-            const newColumnsConfig = isLegacy ? { desktop: columnsConfig } : { ...columnsConfig };
-            newColumnsConfig[activeBreakpoint] = newColumns;
+            const oldTotal = totalColumns;
 
-            updateSetting('columns', newColumnsConfig);
+            // Update responsive layout first to ensure valid values
+            const newLayout = { ...responsiveLayout };
+            newLayout.desktop = Math.min(newLayout.desktop, newTotal);
+            newLayout.tablet = Math.min(newLayout.tablet, newTotal);
+            newLayout.mobile = Math.min(newLayout.mobile, newTotal);
+
+            // Update both columns and responsiveLayout in one go
+            updateElement(element.id, {
+              settings: {
+                ...element.settings,
+                columns: newTotal,
+                responsiveLayout: newLayout
+              },
+            });
 
             // Redistribute child elements if column count changed
-            if (newColumns !== oldColumns) {
+            if (newTotal !== oldTotal) {
               const childElements = elements.filter(el => el.parent_id === element.id);
 
               childElements.forEach((child, index) => {
                 const oldColumnIndex = child.settings.columnIndex ?? 0;
                 // Redistribute: maintain relative position but wrap to new column count
-                const newColumnIndex = index % newColumns;
+                const newColumnIndex = index % newTotal;
 
-                if (oldColumnIndex !== newColumnIndex) {
+                if (oldColumnIndex !== newColumnIndex || oldColumnIndex >= newTotal) {
                   updateElement(child.id, {
                     settings: { ...child.settings, columnIndex: newColumnIndex }
                   });
@@ -623,37 +687,69 @@ export const ElementSettings: React.FC = () => {
             }
           };
 
+          const handleColumnsPerRowChange = (newColumnsPerRow: number) => {
+            const newLayout = { ...responsiveLayout };
+            newLayout[activeBreakpoint] = newColumnsPerRow;
+            updateSetting('responsiveLayout', newLayout);
+          };
+
           return (
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-light-text mb-2">
-                Columns ({activeBreakpoint.charAt(0).toUpperCase() + activeBreakpoint.slice(1)})
-              </label>
-              <select
-                value={currentColumns}
-                onChange={(e) => handleColumnChange(parseInt(e.target.value))}
-                className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
-              >
-                <option value="1">1 Column</option>
-                <option value="2">2 Columns</option>
-                <option value="3">3 Columns</option>
-                <option value="4">4 Columns</option>
-                <option value="5">5 Columns</option>
-                <option value="6">6 Columns</option>
-              </select>
-              {!isLegacy && !columnsConfig[activeBreakpoint] && (
-                <p className="text-xs text-light-muted mt-1">
-                  Using default: {columnsConfig.desktop || 1} column(s)
-                </p>
+            <div className="mb-4 space-y-4">
+              {/* Total Columns (only on desktop) */}
+              {activeBreakpoint === 'desktop' && (
+                <div>
+                  <label className="block text-sm font-medium text-light-text mb-2">
+                    Total Columns
+                  </label>
+                  <select
+                    value={totalColumns}
+                    onChange={(e) => handleTotalColumnsChange(parseInt(e.target.value))}
+                    className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                  >
+                    <option value="1">1 Column</option>
+                    <option value="2">2 Columns</option>
+                    <option value="3">3 Columns</option>
+                    <option value="4">4 Columns</option>
+                    <option value="5">5 Columns</option>
+                    <option value="6">6 Columns</option>
+                  </select>
+                  <p className="text-xs text-light-muted mt-1">
+                    Total number of columns in this row
+                  </p>
+                </div>
               )}
 
+              {/* Columns per Row (responsive layout) */}
+              <div>
+                <label className="block text-sm font-medium text-light-text mb-2">
+                  Columns per Row ({activeBreakpoint.charAt(0).toUpperCase() + activeBreakpoint.slice(1)})
+                </label>
+                <select
+                  value={responsiveLayout[activeBreakpoint]}
+                  onChange={(e) => handleColumnsPerRowChange(parseInt(e.target.value))}
+                  className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                >
+                  {Array.from({ length: totalColumns }, (_, i) => i + 1).map((num) => (
+                    <option key={num} value={num}>
+                      {num} {num === 1 ? 'Column' : 'Columns'} per Row
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-light-muted mt-1">
+                  {totalColumns > 1 && responsiveLayout[activeBreakpoint] < totalColumns
+                    ? `${totalColumns} columns arranged in rows of ${responsiveLayout[activeBreakpoint]}`
+                    : `All ${totalColumns} column(s) in one row`}
+                </p>
+              </div>
+
               {/* Column Style Selector */}
-              {currentColumns > 1 && (
+              {totalColumns > 1 && (
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-light-text mb-2">
                     Column Settings
                   </label>
-                  <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(currentColumns, 3)}, 1fr)` }}>
-                    {Array.from({ length: currentColumns }).map((_, index) => (
+                  <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(totalColumns, 3)}, 1fr)` }}>
+                    {Array.from({ length: totalColumns }).map((_, index) => (
                       <button
                         key={index}
                         onClick={() => {
@@ -683,6 +779,34 @@ export const ElementSettings: React.FC = () => {
                   )}
                 </div>
               )}
+
+              {/* Gap between Columns */}
+              {totalColumns > 1 && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-light-text mb-2">Column Gap</label>
+                  <input
+                    type="text"
+                    value={element.settings.gap || '16px'}
+                    onChange={(e) => updateSetting('gap', e.target.value)}
+                    className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                    placeholder="16px"
+                  />
+                  <p className="text-xs text-light-muted mt-1">Space between columns (e.g., 0px, 16px, 2rem)</p>
+                </div>
+              )}
+
+              {/* Min Height */}
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-light-text mb-2">Min Height</label>
+                <input
+                  type="text"
+                  value={element.settings.minHeight || ''}
+                  onChange={(e) => updateSetting('minHeight', e.target.value)}
+                  className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                  placeholder="auto"
+                />
+                <p className="text-xs text-light-muted mt-1">Minimum height (e.g., 100px, 10vh, auto)</p>
+              </div>
             </div>
           );
         })()}
@@ -862,6 +986,53 @@ export const ElementSettings: React.FC = () => {
               </div>
             </div>
 
+            {/* Column Attributes */}
+            <div className="p-4 border-b border-green-400/30">
+              <h3 className="text-xs font-semibold text-green-300 uppercase mb-3">Column Attributes</h3>
+
+              {/* Column ID */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-light-text mb-2">Column ID</label>
+                <input
+                  type="text"
+                  value={(() => {
+                    const columnIds = element.settings.columnIds || [];
+                    return columnIds[selectedColumnIndex] || '';
+                  })()}
+                  onChange={(e) => {
+                    const columnIds = element.settings.columnIds || [];
+                    const newColumnIds = [...columnIds];
+                    newColumnIds[selectedColumnIndex] = e.target.value;
+                    updateSetting('columnIds', newColumnIds);
+                  }}
+                  className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                  placeholder="my-column-id"
+                />
+                <p className="text-xs text-light-muted mt-1">Unique identifier for this column</p>
+              </div>
+
+              {/* Column Class */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-light-text mb-2">CSS Classes</label>
+                <input
+                  type="text"
+                  value={(() => {
+                    const columnClasses = element.settings.columnClasses || [];
+                    return columnClasses[selectedColumnIndex] || '';
+                  })()}
+                  onChange={(e) => {
+                    const columnClasses = element.settings.columnClasses || [];
+                    const newColumnClasses = [...columnClasses];
+                    newColumnClasses[selectedColumnIndex] = e.target.value;
+                    updateSetting('columnClasses', newColumnClasses);
+                  }}
+                  className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                  placeholder="class-1 class-2 class-3"
+                />
+                <p className="text-xs text-light-muted mt-1">Space-separated CSS class names</p>
+              </div>
+            </div>
+
             {/* Column Style Controls */}
             <div className="p-4 space-y-4">
               {/* Background */}
@@ -920,12 +1091,24 @@ export const ElementSettings: React.FC = () => {
 
                 {/* Background Color */}
                 {columnBackgroundType === 'color' && (
-                  <input
-                    type="color"
-                    value={getColumnStyleValue('backgroundColor') || '#ffffff'}
-                    onChange={(e) => updateColumnStyle('backgroundColor', e.target.value)}
-                    className="w-full h-10 border border-green-400/30 rounded cursor-pointer"
-                  />
+                  <>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="color"
+                        value={getColumnStyleValue('backgroundColor') || '#ffffff'}
+                        onChange={(e) => updateColumnStyle('backgroundColor', e.target.value)}
+                        className="flex-1 h-10 border border-green-400/30 rounded cursor-pointer"
+                      />
+                      <button
+                        onClick={() => updateColumnStyle('backgroundColor', '')}
+                        className="p-2 hover:bg-dark-hover rounded transition-colors text-light-muted hover:text-light-text"
+                        title="Clear color"
+                      >
+                        <FiX size={16} />
+                      </button>
+                    </div>
+                    <GlobalColorSwatches onColorSelect={(color) => updateColumnStyle('backgroundColor', color)} />
+                  </>
                 )}
 
                 {/* Background Gradient */}
@@ -1143,15 +1326,25 @@ export const ElementSettings: React.FC = () => {
             </div>
             <div className="mb-4">
               <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Text Color</label>
-              <input
-                type="color"
-                value={getStyleValue('color') || '#000000'}
-                onChange={(e) => updateStyle('color', e.target.value, activeBreakpoint)}
-                className={`w-full h-10 rounded cursor-pointer ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
-              />
+              <div className="flex gap-2 items-center">
+                <input
+                  type="color"
+                  value={getStyleValue('color') || '#000000'}
+                  onChange={(e) => updateStyle('color', e.target.value, activeBreakpoint)}
+                  className={`flex-1 h-10 rounded cursor-pointer ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
+                />
+                <button
+                  onClick={() => updateStyle('color', '', activeBreakpoint)}
+                  className="p-2 hover:bg-dark-hover rounded transition-colors text-light-muted hover:text-light-text"
+                  title="Clear color"
+                >
+                  <FiX size={16} />
+                </button>
+              </div>
               {isMultiSelect && hasMultiSelectMixedValues('color') && (
                 <p className="text-xs text-orange-400 mt-1">Mixed Values</p>
               )}
+              <GlobalColorSwatches onColorSelect={(color) => updateStyle('color', color, activeBreakpoint)} />
             </div>
             <div className="mb-4">
               <label className="block text-sm font-medium text-light-text mb-2">Text Alignment</label>
@@ -1235,14 +1428,49 @@ export const ElementSettings: React.FC = () => {
         {/* Element Alignment - for elements with limited width */}
         {(isMultiSelect || element) && (element?.type === 'section' || element?.type === 'row' || element?.type === 'button') && (() => {
           if (!element && !isMultiSelect) return null;
-          const marginLeft = getStyleValue('marginLeft');
-          const marginRight = getStyleValue('marginRight');
 
-          const isLeft = (marginLeft === '0' || marginLeft === '0px' || !marginLeft) && marginRight === 'auto';
+          // Parse margin shorthand to get left/right values
+          const margin = getStyleValue('margin') || '0';
+          const parts = margin.trim().split(/\s+/);
+          let marginRight = '0', marginLeft = '0';
+
+          if (parts.length === 1) {
+            marginLeft = marginRight = parts[0];
+          } else if (parts.length === 2) {
+            marginRight = marginLeft = parts[1];
+          } else if (parts.length === 3) {
+            marginRight = marginLeft = parts[1];
+          } else if (parts.length >= 4) {
+            marginRight = parts[1];
+            marginLeft = parts[3];
+          }
+
+          const isLeft = (marginLeft === '0' || marginLeft === '0px') && marginRight === 'auto';
           const isCenter = marginLeft === 'auto' && marginRight === 'auto';
-          const isRight = marginLeft === 'auto' && (marginRight === '0' || marginRight === '0px' || !marginRight);
+          const isRight = marginLeft === 'auto' && (marginRight === '0' || marginRight === '0px');
 
           const handleAlignment = (left: string, right: string) => {
+            // Helper to parse existing margin shorthand and update left/right values
+            const updateMarginShorthand = (existingStyles: Record<string, any>) => {
+              const margin = existingStyles.margin || '0';
+              const parts = margin.trim().split(/\s+/);
+
+              let top = '0', bottom = '0';
+              if (parts.length === 1) {
+                top = bottom = parts[0];
+              } else if (parts.length === 2) {
+                top = bottom = parts[0];
+              } else if (parts.length === 3) {
+                top = parts[0];
+                bottom = parts[2];
+              } else if (parts.length >= 4) {
+                top = parts[0];
+                bottom = parts[2];
+              }
+
+              return `${top} ${right} ${bottom} ${left}`;
+            };
+
             // Get fresh store data
             const store = useBuilderStore.getState();
             const currentElements = store.elements;
@@ -1258,26 +1486,30 @@ export const ElementSettings: React.FC = () => {
 
                 if (styleMode === 'hover') {
                   const hoverStyles = (el as any).hoverStyles || {};
+                  const existingStyles = hoverStyles[activeBreakpoint] || {};
                   return {
                     ...el,
                     hoverStyles: {
                       ...hoverStyles,
                       [activeBreakpoint]: {
-                        ...hoverStyles[activeBreakpoint],
-                        marginLeft: left,
-                        marginRight: right,
+                        ...existingStyles,
+                        margin: updateMarginShorthand(existingStyles),
+                        marginLeft: undefined,
+                        marginRight: undefined,
                       },
                     },
                   };
                 } else {
+                  const existingStyles = el.styles[activeBreakpoint] || {};
                   return {
                     ...el,
                     styles: {
                       ...el.styles,
                       [activeBreakpoint]: {
-                        ...el.styles[activeBreakpoint],
-                        marginLeft: left,
-                        marginRight: right,
+                        ...existingStyles,
+                        margin: updateMarginShorthand(existingStyles),
+                        marginLeft: undefined,
+                        marginRight: undefined,
                       },
                     },
                   };
@@ -1294,24 +1526,28 @@ export const ElementSettings: React.FC = () => {
 
             if (styleMode === 'hover') {
               const hoverStyles = (element as any).hoverStyles || {};
+              const existingStyles = hoverStyles[activeBreakpoint] || {};
               updateElement(element.id, {
                 hoverStyles: {
                   ...hoverStyles,
                   [activeBreakpoint]: {
-                    ...hoverStyles[activeBreakpoint],
-                    marginLeft: left,
-                    marginRight: right,
+                    ...existingStyles,
+                    margin: updateMarginShorthand(existingStyles),
+                    marginLeft: undefined,
+                    marginRight: undefined,
                   },
                 },
               } as any);
             } else {
+              const existingStyles = element.styles[activeBreakpoint] || {};
               updateElement(element.id, {
                 styles: {
                   ...element.styles,
                   [activeBreakpoint]: {
-                    ...element.styles[activeBreakpoint],
-                    marginLeft: left,
-                    marginRight: right,
+                    ...existingStyles,
+                    margin: updateMarginShorthand(existingStyles),
+                    marginLeft: undefined,
+                    marginRight: undefined,
                   },
                 },
               });
@@ -1462,15 +1698,25 @@ export const ElementSettings: React.FC = () => {
             {/* Background Color */}
             {backgroundType === 'color' && (
               <>
-                <input
-                  type="color"
-                  value={getStyleValue('backgroundColor') || '#ffffff'}
-                  onChange={(e) => updateStyle('backgroundColor', e.target.value, activeBreakpoint)}
-                  className={`w-full h-10 rounded cursor-pointer ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
-                />
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="color"
+                    value={getStyleValue('backgroundColor') || '#ffffff'}
+                    onChange={(e) => updateStyle('backgroundColor', e.target.value, activeBreakpoint)}
+                    className={`flex-1 h-10 rounded cursor-pointer ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
+                  />
+                  <button
+                    onClick={() => updateStyle('backgroundColor', '', activeBreakpoint)}
+                    className="p-2 hover:bg-dark-hover rounded transition-colors text-light-muted hover:text-light-text"
+                    title="Clear color"
+                  >
+                    <FiX size={16} />
+                  </button>
+                </div>
                 {isMultiSelect && hasMultiSelectMixedValues('backgroundColor') && (
                   <p className="text-xs text-orange-400 mt-1">Mixed Values</p>
                 )}
+                <GlobalColorSwatches onColorSelect={(color) => updateStyle('backgroundColor', color, activeBreakpoint)} />
               </>
             )}
 
