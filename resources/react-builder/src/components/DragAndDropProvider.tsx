@@ -162,7 +162,11 @@ function getDefaultSettings(type: ElementType): Record<string, any> {
     case 'section':
       return { minHeight: '100px' };
     case 'row':
-      return { gap: '16px', columns: 1 };
+      return {
+        gap: '16px',
+        columns: 1,
+        responsiveLayout: { desktop: 1, tablet: 1, mobile: 1 }
+      };
     case 'column':
       return { width: '1' }; // Legacy - deprecated
     case 'text':

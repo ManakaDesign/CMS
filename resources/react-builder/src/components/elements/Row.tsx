@@ -21,21 +21,18 @@ export const Row: React.FC<RowProps> = (props) => {
   const { element, isSelected, isHovered, onClick, onMouseEnter, onMouseLeave } = props;
   const { elements, activeBreakpoint } = useBuilderStore();
 
-  // Get column count from settings based on active breakpoint
-  const columnsConfig = element.settings.columns || 1;
-  const isLegacy = typeof columnsConfig === 'number';
+  // Get total column count (always from settings.columns, now always a number)
+  const columnCount: number = element.settings.columns || 1;
 
-  // Get desktop column count (for rendering structure)
-  let columnCount: number;
-  if (isLegacy) {
-    columnCount = columnsConfig;
-  } else {
-    columnCount = columnsConfig.desktop || columnsConfig.tablet || 1;
-  }
+  // Get responsive layout config (columns per row for each breakpoint)
+  const responsiveLayout = element.settings.responsiveLayout || {
+    desktop: columnCount,
+    tablet: Math.min(columnCount, 2),
+    mobile: 1,
+  };
 
-  // Determine flex direction based on breakpoint
-  // On mobile, stack columns vertically instead of reducing column count
-  const flexDirection = activeBreakpoint === 'mobile' ? 'column' : 'row';
+  // Get columns per row for current breakpoint
+  const columnsPerRow = responsiveLayout[activeBreakpoint] || columnCount;
 
   // Get children elements
   const childElements = elements
@@ -133,7 +130,7 @@ export const Row: React.FC<RowProps> = (props) => {
         <BackgroundRenderer element={element} />
 
         {/* Content Layer - padding and other styles applied here */}
-        <div className="relative z-10 flex row-content" style={{ width: '100%', flexDirection, ...getContentStyles(), gap: element.settings.gap || '16px', minHeight: element.settings.minHeight || 'auto' }}>
+        <div className="relative z-10 grid row-content" style={{ width: '100%', gridTemplateColumns: `repeat(${columnsPerRow}, 1fr)`, ...getContentStyles(), gap: element.settings.gap || '16px', minHeight: element.settings.minHeight || 'auto' }}>
         {Array.from({ length: columnCount }).map((_, columnIndex) => {
           // Get column-specific styles
           const columnStyles = element.settings.columnStyles || [];

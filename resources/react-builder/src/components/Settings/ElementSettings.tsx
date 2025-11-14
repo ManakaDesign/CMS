@@ -637,37 +637,41 @@ export const ElementSettings: React.FC = () => {
           </>
         )}
 
-        {/* Row Columns - Breakpoint specific */}
+        {/* Row Columns - Total count and responsive layout */}
         {element.type === 'row' && (() => {
-          // Get columns for current breakpoint
-          const columnsConfig = element.settings.columns || {};
-          const isLegacy = typeof columnsConfig === 'number';
+          // Get total column count (always a number now)
+          const totalColumns = element.settings.columns || 1;
 
-          // Legacy support: if columns is a number, treat it as desktop value
-          const currentColumns = isLegacy
-            ? (activeBreakpoint === 'desktop' ? columnsConfig : 1)
-            : (columnsConfig[activeBreakpoint] || columnsConfig.desktop || 1);
+          // Get responsive layout (columns per row for each breakpoint)
+          const responsiveLayout = element.settings.responsiveLayout || {
+            desktop: totalColumns,
+            tablet: Math.min(totalColumns, 2),
+            mobile: 1,
+          };
 
-          const handleColumnChange = (newColumns: number) => {
-            // Get old columns to redistribute elements
-            const oldColumns = currentColumns;
+          const handleTotalColumnsChange = (newTotal: number) => {
+            const oldTotal = totalColumns;
 
-            // Update columns config
-            const newColumnsConfig = isLegacy ? { desktop: columnsConfig } : { ...columnsConfig };
-            newColumnsConfig[activeBreakpoint] = newColumns;
+            // Update total columns
+            updateSetting('columns', newTotal);
 
-            updateSetting('columns', newColumnsConfig);
+            // Update responsive layout to ensure valid values
+            const newLayout = { ...responsiveLayout };
+            newLayout.desktop = Math.min(newLayout.desktop, newTotal);
+            newLayout.tablet = Math.min(newLayout.tablet, newTotal);
+            newLayout.mobile = Math.min(newLayout.mobile, newTotal);
+            updateSetting('responsiveLayout', newLayout);
 
             // Redistribute child elements if column count changed
-            if (newColumns !== oldColumns) {
+            if (newTotal !== oldTotal) {
               const childElements = elements.filter(el => el.parent_id === element.id);
 
               childElements.forEach((child, index) => {
                 const oldColumnIndex = child.settings.columnIndex ?? 0;
                 // Redistribute: maintain relative position but wrap to new column count
-                const newColumnIndex = index % newColumns;
+                const newColumnIndex = index % newTotal;
 
-                if (oldColumnIndex !== newColumnIndex) {
+                if (oldColumnIndex !== newColumnIndex || oldColumnIndex >= newTotal) {
                   updateElement(child.id, {
                     settings: { ...child.settings, columnIndex: newColumnIndex }
                   });
@@ -676,37 +680,69 @@ export const ElementSettings: React.FC = () => {
             }
           };
 
+          const handleColumnsPerRowChange = (newColumnsPerRow: number) => {
+            const newLayout = { ...responsiveLayout };
+            newLayout[activeBreakpoint] = newColumnsPerRow;
+            updateSetting('responsiveLayout', newLayout);
+          };
+
           return (
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-light-text mb-2">
-                Columns ({activeBreakpoint.charAt(0).toUpperCase() + activeBreakpoint.slice(1)})
-              </label>
-              <select
-                value={currentColumns}
-                onChange={(e) => handleColumnChange(parseInt(e.target.value))}
-                className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
-              >
-                <option value="1">1 Column</option>
-                <option value="2">2 Columns</option>
-                <option value="3">3 Columns</option>
-                <option value="4">4 Columns</option>
-                <option value="5">5 Columns</option>
-                <option value="6">6 Columns</option>
-              </select>
-              {!isLegacy && !columnsConfig[activeBreakpoint] && (
-                <p className="text-xs text-light-muted mt-1">
-                  Using default: {columnsConfig.desktop || 1} column(s)
-                </p>
+            <div className="mb-4 space-y-4">
+              {/* Total Columns (only on desktop) */}
+              {activeBreakpoint === 'desktop' && (
+                <div>
+                  <label className="block text-sm font-medium text-light-text mb-2">
+                    Total Columns
+                  </label>
+                  <select
+                    value={totalColumns}
+                    onChange={(e) => handleTotalColumnsChange(parseInt(e.target.value))}
+                    className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                  >
+                    <option value="1">1 Column</option>
+                    <option value="2">2 Columns</option>
+                    <option value="3">3 Columns</option>
+                    <option value="4">4 Columns</option>
+                    <option value="5">5 Columns</option>
+                    <option value="6">6 Columns</option>
+                  </select>
+                  <p className="text-xs text-light-muted mt-1">
+                    Total number of columns in this row
+                  </p>
+                </div>
               )}
 
+              {/* Columns per Row (responsive layout) */}
+              <div>
+                <label className="block text-sm font-medium text-light-text mb-2">
+                  Columns per Row ({activeBreakpoint.charAt(0).toUpperCase() + activeBreakpoint.slice(1)})
+                </label>
+                <select
+                  value={responsiveLayout[activeBreakpoint]}
+                  onChange={(e) => handleColumnsPerRowChange(parseInt(e.target.value))}
+                  className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                >
+                  {Array.from({ length: totalColumns }, (_, i) => i + 1).map((num) => (
+                    <option key={num} value={num}>
+                      {num} {num === 1 ? 'Column' : 'Columns'} per Row
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-light-muted mt-1">
+                  {totalColumns > 1 && responsiveLayout[activeBreakpoint] < totalColumns
+                    ? `${totalColumns} columns arranged in rows of ${responsiveLayout[activeBreakpoint]}`
+                    : `All ${totalColumns} column(s) in one row`}
+                </p>
+              </div>
+
               {/* Column Style Selector */}
-              {currentColumns > 1 && (
+              {totalColumns > 1 && (
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-light-text mb-2">
                     Column Settings
                   </label>
-                  <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(currentColumns, 3)}, 1fr)` }}>
-                    {Array.from({ length: currentColumns }).map((_, index) => (
+                  <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(totalColumns, 3)}, 1fr)` }}>
+                    {Array.from({ length: totalColumns }).map((_, index) => (
                       <button
                         key={index}
                         onClick={() => {
@@ -738,7 +774,7 @@ export const ElementSettings: React.FC = () => {
               )}
 
               {/* Gap between Columns */}
-              {currentColumns > 1 && (
+              {totalColumns > 1 && (
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-light-text mb-2">Column Gap</label>
                   <input
