@@ -199,7 +199,7 @@ interface RowColumnProps {
   columnClass?: string;
 }
 
-const RowColumn: React.FC<RowColumnProps> = ({ rowId, rowElementId, columnIndex, columnCount, isRowSelected, children, columnStyle, columnHoverStyle, columnBackground, activeBreakpoint, columnId, columnClass }) => {
+const RowColumn: React.FC<RowColumnProps> = ({ rowId, rowElementId, columnIndex, columnCount: _columnCount, isRowSelected, children, columnStyle, columnHoverStyle, columnBackground, activeBreakpoint: _activeBreakpoint, columnId, columnClass }) => {
   const { selectedElementId, hoveredElementId, selectElement, hoverElement, isPreviewMode } = useBuilderStore();
 
   // Make column droppable (empty state only)
@@ -319,9 +319,8 @@ const RowColumn: React.FC<RowColumnProps> = ({ rowId, rowElementId, columnIndex,
 
       <div
         id={columnId}
-        className={`${columnClassName} flex-1 relative transition-all overflow-hidden ${columnClass || ''}`.trim()}
+        className={`${columnClassName} relative transition-all overflow-hidden ${columnClass || ''}`.trim()}
         style={{
-          flex: activeBreakpoint === 'mobile' ? '1 1 100%' : `1 1 ${100 / columnCount}%`,
           ...borderStyle,
           ...columnStyle,
         }}
