@@ -310,7 +310,7 @@ const RowColumn: React.FC<RowColumnProps> = ({ rowId, rowElementId, columnIndex,
 
       <div
         id={columnId}
-        className={`${columnClassName} flex-1 min-h-[100px] relative transition-all overflow-hidden ${columnClass || ''}`.trim()}
+        className={`${columnClassName} flex-1 relative transition-all overflow-hidden ${columnClass || ''}`.trim()}
         style={{
           flex: activeBreakpoint === 'mobile' ? '1 1 100%' : `1 1 ${100 / columnCount}%`,
           ...borderStyle,

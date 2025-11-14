@@ -213,12 +213,12 @@ export const GlobalSettings: React.FC = () => {
                 placeholder="Farbname (z.B. Primary Blue)"
                 className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
               />
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 <input
                   type="color"
                   value={newColorValue}
                   onChange={(e) => setNewColorValue(e.target.value)}
-                  className="w-16 h-10 border border-dark-border rounded cursor-pointer"
+                  className="w-16 h-10 border border-dark-border rounded cursor-pointer flex-shrink-0"
                 />
                 <input
                   type="text"
@@ -227,15 +227,15 @@ export const GlobalSettings: React.FC = () => {
                   placeholder="#000000"
                   className="flex-1 px-3 py-2 bg-dark-bg border border-dark-border rounded text-sm text-light-text placeholder-light-muted font-mono"
                 />
-                <button
-                  onClick={handleAddColor}
-                  disabled={!newColorName.trim()}
-                  className="px-4 py-2 bg-brand-primary text-white rounded hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  <FiPlus size={16} />
-                  Hinzufügen
-                </button>
               </div>
+              <button
+                onClick={handleAddColor}
+                disabled={!newColorName.trim()}
+                className="w-full px-4 py-2 bg-brand-primary text-white rounded hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <FiPlus size={16} />
+                Hinzufügen
+              </button>
             </div>
           </div>
 
