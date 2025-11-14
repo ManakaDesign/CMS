@@ -75,17 +75,26 @@ export const Row: React.FC<RowProps> = (props) => {
     return styles as React.CSSProperties;
   };
 
-  // Get content styles (everything except sizing and alignment - those go on BaseElement wrapper)
+  // Get content styles (everything except sizing, alignment and grid properties - those go on BaseElement wrapper)
   const getContentStyles = (): React.CSSProperties => {
     const allStyles = getActiveStyles();
     const contentStyles = { ...allStyles };
 
+    // Remove properties that are handled separately
     delete contentStyles.width;
     delete contentStyles.maxWidth;
     delete contentStyles.height;
     delete contentStyles.maxHeight;
     delete contentStyles.marginLeft;
     delete contentStyles.marginRight;
+
+    // Remove grid/flex properties to avoid conflicts with our grid layout
+    delete (contentStyles as any).display;
+    delete (contentStyles as any).gridTemplateColumns;
+    delete (contentStyles as any).gridTemplateRows;
+    delete (contentStyles as any).gridAutoFlow;
+    delete (contentStyles as any).flexDirection;
+    delete (contentStyles as any).flexWrap;
 
     return contentStyles;
   };
@@ -139,7 +148,14 @@ export const Row: React.FC<RowProps> = (props) => {
         <BackgroundRenderer element={element} />
 
         {/* Content Layer - padding and other styles applied here */}
-        <div className="relative z-10 grid row-content" style={{ width: '100%', gridTemplateColumns: `repeat(${columnsPerRow}, 1fr)`, ...getContentStyles(), gap: element.settings.gap || '16px', minHeight: element.settings.minHeight || 'auto' }}>
+        <div className="relative z-10 grid row-content" style={{
+          width: '100%',
+          display: 'grid',
+          ...getContentStyles(),
+          gridTemplateColumns: `repeat(${columnsPerRow}, 1fr)`,
+          gap: element.settings.gap || '16px',
+          minHeight: element.settings.minHeight || 'auto'
+        }}>
         {Array.from({ length: columnCount }).map((_, columnIndex) => {
           // Get column-specific styles
           const columnStyles = element.settings.columnStyles || [];
