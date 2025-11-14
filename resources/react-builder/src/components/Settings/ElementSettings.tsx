@@ -640,7 +640,7 @@ export const ElementSettings: React.FC = () => {
         {/* Row Columns - Total count and responsive layout */}
         {element.type === 'row' && (() => {
           // Get total column count (always a number now)
-          const totalColumns = element.settings.columns || 1;
+          const totalColumns = typeof element.settings.columns === 'number' ? element.settings.columns : 1;
 
           // Get responsive layout (columns per row for each breakpoint)
           const responsiveLayout = element.settings.responsiveLayout || {
@@ -650,17 +650,24 @@ export const ElementSettings: React.FC = () => {
           };
 
           const handleTotalColumnsChange = (newTotal: number) => {
+            if (!element) return;
+
             const oldTotal = totalColumns;
 
-            // Update total columns
-            updateSetting('columns', newTotal);
-
-            // Update responsive layout to ensure valid values
+            // Update responsive layout first to ensure valid values
             const newLayout = { ...responsiveLayout };
             newLayout.desktop = Math.min(newLayout.desktop, newTotal);
             newLayout.tablet = Math.min(newLayout.tablet, newTotal);
             newLayout.mobile = Math.min(newLayout.mobile, newTotal);
-            updateSetting('responsiveLayout', newLayout);
+
+            // Update both columns and responsiveLayout in one go
+            updateElement(element.id, {
+              settings: {
+                ...element.settings,
+                columns: newTotal,
+                responsiveLayout: newLayout
+              },
+            });
 
             // Redistribute child elements if column count changed
             if (newTotal !== oldTotal) {

@@ -4,7 +4,7 @@ import { FiPlus, FiTrash2, FiEdit2, FiCheck, FiX } from 'react-icons/fi';
 import { HexColorPicker } from 'react-colorful';
 
 export const GlobalSettings: React.FC = () => {
-  const { globalColors, addGlobalColor, updateGlobalColor, deleteGlobalColor } = useBuilderStore();
+  const { globalColors, addGlobalColor, updateGlobalColor, deleteGlobalColor, elements, updateElement } = useBuilderStore();
   const [newColorName, setNewColorName] = useState('');
   const [newColorValue, setNewColorValue] = useState('#000000');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -41,8 +41,145 @@ export const GlobalSettings: React.FC = () => {
     setEditingName('');
   };
 
-  const handleColorChange = (id: string, value: string) => {
-    updateGlobalColor(id, { value });
+  const handleColorChange = (id: string, newValue: string) => {
+    // Find the old color value
+    const oldColor = globalColors.find(c => c.id === id);
+    if (!oldColor) return;
+
+    const oldValue = oldColor.value.toLowerCase();
+
+    // Update the global color
+    updateGlobalColor(id, { value: newValue });
+
+    // Update all elements that use this color
+    elements.forEach((element) => {
+      let needsUpdate = false;
+      const updatedElement = { ...element };
+
+      // Check all breakpoints (desktop, tablet, mobile)
+      const breakpoints = ['desktop', 'tablet', 'mobile'] as const;
+
+      breakpoints.forEach((breakpoint) => {
+        const styles = element.styles[breakpoint] || {};
+        const updatedStyles = { ...styles } as any;
+        let stylesChanged = false;
+
+        // Check all style properties that could contain colors
+        const colorProps = ['color', 'backgroundColor', 'borderColor', 'borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor'];
+
+        colorProps.forEach((prop) => {
+          const styleValue = (styles as any)[prop];
+          if (styleValue?.toLowerCase && styleValue.toLowerCase() === oldValue) {
+            updatedStyles[prop] = newValue;
+            stylesChanged = true;
+          }
+        });
+
+        if (stylesChanged) {
+          if (!updatedElement.styles) updatedElement.styles = {};
+          updatedElement.styles[breakpoint] = updatedStyles;
+          needsUpdate = true;
+        }
+
+        // Also check hover styles
+        if ((element as any).hoverStyles) {
+          const hoverStyles = (element as any).hoverStyles[breakpoint] || {};
+          const updatedHoverStyles = { ...hoverStyles } as any;
+          let hoverStylesChanged = false;
+
+          colorProps.forEach((prop) => {
+            const hoverValue = (hoverStyles as any)[prop];
+            if (hoverValue?.toLowerCase && hoverValue.toLowerCase() === oldValue) {
+              updatedHoverStyles[prop] = newValue;
+              hoverStylesChanged = true;
+            }
+          });
+
+          if (hoverStylesChanged) {
+            if (!(updatedElement as any).hoverStyles) (updatedElement as any).hoverStyles = {};
+            (updatedElement as any).hoverStyles[breakpoint] = updatedHoverStyles;
+            needsUpdate = true;
+          }
+        }
+      });
+
+      // Check column styles for rows
+      if (element.type === 'row' && element.settings.columnStyles) {
+        const columnStyles = element.settings.columnStyles as any[];
+        const updatedColumnStyles = columnStyles.map(colStyle => {
+          if (!colStyle) return colStyle;
+          const updated = { ...colStyle };
+          let changed = false;
+
+          if (colStyle.backgroundColor?.toLowerCase() === oldValue) {
+            updated.backgroundColor = newValue;
+            changed = true;
+          }
+
+          return changed ? updated : colStyle;
+        });
+
+        if (JSON.stringify(updatedColumnStyles) !== JSON.stringify(columnStyles)) {
+          if (!updatedElement.settings) updatedElement.settings = {};
+          updatedElement.settings.columnStyles = updatedColumnStyles;
+          needsUpdate = true;
+        }
+      }
+
+      // Check gradient backgrounds
+      if (element.settings.backgroundGradient) {
+        const gradient = element.settings.backgroundGradient as any;
+        let gradientChanged = false;
+        const updatedGradient = { ...gradient };
+
+        if (gradient.color1?.toLowerCase() === oldValue) {
+          updatedGradient.color1 = newValue;
+          gradientChanged = true;
+        }
+        if (gradient.color2?.toLowerCase() === oldValue) {
+          updatedGradient.color2 = newValue;
+          gradientChanged = true;
+        }
+
+        if (gradientChanged) {
+          if (!updatedElement.settings) updatedElement.settings = {};
+          updatedElement.settings.backgroundGradient = updatedGradient;
+          needsUpdate = true;
+        }
+      }
+
+      // Check column gradient backgrounds for rows
+      if (element.type === 'row' && element.settings.columnBackgrounds) {
+        const columnBgs = element.settings.columnBackgrounds as any[];
+        const updatedColumnBgs = columnBgs.map(colBg => {
+          if (!colBg) return colBg;
+          const updated = { ...colBg };
+          let changed = false;
+
+          if (colBg.gradientColor1?.toLowerCase() === oldValue) {
+            updated.gradientColor1 = newValue;
+            changed = true;
+          }
+          if (colBg.gradientColor2?.toLowerCase() === oldValue) {
+            updated.gradientColor2 = newValue;
+            changed = true;
+          }
+
+          return changed ? updated : colBg;
+        });
+
+        if (JSON.stringify(updatedColumnBgs) !== JSON.stringify(columnBgs)) {
+          if (!updatedElement.settings) updatedElement.settings = {};
+          updatedElement.settings.columnBackgrounds = updatedColumnBgs;
+          needsUpdate = true;
+        }
+      }
+
+      // Update the element if any changes were made
+      if (needsUpdate) {
+        updateElement(element.id, updatedElement);
+      }
+    });
   };
 
   return (
