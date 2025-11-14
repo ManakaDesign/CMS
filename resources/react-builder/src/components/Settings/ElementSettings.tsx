@@ -688,9 +688,18 @@ export const ElementSettings: React.FC = () => {
           };
 
           const handleColumnsPerRowChange = (newColumnsPerRow: number) => {
+            if (!element) return;
+
             const newLayout = { ...responsiveLayout };
             newLayout[activeBreakpoint] = newColumnsPerRow;
-            updateSetting('responsiveLayout', newLayout);
+
+            // Update responsiveLayout directly
+            updateElement(element.id, {
+              settings: {
+                ...element.settings,
+                responsiveLayout: newLayout
+              },
+            });
           };
 
           return (
