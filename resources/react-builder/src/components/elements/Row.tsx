@@ -34,6 +34,15 @@ export const Row: React.FC<RowProps> = (props) => {
   // Get columns per row for current breakpoint
   const columnsPerRow = responsiveLayout[activeBreakpoint] || columnCount;
 
+  // Debug log
+  console.log('Row Debug:', {
+    rowId: element.id,
+    columnCount,
+    activeBreakpoint,
+    responsiveLayout,
+    columnsPerRow
+  });
+
   // Get children elements
   const childElements = elements
     .filter((el) => el.parent_id === element.id)
