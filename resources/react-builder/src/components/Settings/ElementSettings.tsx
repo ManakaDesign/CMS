@@ -3,6 +3,7 @@ import { useBuilderStore } from '../../store/builderStore';
 import { FiTrash2, FiCopy, FiEye, FiEyeOff, FiDroplet, FiImage, FiVideo, FiAlignLeft, FiAlignCenter, FiAlignRight, FiSettings, FiColumns, FiX } from 'react-icons/fi';
 import { RiAlignItemLeftFill, RiAlignItemHorizontalCenterFill, RiAlignItemRightFill } from 'react-icons/ri';
 import { SpacingControl } from './SpacingControl';
+import { GlobalColorSwatches } from './GlobalColorSwatches';
 
 type BackgroundType = 'color' | 'gradient' | 'image' | 'video' | 'none';
 
@@ -1047,21 +1048,24 @@ export const ElementSettings: React.FC = () => {
 
                 {/* Background Color */}
                 {columnBackgroundType === 'color' && (
-                  <div className="flex gap-2 items-center">
-                    <input
-                      type="color"
-                      value={getColumnStyleValue('backgroundColor') || '#ffffff'}
-                      onChange={(e) => updateColumnStyle('backgroundColor', e.target.value)}
-                      className="flex-1 h-10 border border-green-400/30 rounded cursor-pointer"
-                    />
-                    <button
-                      onClick={() => updateColumnStyle('backgroundColor', '')}
-                      className="p-2 hover:bg-dark-hover rounded transition-colors text-light-muted hover:text-light-text"
-                      title="Clear color"
-                    >
-                      <FiX size={16} />
-                    </button>
-                  </div>
+                  <>
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="color"
+                        value={getColumnStyleValue('backgroundColor') || '#ffffff'}
+                        onChange={(e) => updateColumnStyle('backgroundColor', e.target.value)}
+                        className="flex-1 h-10 border border-green-400/30 rounded cursor-pointer"
+                      />
+                      <button
+                        onClick={() => updateColumnStyle('backgroundColor', '')}
+                        className="p-2 hover:bg-dark-hover rounded transition-colors text-light-muted hover:text-light-text"
+                        title="Clear color"
+                      >
+                        <FiX size={16} />
+                      </button>
+                    </div>
+                    <GlobalColorSwatches onColorSelect={(color) => updateColumnStyle('backgroundColor', color)} />
+                  </>
                 )}
 
                 {/* Background Gradient */}
@@ -1295,6 +1299,7 @@ export const ElementSettings: React.FC = () => {
               {isMultiSelect && hasMultiSelectMixedValues('color') && (
                 <p className="text-xs text-orange-400 mt-1">Mixed Values</p>
               )}
+              <GlobalColorSwatches onColorSelect={(color) => updateStyle('color', color, activeBreakpoint)} />
             </div>
             <div className="mb-4">
               <label className="block text-sm font-medium text-light-text mb-2">Text Alignment</label>
@@ -1666,6 +1671,7 @@ export const ElementSettings: React.FC = () => {
                 {isMultiSelect && hasMultiSelectMixedValues('backgroundColor') && (
                   <p className="text-xs text-orange-400 mt-1">Mixed Values</p>
                 )}
+                <GlobalColorSwatches onColorSelect={(color) => updateStyle('backgroundColor', color, activeBreakpoint)} />
               </>
             )}
 
