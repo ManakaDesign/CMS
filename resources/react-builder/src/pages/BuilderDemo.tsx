@@ -7,6 +7,7 @@ import { DroppableCanvas } from '../components/DroppableCanvas';
 import { ElementsSidebar } from '../components/Sidebar/ElementsSidebar';
 import { ElementSettings } from '../components/Settings/ElementSettings';
 import { BreakpointSettings } from '../components/Settings/BreakpointSettings';
+import { GlobalSettings } from '../components/Settings/GlobalSettings';
 import { LayerTree } from '../components/LayerTree/LayerTree';
 import { CSSEditor } from '../components/CSSEditor/CSSEditor';
 import { localStorageService } from '../api/localStorageService';
@@ -37,7 +38,7 @@ export const BuilderDemo: React.FC = () => {
 
   const [showBreakpointSettings, setShowBreakpointSettings] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [leftPanel, setLeftPanel] = useState<'elements' | 'layers' | 'css'>('elements');
+  const [leftPanel, setLeftPanel] = useState<'elements' | 'layers' | 'css' | 'settings'>('elements');
 
   // Load demo data on mount
   useEffect(() => {
@@ -286,15 +287,29 @@ export const BuilderDemo: React.FC = () => {
               >
                 <FiCode size={18} />
               </button>
+              <button
+                onClick={() => setLeftPanel('settings')}
+                className={`
+                  flex items-center justify-center p-3 transition-colors border-b border-dark-border
+                  ${leftPanel === 'settings'
+                    ? 'bg-brand-primary text-white'
+                    : 'text-light-muted hover:text-light-text hover:bg-dark-hover'
+                  }
+                `}
+                title="Global Settings"
+              >
+                <FiSettings size={18} />
+              </button>
             </div>
           )}
 
-          {/* Left Sidebar - Elements Library, Layer Tree, or CSS Editor */}
+          {/* Left Sidebar - Elements Library, Layer Tree, CSS Editor, or Settings */}
           {!isPreviewMode && (
             <div className="w-64 bg-dark-surface border-r border-dark-border overflow-y-auto flex-shrink-0">
               {leftPanel === 'elements' && <ElementsSidebar />}
               {leftPanel === 'layers' && <LayerTree />}
               {leftPanel === 'css' && <CSSEditor />}
+              {leftPanel === 'settings' && <GlobalSettings />}
             </div>
           )}
 
