@@ -83,12 +83,10 @@ export const NumberInput: React.FC<NumberInputProps> = ({
 
   const handleNumBlur = () => {
     const trimmed = localNum.trim();
-    console.log(`NumberInput blur: input="${trimmed}", currentUnit="${localUnit}", allowedUnits=`, allowedUnits);
 
     // Check for special keywords (auto, none, inherit)
     const keywords = ['auto', 'none', 'inherit'];
     if (keywords.includes(trimmed.toLowerCase()) && allowedUnits.includes(trimmed.toLowerCase())) {
-      console.log(`NumberInput: Detected keyword "${trimmed}"`);
       setLocalNum('0');
       setLocalUnit(trimmed.toLowerCase());
       onChange(trimmed.toLowerCase());
@@ -97,24 +95,20 @@ export const NumberInput: React.FC<NumberInputProps> = ({
 
     // Check if user entered a value with a unit (e.g., "8em", "100%", "2rem")
     const match = trimmed.match(/^(-?\d+\.?\d*)\s*([a-z%]*)$/i);
-    console.log(`NumberInput regex match:`, match);
 
     if (match) {
       const num = parseFloat(match[1]);
-      const detectedUnit = match[2] || ''; // Ensure empty string instead of undefined
-      console.log(`NumberInput parsed: num=${num}, detectedUnit="${detectedUnit}"`);
+      const detectedUnit = match[2] || '';
 
       if (!isNaN(num)) {
         const clamped = clampValue(num);
 
         // If a unit was detected and it's in allowedUnits, switch to that unit
         if (detectedUnit.length > 0 && allowedUnits.includes(detectedUnit)) {
-          console.log(`✅ NumberInput: Auto-detected unit "${detectedUnit}" for value ${clamped}`);
           setLocalNum(String(clamped));
           setLocalUnit(detectedUnit);
           emitChange(String(clamped), detectedUnit);
         } else {
-          console.log(`NumberInput: No valid unit detected, using current unit "${localUnit}"`);
           // No unit or invalid unit - use current unit
           setLocalNum(String(clamped));
           emitChange(String(clamped), localUnit);
