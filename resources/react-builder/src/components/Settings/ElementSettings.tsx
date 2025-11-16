@@ -1308,7 +1308,7 @@ export const ElementSettings: React.FC = () => {
               <NumberInput
                 value={getStyleValue('fontSize') || '16px'}
                 onChange={(val) => updateStyle('fontSize', val, activeBreakpoint)}
-                min={8}
+                min={1}
                 max={200}
                 step={1}
                 allowedUnits={['px', 'em', 'rem', '%', 'vh', 'vw']}
