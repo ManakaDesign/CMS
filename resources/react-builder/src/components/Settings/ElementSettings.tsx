@@ -4,6 +4,7 @@ import { FiTrash2, FiCopy, FiEye, FiEyeOff, FiDroplet, FiImage, FiVideo, FiAlign
 import { RiAlignItemLeftFill, RiAlignItemHorizontalCenterFill, RiAlignItemRightFill } from 'react-icons/ri';
 import { SpacingControl } from './SpacingControl';
 import { GlobalColorSwatches } from './GlobalColorSwatches';
+import { NumberInput } from '../UI/NumberInput';
 
 type BackgroundType = 'color' | 'gradient' | 'image' | 'video' | 'none';
 
