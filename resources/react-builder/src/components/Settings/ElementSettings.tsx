@@ -245,82 +245,7 @@ export const ElementSettings: React.FC = () => {
     return (breakpointStyles as any)[property] || '';
   };
 
-  // Update style without auto-px (for onChange)
-  const updateStyleDirect = (property: string, value: string, breakpoint: 'desktop' | 'tablet' | 'mobile' = 'desktop') => {
-    // Get fresh data from store to avoid stale closure
-    const store = useBuilderStore.getState();
-    const currentElements = store.elements;
-    const currentSelectedIds = store.selectedElementIds;
-    const isCurrentlyMultiSelect = currentSelectedIds.length > 1;
-
-    if (isCurrentlyMultiSelect) {
-      // Multi-select: batch update all selected elements
-      const elementIdsSet = new Set(currentSelectedIds);
-
-      const updatedElements = currentElements.map(el => {
-        if (!elementIdsSet.has(el.id)) return el;
-
-        if (styleMode === 'hover') {
-          const hoverStyles = (el as any).hoverStyles || {};
-          return {
-            ...el,
-            hoverStyles: {
-              ...hoverStyles,
-              [breakpoint]: {
-                ...hoverStyles[breakpoint],
-                [property]: value,
-              },
-            },
-          };
-        } else {
-          return {
-            ...el,
-            styles: {
-              ...el.styles,
-              [breakpoint]: {
-                ...el.styles[breakpoint],
-                [property]: value,
-              },
-            },
-          };
-        }
-      });
-
-      // Update all elements in a single operation
-      useBuilderStore.setState({ elements: updatedElements });
-      useBuilderStore.getState().addToHistory();
-      return;
-    }
-
-    if (!element) return;
-
-    if (styleMode === 'hover') {
-      // Update hover styles
-      const hoverStyles = (element as any).hoverStyles || {};
-      updateElement(element.id, {
-        hoverStyles: {
-          ...hoverStyles,
-          [breakpoint]: {
-            ...hoverStyles[breakpoint],
-            [property]: value,
-          },
-        },
-      } as any);
-    } else {
-      // Update normal styles
-      updateElement(element.id, {
-        styles: {
-          ...element.styles,
-          [breakpoint]: {
-            ...element.styles[breakpoint],
-            [property]: value,
-          },
-        },
-      });
-    }
-  };
-
-  // Update style with auto-px (for onBlur)
+  // Update style with auto-px
   const updateStyle = (property: string, value: string, breakpoint: 'desktop' | 'tablet' | 'mobile' = 'desktop') => {
     // Auto-append 'px' if only a number is provided (for spacing/size properties)
     const spacingProps = ['padding', 'margin', 'width', 'height', 'maxWidth', 'maxHeight', 'fontSize', 'borderRadius', 'gap'];
@@ -795,28 +720,33 @@ export const ElementSettings: React.FC = () => {
               {totalColumns > 1 && (
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-light-text mb-2">Column Gap</label>
-                  <input
-                    type="text"
+                  <NumberInput
                     value={element.settings.gap || '16px'}
-                    onChange={(e) => updateSetting('gap', e.target.value)}
-                    className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
-                    placeholder="16px"
+                    onChange={(val) => updateSetting('gap', val)}
+                    min={0}
+                    max={200}
+                    step={1}
+                    className="w-full px-3 py-2 bg-dark-panel border border-dark-border text-sm text-light-text"
+                    placeholder="16"
                   />
-                  <p className="text-xs text-light-muted mt-1">Space between columns (e.g., 0px, 16px, 2rem)</p>
+                  <p className="text-xs text-light-muted mt-1">Space between columns</p>
                 </div>
               )}
 
               {/* Min Height */}
               <div className="mt-4">
                 <label className="block text-sm font-medium text-light-text mb-2">Min Height</label>
-                <input
-                  type="text"
-                  value={element.settings.minHeight || ''}
-                  onChange={(e) => updateSetting('minHeight', e.target.value)}
-                  className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                <NumberInput
+                  value={element.settings.minHeight || 'auto'}
+                  onChange={(val) => updateSetting('minHeight', val)}
+                  min={0}
+                  max={2000}
+                  step={1}
+                  allowedUnits={['px', 'em', 'rem', '%', 'vh', 'vw', 'auto']}
+                  className="w-full px-3 py-2 bg-dark-panel border border-dark-border text-sm text-light-text"
                   placeholder="auto"
                 />
-                <p className="text-xs text-light-muted mt-1">Minimum height (e.g., 100px, 10vh, auto)</p>
+                <p className="text-xs text-light-muted mt-1">Minimum height</p>
               </div>
             </div>
           );
@@ -826,12 +756,15 @@ export const ElementSettings: React.FC = () => {
         {element.type === 'spacer' && (
           <div className="mb-4">
             <label className="block text-sm font-medium text-light-text mb-2">Height</label>
-            <input
-              type="text"
+            <NumberInput
               value={element.settings.height || '50px'}
-              onChange={(e) => updateSetting('height', e.target.value)}
-              className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
-              placeholder="50px"
+              onChange={(val) => updateSetting('height', val)}
+              min={0}
+              max={1000}
+              step={1}
+              allowedUnits={['px', 'em', 'rem', '%', 'vh']}
+              className="w-full px-3 py-2 bg-dark-panel border border-dark-border text-sm text-light-text"
+              placeholder="50"
             />
           </div>
         )}
@@ -1445,13 +1378,16 @@ export const ElementSettings: React.FC = () => {
             </div>
             <div className="mb-4">
               <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Line Height</label>
-              <input
-                type="text"
-                value={getStyleValue('lineHeight')}
-                onChange={(e) => updateStyleDirect('lineHeight', e.target.value, activeBreakpoint)}
-                onBlur={(e) => updateStyle('lineHeight', e.target.value, activeBreakpoint)}
-                className={`w-full px-3 py-2 bg-dark-panel rounded text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
-                placeholder={isMultiSelect && hasMultiSelectMixedValues('lineHeight') ? 'Mixed Values' : '1.5 or 24px'}
+              <NumberInput
+                value={getStyleValue('lineHeight') || '1.5'}
+                onChange={(val) => updateStyle('lineHeight', val, activeBreakpoint)}
+                min={0}
+                max={10}
+                step={0.1}
+                allowedUnits={['px', 'em', 'rem', '%', '']}
+                defaultUnit=""
+                className={`w-full px-3 py-2 bg-dark-panel text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
+                placeholder={isMultiSelect && hasMultiSelectMixedValues('lineHeight') ? 'Mixed Values' : '1.5'}
               />
             </div>
             <div className="mb-4">
@@ -1725,46 +1661,54 @@ export const ElementSettings: React.FC = () => {
           <>
             <div className="mb-4">
               <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Width</label>
-              <input
-                type="text"
-                value={getStyleValue('width')}
-                onChange={(e) => updateStyleDirect('width', e.target.value, activeBreakpoint)}
-                onBlur={(e) => updateStyle('width', e.target.value, activeBreakpoint)}
-                className={`w-full px-3 py-2 bg-dark-panel rounded text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
-                placeholder={isMultiSelect && hasMultiSelectMixedValues('width') ? 'Mixed Values' : 'auto, 100%, 500px'}
+              <NumberInput
+                value={getStyleValue('width') || 'auto'}
+                onChange={(val) => updateStyle('width', val, activeBreakpoint)}
+                min={0}
+                max={5000}
+                step={1}
+                allowedUnits={['px', 'em', 'rem', '%', 'vw', 'auto']}
+                className={`w-full px-3 py-2 bg-dark-panel text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
+                placeholder={isMultiSelect && hasMultiSelectMixedValues('width') ? 'Mixed Values' : 'auto'}
               />
             </div>
             <div className="mb-4">
               <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Max Width</label>
-              <input
-                type="text"
-                value={getStyleValue('maxWidth')}
-                onChange={(e) => updateStyleDirect('maxWidth', e.target.value, activeBreakpoint)}
-                onBlur={(e) => updateStyle('maxWidth', e.target.value, activeBreakpoint)}
-                className={`w-full px-3 py-2 bg-dark-panel rounded text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
-                placeholder={isMultiSelect && hasMultiSelectMixedValues('maxWidth') ? 'Mixed Values' : 'none, 100%, 1200px'}
+              <NumberInput
+                value={getStyleValue('maxWidth') || 'none'}
+                onChange={(val) => updateStyle('maxWidth', val, activeBreakpoint)}
+                min={0}
+                max={5000}
+                step={1}
+                allowedUnits={['px', 'em', 'rem', '%', 'vw', 'none']}
+                className={`w-full px-3 py-2 bg-dark-panel text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
+                placeholder={isMultiSelect && hasMultiSelectMixedValues('maxWidth') ? 'Mixed Values' : 'none'}
               />
             </div>
             <div className="mb-4">
               <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Height</label>
-              <input
-                type="text"
-                value={getStyleValue('height')}
-                onChange={(e) => updateStyleDirect('height', e.target.value, activeBreakpoint)}
-                onBlur={(e) => updateStyle('height', e.target.value, activeBreakpoint)}
-                className={`w-full px-3 py-2 bg-dark-panel rounded text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
-                placeholder={isMultiSelect && hasMultiSelectMixedValues('height') ? 'Mixed Values' : 'auto, 100%, 300px'}
+              <NumberInput
+                value={getStyleValue('height') || 'auto'}
+                onChange={(val) => updateStyle('height', val, activeBreakpoint)}
+                min={0}
+                max={5000}
+                step={1}
+                allowedUnits={['px', 'em', 'rem', '%', 'vh', 'auto']}
+                className={`w-full px-3 py-2 bg-dark-panel text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
+                placeholder={isMultiSelect && hasMultiSelectMixedValues('height') ? 'Mixed Values' : 'auto'}
               />
             </div>
             <div className="mb-4">
               <label className="block text-sm font-medium text-light-text mb-2">Max Height</label>
-              <input
-                type="text"
-                value={getStyleValue('maxHeight')}
-                onChange={(e) => updateStyleDirect('maxHeight', e.target.value, activeBreakpoint)}
-                onBlur={(e) => updateStyle('maxHeight', e.target.value, activeBreakpoint)}
-                className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
-                placeholder="none, 100vh, 600px"
+              <NumberInput
+                value={getStyleValue('maxHeight') || 'none'}
+                onChange={(val) => updateStyle('maxHeight', val, activeBreakpoint)}
+                min={0}
+                max={5000}
+                step={1}
+                allowedUnits={['px', 'em', 'rem', '%', 'vh', 'none']}
+                className="w-full px-3 py-2 bg-dark-panel border border-dark-border text-sm text-light-text placeholder-light-muted"
+                placeholder="none"
               />
             </div>
           </>

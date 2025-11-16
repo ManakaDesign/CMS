@@ -82,11 +82,31 @@ export const NumberInput: React.FC<NumberInputProps> = ({
   };
 
   const handleNumBlur = () => {
-    const numValue = parseFloat(localNum);
-    if (!isNaN(numValue)) {
-      const clamped = clampValue(numValue);
-      setLocalNum(String(clamped));
-      emitChange(String(clamped), localUnit);
+    // Check if user entered a value with a unit (e.g., "8em", "100%", "2rem")
+    const trimmed = localNum.trim();
+    const match = trimmed.match(/^(-?\d+\.?\d*)\s*([a-z%]*)$/i);
+
+    if (match) {
+      const num = parseFloat(match[1]);
+      const detectedUnit = match[2];
+
+      if (!isNaN(num)) {
+        const clamped = clampValue(num);
+
+        // If a unit was detected and it's in allowedUnits, switch to that unit
+        if (detectedUnit && allowedUnits.includes(detectedUnit)) {
+          setLocalNum(String(clamped));
+          setLocalUnit(detectedUnit);
+          emitChange(String(clamped), detectedUnit);
+        } else {
+          // No unit or invalid unit - use current unit
+          setLocalNum(String(clamped));
+          emitChange(String(clamped), localUnit);
+        }
+      } else {
+        emitChange('0', localUnit);
+        setLocalNum('0');
+      }
     } else {
       emitChange('0', localUnit);
       setLocalNum('0');
