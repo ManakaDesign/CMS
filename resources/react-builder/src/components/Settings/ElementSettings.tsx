@@ -1365,13 +1365,13 @@ export const ElementSettings: React.FC = () => {
             <div className="mb-4">
               <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Font Size</label>
               <NumberInput
-                value={parseInt(getStyleValue('fontSize')) || 16}
-                onChange={(val) => updateStyle('fontSize', `${val}px`, activeBreakpoint)}
+                value={getStyleValue('fontSize') || '16px'}
+                onChange={(val) => updateStyle('fontSize', val, activeBreakpoint)}
                 min={8}
                 max={200}
                 step={1}
-                unit="px"
-                className={`w-full px-3 py-2 bg-dark-panel rounded text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
+                allowedUnits={['px', 'em', 'rem', '%', 'vh', 'vw']}
+                className={`w-full px-3 py-2 bg-dark-panel text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
                 placeholder={isMultiSelect && hasMultiSelectMixedValues('fontSize') ? 'Mixed Values' : '16'}
               />
             </div>
@@ -2041,13 +2041,13 @@ export const ElementSettings: React.FC = () => {
         <div className="mb-4">
           <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Border Radius</label>
           <NumberInput
-            value={parseInt(getStyleValue('borderRadius')) || 0}
-            onChange={(val) => updateStyle('borderRadius', `${val}px`, activeBreakpoint)}
+            value={getStyleValue('borderRadius') || '0px'}
+            onChange={(val) => updateStyle('borderRadius', val, activeBreakpoint)}
             min={0}
             max={500}
             step={1}
-            unit="px"
-            className={`w-full px-3 py-2 bg-dark-panel rounded text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
+            allowedUnits={['px', 'em', 'rem', '%']}
+            className={`w-full px-3 py-2 bg-dark-panel text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
             placeholder={isMultiSelect && hasMultiSelectMixedValues('borderRadius') ? 'Mixed Values' : '0'}
           />
         </div>

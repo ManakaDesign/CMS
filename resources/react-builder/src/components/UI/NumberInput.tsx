@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 
 interface NumberInputProps {
-  value: number | string;
-  onChange: (value: number) => void;
+  value: string | number; // Can be "16px", "2em", "100%", or just 16
+  onChange: (value: string) => void;
   min?: number;
   max?: number;
   step?: number;
   placeholder?: string;
   className?: string;
   disabled?: boolean;
-  unit?: string; // e.g., "px", "%", "rem"
+  allowedUnits?: string[]; // e.g., ['px', 'em', 'rem', '%', 'vh', 'vw']
+  defaultUnit?: string; // default unit when only number is provided
 }
 
 export const NumberInput: React.FC<NumberInputProps> = ({
@@ -21,20 +22,40 @@ export const NumberInput: React.FC<NumberInputProps> = ({
   placeholder,
   className = '',
   disabled = false,
-  unit,
+  allowedUnits = ['px', 'em', 'rem', '%', 'vh', 'vw', 'auto'],
+  defaultUnit = 'px',
 }) => {
-  const [localValue, setLocalValue] = useState<string>(String(value));
+  // Parse value into number and unit
+  const parseValue = (val: string | number): { num: number; unit: string } => {
+    if (typeof val === 'number') {
+      return { num: val, unit: defaultUnit };
+    }
+
+    const str = String(val).trim();
+    if (str === '' || str === 'auto') {
+      return { num: 0, unit: 'auto' };
+    }
+
+    // Extract number and unit
+    const match = str.match(/^(-?\d+\.?\d*)\s*([a-z%]*)$/i);
+    if (match) {
+      const num = parseFloat(match[1]);
+      const unit = match[2] || defaultUnit;
+      return { num: isNaN(num) ? 0 : num, unit };
+    }
+
+    return { num: 0, unit: defaultUnit };
+  };
+
+  const parsed = parseValue(value);
+  const [localNum, setLocalNum] = useState<string>(String(parsed.num));
+  const [localUnit, setLocalUnit] = useState<string>(parsed.unit);
 
   useEffect(() => {
-    setLocalValue(String(value));
+    const newParsed = parseValue(value);
+    setLocalNum(String(newParsed.num));
+    setLocalUnit(newParsed.unit);
   }, [value]);
-
-  const parseValue = (str: string): number => {
-    // Remove any non-numeric characters except minus and decimal point
-    const cleanStr = str.replace(/[^0-9.-]/g, '');
-    const parsed = parseFloat(cleanStr);
-    return isNaN(parsed) ? 0 : parsed;
-  };
 
   const clampValue = (val: number): number => {
     let clamped = val;
@@ -43,52 +64,81 @@ export const NumberInput: React.FC<NumberInputProps> = ({
     return clamped;
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLocalValue(e.target.value);
+  const emitChange = (num: string, unit: string) => {
+    if (unit === 'auto') {
+      onChange('auto');
+    } else {
+      const numValue = parseFloat(num);
+      if (isNaN(numValue)) {
+        onChange(`0${unit}`);
+      } else {
+        onChange(`${numValue}${unit}`);
+      }
+    }
   };
 
-  const handleBlur = () => {
-    const numValue = parseValue(localValue);
-    const clamped = clampValue(numValue);
-    onChange(clamped);
-    setLocalValue(String(clamped));
+  const handleNumChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalNum(e.target.value);
+  };
+
+  const handleNumBlur = () => {
+    const numValue = parseFloat(localNum);
+    if (!isNaN(numValue)) {
+      const clamped = clampValue(numValue);
+      setLocalNum(String(clamped));
+      emitChange(String(clamped), localUnit);
+    } else {
+      emitChange('0', localUnit);
+      setLocalNum('0');
+    }
+  };
+
+  const handleUnitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newUnit = e.target.value;
+    setLocalUnit(newUnit);
+    emitChange(localNum, newUnit);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
       e.preventDefault();
-      const currentValue = parseValue(localValue);
+      const currentValue = parseFloat(localNum) || 0;
       const increment = e.shiftKey ? step * 10 : step;
       const newValue = e.key === 'ArrowUp'
         ? currentValue + increment
         : currentValue - increment;
       const clamped = clampValue(newValue);
-      onChange(clamped);
-      setLocalValue(String(clamped));
+      setLocalNum(String(clamped));
+      emitChange(String(clamped), localUnit);
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      handleBlur();
+      handleNumBlur();
       (e.target as HTMLInputElement).blur();
     }
   };
 
   return (
-    <div className="relative inline-flex items-center">
+    <div className="relative flex items-stretch">
       <input
         type="text"
-        value={localValue}
-        onChange={handleChange}
-        onBlur={handleBlur}
+        value={localNum}
+        onChange={handleNumChange}
+        onBlur={handleNumBlur}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        disabled={disabled}
-        className={`${className} ${unit ? 'pr-8' : ''}`}
+        disabled={disabled || localUnit === 'auto'}
+        className={`${className} flex-1 rounded-r-none`}
       />
-      {unit && (
-        <span className="absolute right-3 text-sm text-light-muted pointer-events-none">
-          {unit}
-        </span>
-      )}
+      <select
+        value={localUnit}
+        onChange={handleUnitChange}
+        disabled={disabled}
+        className="w-20 px-2 py-2 bg-dark-hover border-l border-dark-border rounded-r text-xs text-light-text focus:outline-none focus:border-brand-primary"
+      >
+        {allowedUnits.map(unit => (
+          <option key={unit} value={unit}>{unit}</option>
+        ))}
+      </select>
     </div>
   );
 };
