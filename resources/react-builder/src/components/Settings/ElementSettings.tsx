@@ -67,6 +67,7 @@ export const ElementSettings: React.FC = () => {
   const [columnBackgroundType, setColumnBackgroundType] = useState<BackgroundType>('color');
   const [syncAllColumns, setSyncAllColumns] = useState<boolean>(false);
   const [iconPickerOpen, setIconPickerOpen] = useState<'before' | 'after' | null>(null);
+  const [openSection, setOpenSection] = useState<string>('typography');
 
   // Initialize backgroundType based on what's stored in element
   useEffect(() => {
@@ -487,50 +488,6 @@ export const ElementSettings: React.FC = () => {
                 />
                 Open in new tab
               </label>
-            </div>
-
-            {/* Icon Before */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-light-text mb-2">Icon Before Text</label>
-              <button
-                onClick={() => setIconPickerOpen('before')}
-                className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text hover:bg-dark-hover transition-colors text-left flex items-center justify-between"
-              >
-                <span>{element.settings.iconBefore ? element.settings.iconBefore.replace('Fi', '') : 'Select Icon...'}</span>
-                {element.settings.iconBefore && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      updateSetting('iconBefore', '');
-                    }}
-                    className="ml-2 p-1 hover:bg-dark-border rounded"
-                  >
-                    <FiX size={14} />
-                  </button>
-                )}
-              </button>
-            </div>
-
-            {/* Icon After */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-light-text mb-2">Icon After Text</label>
-              <button
-                onClick={() => setIconPickerOpen('after')}
-                className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text hover:bg-dark-hover transition-colors text-left flex items-center justify-between"
-              >
-                <span>{element.settings.iconAfter ? element.settings.iconAfter.replace('Fi', '') : 'Select Icon...'}</span>
-                {element.settings.iconAfter && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      updateSetting('iconAfter', '');
-                    }}
-                    className="ml-2 p-1 hover:bg-dark-border rounded"
-                  >
-                    <FiX size={14} />
-                  </button>
-                )}
-              </button>
             </div>
           </>
         )}
@@ -1320,7 +1277,11 @@ export const ElementSettings: React.FC = () => {
         {((isMultiSelect && selectedElements.length > 0) || element) &&
          (element?.type === 'text' || element?.type === 'heading' || element?.type === 'button' ||
           selectedElements[0]?.type === 'text' || selectedElements[0]?.type === 'heading' || selectedElements[0]?.type === 'button') && (
-          <CollapsibleSection title="Typography" defaultOpen={true}>
+          <CollapsibleSection
+            title="Typography"
+            isOpen={openSection === 'typography'}
+            onToggle={() => setOpenSection(openSection === 'typography' ? '' : 'typography')}
+          >
             {/* Font Family */}
             <div className="mb-4">
               <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Font Family</label>
@@ -1503,11 +1464,64 @@ export const ElementSettings: React.FC = () => {
                 </button>
               </div>
             </div>
+
+            {/* Button Icons - only for button elements */}
+            {element?.type === 'button' && (
+              <>
+                {/* Icon Before */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-light-text mb-2">Icon Before Text</label>
+                  <button
+                    onClick={() => setIconPickerOpen('before')}
+                    className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text hover:bg-dark-hover transition-colors text-left flex items-center justify-between"
+                  >
+                    <span>{element.settings.iconBefore ? element.settings.iconBefore.replace('Fi', '') : 'Select Icon...'}</span>
+                    {element.settings.iconBefore && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateSetting('iconBefore', '');
+                        }}
+                        className="ml-2 p-1 hover:bg-dark-border rounded"
+                      >
+                        <FiX size={14} />
+                      </button>
+                    )}
+                  </button>
+                </div>
+
+                {/* Icon After */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-light-text mb-2">Icon After Text</label>
+                  <button
+                    onClick={() => setIconPickerOpen('after')}
+                    className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text hover:bg-dark-hover transition-colors text-left flex items-center justify-between"
+                  >
+                    <span>{element.settings.iconAfter ? element.settings.iconAfter.replace('Fi', '') : 'Select Icon...'}</span>
+                    {element.settings.iconAfter && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateSetting('iconAfter', '');
+                        }}
+                        className="ml-2 p-1 hover:bg-dark-border rounded"
+                      >
+                        <FiX size={14} />
+                      </button>
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
           </CollapsibleSection>
         )}
 
         {/* Spacing */}
-        <CollapsibleSection title="Spacing" defaultOpen={true}>
+        <CollapsibleSection
+          title="Spacing"
+          isOpen={openSection === 'spacing'}
+          onToggle={() => setOpenSection(openSection === 'spacing' ? '' : 'spacing')}
+        >
           <SpacingControl
             label="Padding"
             value={getStyleValue('padding')}
@@ -1524,7 +1538,11 @@ export const ElementSettings: React.FC = () => {
         </CollapsibleSection>
 
         {/* Layout */}
-        <CollapsibleSection title="Layout" defaultOpen={true}>
+        <CollapsibleSection
+          title="Layout"
+          isOpen={openSection === 'layout'}
+          onToggle={() => setOpenSection(openSection === 'layout' ? '' : 'layout')}
+        >
           {/* Display Property */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-light-text mb-2">Display</label>
@@ -1768,7 +1786,11 @@ export const ElementSettings: React.FC = () => {
 
         {/* Background */}
         {(isMultiSelect || element) && (element?.type === 'section' || element?.type === 'row' || element?.type === 'button') && (
-          <CollapsibleSection title="Background" defaultOpen={true}>
+          <CollapsibleSection
+            title="Background"
+            isOpen={openSection === 'background'}
+            onToggle={() => setOpenSection(openSection === 'background' ? '' : 'background')}
+          >
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium text-light-text">Type</label>
 
@@ -2023,7 +2045,11 @@ export const ElementSettings: React.FC = () => {
         )}
 
         {/* Border */}
-        <CollapsibleSection title="Border" defaultOpen={true}>
+        <CollapsibleSection
+          title="Border"
+          isOpen={openSection === 'border'}
+          onToggle={() => setOpenSection(openSection === 'border' ? '' : 'border')}
+        >
           <div className="mb-4">
             <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Border</label>
             <input

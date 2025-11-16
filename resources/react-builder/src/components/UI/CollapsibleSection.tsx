@@ -1,26 +1,26 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { FiChevronDown, FiChevronRight } from 'react-icons/fi';
 
 interface CollapsibleSectionProps {
   title: string;
-  defaultOpen?: boolean;
+  isOpen: boolean;
+  onToggle: () => void;
   children: React.ReactNode;
   className?: string;
 }
 
 export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
   title,
-  defaultOpen = true,
+  isOpen,
+  onToggle,
   children,
   className = '',
 }) => {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-
   return (
     <div className={`border-b border-dark-border ${className}`}>
       {/* Header */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={onToggle}
         className="w-full flex items-center justify-between p-3 hover:bg-dark-hover transition-colors text-left"
       >
         <h3 className="text-sm font-semibold text-light-text uppercase">{title}</h3>
