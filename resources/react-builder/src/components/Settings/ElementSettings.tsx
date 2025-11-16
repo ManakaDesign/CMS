@@ -1340,6 +1340,27 @@ export const ElementSettings: React.FC = () => {
          (element?.type === 'text' || element?.type === 'heading' || element?.type === 'button' ||
           selectedElements[0]?.type === 'text' || selectedElements[0]?.type === 'heading' || selectedElements[0]?.type === 'button') && (
           <>
+            {/* Font Family */}
+            <div className="mb-4">
+              <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Font Family</label>
+              <select
+                value={getStyleValue('fontFamily') || 'inherit'}
+                onChange={(e) => updateStyle('fontFamily', e.target.value, activeBreakpoint)}
+                className={`w-full px-3 py-2 bg-dark-panel rounded text-sm text-light-text ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
+              >
+                <option value="inherit">Default</option>
+                <option value="Inter, sans-serif">Inter</option>
+                <option value="Roboto, sans-serif">Roboto</option>
+                <option value="'Open Sans', sans-serif">Open Sans</option>
+                <option value="Montserrat, sans-serif">Montserrat</option>
+                <option value="Lato, sans-serif">Lato</option>
+                <option value="Poppins, sans-serif">Poppins</option>
+                <option value="Georgia, serif">Georgia</option>
+                <option value="'Times New Roman', serif">Times New Roman</option>
+                <option value="'Courier New', monospace">Courier New</option>
+              </select>
+            </div>
+
             <div className="mb-4">
               <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Font Size</label>
               <input
@@ -1365,6 +1386,59 @@ export const ElementSettings: React.FC = () => {
                 <option value="600">Semi Bold</option>
                 <option value="700">Bold</option>
               </select>
+            </div>
+
+            {/* Text Style Toggles */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-light-text mb-2">Text Style</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    const currentWeight = getStyleValue('fontWeight');
+                    const isBold = currentWeight === 'bold' || currentWeight === '700' || currentWeight === '600';
+                    updateStyle('fontWeight', isBold ? 'normal' : 'bold', activeBreakpoint);
+                  }}
+                  className={`flex-1 px-3 py-2 rounded text-sm font-bold transition-colors ${
+                    (() => {
+                      const weight = getStyleValue('fontWeight');
+                      return weight === 'bold' || weight === '700' || weight === '600'
+                        ? 'bg-brand-primary text-white'
+                        : 'bg-dark-panel text-light-text hover:bg-dark-hover border border-dark-border';
+                    })()
+                  }`}
+                  title="Bold"
+                >
+                  B
+                </button>
+                <button
+                  onClick={() => {
+                    const current = getStyleValue('fontStyle');
+                    updateStyle('fontStyle', current === 'italic' ? 'normal' : 'italic', activeBreakpoint);
+                  }}
+                  className={`flex-1 px-3 py-2 rounded text-sm italic transition-colors ${
+                    getStyleValue('fontStyle') === 'italic'
+                      ? 'bg-brand-primary text-white'
+                      : 'bg-dark-panel text-light-text hover:bg-dark-hover border border-dark-border'
+                  }`}
+                  title="Italic"
+                >
+                  I
+                </button>
+                <button
+                  onClick={() => {
+                    const current = getStyleValue('textDecoration');
+                    updateStyle('textDecoration', current === 'underline' ? 'none' : 'underline', activeBreakpoint);
+                  }}
+                  className={`flex-1 px-3 py-2 rounded text-sm underline transition-colors ${
+                    getStyleValue('textDecoration') === 'underline'
+                      ? 'bg-brand-primary text-white'
+                      : 'bg-dark-panel text-light-text hover:bg-dark-hover border border-dark-border'
+                  }`}
+                  title="Underline"
+                >
+                  U
+                </button>
+              </div>
             </div>
             <div className="mb-4">
               <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Line Height</label>
