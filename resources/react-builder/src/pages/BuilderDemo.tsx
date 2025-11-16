@@ -17,6 +17,7 @@ export const BuilderDemo: React.FC = () => {
     page,
     elements,
     customCSS,
+    globalColors,
     selectedElementId,
     selectedElementIds,
     activeBreakpoint,
@@ -25,6 +26,7 @@ export const BuilderDemo: React.FC = () => {
     setPage,
     setElements,
     setCustomCSS,
+    setGlobalColors,
     setActiveBreakpoint,
     togglePreviewMode,
     canUndo,
@@ -44,13 +46,15 @@ export const BuilderDemo: React.FC = () => {
     const demoPage = localStorageService.getPage(pageId);
     const demoElements = localStorageService.getElements(pageId);
     const demoCSS = localStorageService.getCustomCSS(pageId);
+    const demoGlobalColors = localStorageService.getGlobalColors();
 
     if (demoPage) {
       setPage(demoPage);
       setElements(demoElements);
       setCustomCSS(demoCSS);
+      setGlobalColors(demoGlobalColors);
     }
-  }, [setPage, setElements, setCustomCSS]);
+  }, [setPage, setElements, setCustomCSS, setGlobalColors]);
 
   // Auto-save to localStorage
   useEffect(() => {
@@ -75,6 +79,17 @@ export const BuilderDemo: React.FC = () => {
       return () => clearTimeout(saveTimeout);
     }
   }, [page, customCSS]);
+
+  // Auto-save global colors to localStorage
+  useEffect(() => {
+    if (globalColors.length >= 0) {
+      const saveTimeout = setTimeout(() => {
+        localStorageService.saveGlobalColors(globalColors);
+      }, 1000); // Debounce saves
+
+      return () => clearTimeout(saveTimeout);
+    }
+  }, [globalColors]);
 
   const breakpoints = [
     { value: 'desktop' as Breakpoint, icon: FiMonitor, label: 'Desktop' },
