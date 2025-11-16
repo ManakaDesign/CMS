@@ -4,7 +4,6 @@ import { FiTrash2, FiCopy, FiEye, FiEyeOff, FiDroplet, FiImage, FiVideo, FiAlign
 import { RiAlignItemLeftFill, RiAlignItemHorizontalCenterFill, RiAlignItemRightFill } from 'react-icons/ri';
 import { SpacingControl } from './SpacingControl';
 import { GlobalColorSwatches } from './GlobalColorSwatches';
-import { NumberInput } from '../UI/NumberInput';
 
 type BackgroundType = 'color' | 'gradient' | 'image' | 'video' | 'none';
 
@@ -63,6 +62,7 @@ export const ElementSettings: React.FC = () => {
   const [backgroundType, setBackgroundType] = useState<BackgroundType>('color');
   const [columnStyleMode, setColumnStyleMode] = useState<'normal' | 'hover'>('normal');
   const [columnBackgroundType, setColumnBackgroundType] = useState<BackgroundType>('color');
+  const [syncAllColumns, setSyncAllColumns] = useState<boolean>(false);
 
   // Initialize backgroundType based on what's stored in element
   useEffect(() => {
@@ -892,17 +892,41 @@ export const ElementSettings: React.FC = () => {
         const updateColumnStyle = (property: string, value: string) => {
           if (columnStyleMode === 'hover') {
             const newColumnHoverStyles = [...columnHoverStyles];
-            newColumnHoverStyles[selectedColumnIndex] = {
-              ...columnHoverStyle,
-              [property]: value,
-            };
+            if (syncAllColumns) {
+              // Apply to all columns
+              const totalColumns = element.settings.columns || 2;
+              for (let i = 0; i < totalColumns; i++) {
+                newColumnHoverStyles[i] = {
+                  ...(newColumnHoverStyles[i] || {}),
+                  [property]: value,
+                };
+              }
+            } else {
+              // Apply to selected column only
+              newColumnHoverStyles[selectedColumnIndex] = {
+                ...columnHoverStyle,
+                [property]: value,
+              };
+            }
             updateSetting('columnHoverStyles', newColumnHoverStyles);
           } else {
             const newColumnStyles = [...columnStyles];
-            newColumnStyles[selectedColumnIndex] = {
-              ...columnStyle,
-              [property]: value,
-            };
+            if (syncAllColumns) {
+              // Apply to all columns
+              const totalColumns = element.settings.columns || 2;
+              for (let i = 0; i < totalColumns; i++) {
+                newColumnStyles[i] = {
+                  ...(newColumnStyles[i] || {}),
+                  [property]: value,
+                };
+              }
+            } else {
+              // Apply to selected column only
+              newColumnStyles[selectedColumnIndex] = {
+                ...columnStyle,
+                [property]: value,
+              };
+            }
             updateSetting('columnStyles', newColumnStyles);
           }
         };
@@ -959,7 +983,9 @@ export const ElementSettings: React.FC = () => {
                     <FiColumns size={16} />
                     Column {selectedColumnIndex + 1} Settings
                   </h3>
-                  <p className="text-xs text-green-400/70 mt-1">Customize this column independently</p>
+                  <p className="text-xs text-green-400/70 mt-1">
+                    {syncAllColumns ? 'Changes apply to all columns' : 'Customize this column independently'}
+                  </p>
                 </div>
                 <button
                   onClick={() => selectColumn(null)}
@@ -967,6 +993,23 @@ export const ElementSettings: React.FC = () => {
                 >
                   Back to Row
                 </button>
+              </div>
+
+              {/* Sync All Columns Toggle */}
+              <div className="flex items-center justify-between p-3 bg-dark-panel rounded">
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-light-text">Sync All Columns</span>
+                  <span className="text-xs text-light-muted">Apply changes to all columns at once</span>
+                </div>
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={syncAllColumns}
+                    onChange={(e) => setSyncAllColumns(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-dark-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-light-muted after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500 peer-checked:after:bg-white"></div>
+                </div>
               </div>
 
               {/* Normal/Hover Toggle for Column */}
