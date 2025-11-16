@@ -4,6 +4,7 @@ import { FiTrash2, FiCopy, FiEye, FiEyeOff, FiDroplet, FiImage, FiVideo, FiAlign
 import { RiAlignItemLeftFill, RiAlignItemHorizontalCenterFill, RiAlignItemRightFill } from 'react-icons/ri';
 import { SpacingControl } from './SpacingControl';
 import { GlobalColorSwatches } from './GlobalColorSwatches';
+import { NumberInput } from '../UI/NumberInput';
 
 type BackgroundType = 'color' | 'gradient' | 'image' | 'video' | 'none';
 
@@ -996,8 +997,8 @@ export const ElementSettings: React.FC = () => {
               </div>
 
               {/* Sync All Columns Toggle */}
-              <div className="flex items-center justify-between p-3 bg-dark-panel rounded">
-                <div className="flex flex-col">
+              <label className="flex items-center justify-between p-3 bg-dark-panel rounded cursor-pointer">
+                <div className="flex flex-col pointer-events-none">
                   <span className="text-sm font-medium text-light-text">Sync All Columns</span>
                   <span className="text-xs text-light-muted">Apply changes to all columns at once</span>
                 </div>
@@ -1010,7 +1011,7 @@ export const ElementSettings: React.FC = () => {
                   />
                   <div className="w-11 h-6 bg-dark-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-light-muted after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500 peer-checked:after:bg-white"></div>
                 </div>
-              </div>
+              </label>
 
               {/* Normal/Hover Toggle for Column */}
               <div className="flex items-center gap-1 bg-dark-panel border border-green-400/30 rounded p-0.5">
@@ -1363,13 +1364,15 @@ export const ElementSettings: React.FC = () => {
 
             <div className="mb-4">
               <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Font Size</label>
-              <input
-                type="text"
-                value={getStyleValue('fontSize')}
-                onChange={(e) => updateStyleDirect('fontSize', e.target.value, activeBreakpoint)}
-                onBlur={(e) => updateStyle('fontSize', e.target.value, activeBreakpoint)}
+              <NumberInput
+                value={parseInt(getStyleValue('fontSize')) || 16}
+                onChange={(val) => updateStyle('fontSize', `${val}px`, activeBreakpoint)}
+                min={8}
+                max={200}
+                step={1}
+                unit="px"
                 className={`w-full px-3 py-2 bg-dark-panel rounded text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
-                placeholder={isMultiSelect && hasMultiSelectMixedValues('fontSize') ? 'Mixed Values' : '16px'}
+                placeholder={isMultiSelect && hasMultiSelectMixedValues('fontSize') ? 'Mixed Values' : '16'}
               />
             </div>
             <div className="mb-4">
@@ -2037,13 +2040,15 @@ export const ElementSettings: React.FC = () => {
 
         <div className="mb-4">
           <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Border Radius</label>
-          <input
-            type="text"
-            value={getStyleValue('borderRadius')}
-            onChange={(e) => updateStyleDirect('borderRadius', e.target.value, activeBreakpoint)}
-            onBlur={(e) => updateStyle('borderRadius', e.target.value, activeBreakpoint)}
+          <NumberInput
+            value={parseInt(getStyleValue('borderRadius')) || 0}
+            onChange={(val) => updateStyle('borderRadius', `${val}px`, activeBreakpoint)}
+            min={0}
+            max={500}
+            step={1}
+            unit="px"
             className={`w-full px-3 py-2 bg-dark-panel rounded text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
-            placeholder={isMultiSelect && hasMultiSelectMixedValues('borderRadius') ? 'Mixed Values' : '4px'}
+            placeholder={isMultiSelect && hasMultiSelectMixedValues('borderRadius') ? 'Mixed Values' : '0'}
           />
         </div>
       </div>
