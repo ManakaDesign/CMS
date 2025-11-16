@@ -7,12 +7,14 @@ interface BreakpointSettingsProps {
 }
 
 export const BreakpointSettings: React.FC<BreakpointSettingsProps> = ({ onClose }) => {
-  const { breakpointWidths, setBreakpointWidths } = useBuilderStore();
+  const { breakpointWidths, setBreakpointWidths, useFullWidthDesktop, setUseFullWidthDesktop } = useBuilderStore();
 
   const [localWidths, setLocalWidths] = useState(breakpointWidths);
+  const [localFullWidth, setLocalFullWidth] = useState(useFullWidthDesktop);
 
   const handleSave = () => {
     setBreakpointWidths(localWidths);
+    setUseFullWidthDesktop(localFullWidth);
     onClose();
   };
 
@@ -40,26 +42,47 @@ export const BreakpointSettings: React.FC<BreakpointSettingsProps> = ({ onClose 
             Customize the pixel widths for each breakpoint. These values determine when the canvas switches between device views.
           </p>
 
-          {/* Desktop */}
-          <div className="space-y-2">
-            <label className="flex items-center justify-between">
-              <span className="text-sm font-medium text-light-text">Desktop</span>
-              <div className="flex items-center gap-2">
+          {/* Desktop Full Width Toggle */}
+          <div className="space-y-2 pb-3 border-b border-dark-border">
+            <label className="flex items-center justify-between cursor-pointer">
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-light-text">Desktop Full Width</span>
+                <span className="text-xs text-light-muted">Canvas takes 100% of viewport width</span>
+              </div>
+              <div className="relative">
                 <input
-                  type="number"
-                  value={localWidths.desktop}
-                  onChange={(e) =>
-                    setLocalWidths({ ...localWidths, desktop: parseInt(e.target.value) || 1920 })
-                  }
-                  className="w-24 px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text"
-                  min="768"
-                  max="3840"
+                  type="checkbox"
+                  checked={localFullWidth}
+                  onChange={(e) => setLocalFullWidth(e.target.checked)}
+                  className="sr-only peer"
                 />
-                <span className="text-sm text-light-muted">px</span>
+                <div className="w-11 h-6 bg-dark-panel peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-light-muted after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-primary peer-checked:after:bg-white"></div>
               </div>
             </label>
-            <p className="text-xs text-light-muted">Default: 1920px</p>
           </div>
+
+          {/* Desktop Width (only shown when not full width) */}
+          {!localFullWidth && (
+            <div className="space-y-2">
+              <label className="flex items-center justify-between">
+                <span className="text-sm font-medium text-light-text">Desktop Max Width</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={localWidths.desktop}
+                    onChange={(e) =>
+                      setLocalWidths({ ...localWidths, desktop: parseInt(e.target.value) || 1920 })
+                    }
+                    className="w-24 px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text"
+                    min="768"
+                    max="3840"
+                  />
+                  <span className="text-sm text-light-muted">px</span>
+                </div>
+              </label>
+              <p className="text-xs text-light-muted">Default: 1920px</p>
+            </div>
+          )}
 
           {/* Tablet */}
           <div className="space-y-2">

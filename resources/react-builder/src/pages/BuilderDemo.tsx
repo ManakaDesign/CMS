@@ -23,6 +23,7 @@ export const BuilderDemo: React.FC = () => {
     selectedElementIds,
     activeBreakpoint,
     breakpointWidths,
+    useFullWidthDesktop,
     isPreviewMode,
     setPage,
     setElements,
@@ -320,7 +321,7 @@ export const BuilderDemo: React.FC = () => {
                 className="bg-white shadow-lg mx-auto builder-canvas min-h-full"
                 style={{
                   maxWidth: activeBreakpoint === 'desktop'
-                    ? `${breakpointWidths.desktop}px`
+                    ? (useFullWidthDesktop ? '100%' : `${breakpointWidths.desktop}px`)
                     : activeBreakpoint === 'tablet'
                       ? `${breakpointWidths.tablet}px`
                       : `${breakpointWidths.mobile}px`,
