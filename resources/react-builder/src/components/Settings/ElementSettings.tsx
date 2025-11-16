@@ -5,6 +5,7 @@ import { RiAlignItemLeftFill, RiAlignItemHorizontalCenterFill, RiAlignItemRightF
 import { SpacingControl } from './SpacingControl';
 import { GlobalColorSwatches } from './GlobalColorSwatches';
 import { NumberInput } from '../UI/NumberInput';
+import { CollapsibleSection } from '../UI/CollapsibleSection';
 
 type BackgroundType = 'color' | 'gradient' | 'image' | 'video' | 'none';
 
@@ -1273,7 +1274,7 @@ export const ElementSettings: React.FC = () => {
         {((isMultiSelect && selectedElements.length > 0) || element) &&
          (element?.type === 'text' || element?.type === 'heading' || element?.type === 'button' ||
           selectedElements[0]?.type === 'text' || selectedElements[0]?.type === 'heading' || selectedElements[0]?.type === 'button') && (
-          <>
+          <CollapsibleSection title="Typography" defaultOpen={true}>
             {/* Font Family */}
             <div className="mb-4">
               <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Font Family</label>
@@ -1456,42 +1457,46 @@ export const ElementSettings: React.FC = () => {
                 </button>
               </div>
             </div>
-          </>
+          </CollapsibleSection>
         )}
 
         {/* Spacing */}
-        <SpacingControl
-          label="Padding"
-          value={getStyleValue('padding')}
-          onChange={(value) => updateStyle('padding', value, activeBreakpoint)}
-          className="mb-4"
-        />
+        <CollapsibleSection title="Spacing" defaultOpen={true}>
+          <SpacingControl
+            label="Padding"
+            value={getStyleValue('padding')}
+            onChange={(value) => updateStyle('padding', value, activeBreakpoint)}
+            className="mb-4"
+          />
 
-        <SpacingControl
-          label="Margin"
-          value={getStyleValue('margin')}
-          onChange={(value) => updateStyle('margin', value, activeBreakpoint)}
-          className="mb-4"
-        />
+          <SpacingControl
+            label="Margin"
+            value={getStyleValue('margin')}
+            onChange={(value) => updateStyle('margin', value, activeBreakpoint)}
+            className="mb-4"
+          />
+        </CollapsibleSection>
 
-        {/* Display Property */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-light-text mb-2">Display</label>
-          <select
-            value={getStyleValue('display') || 'block'}
-            onChange={(e) => updateStyle('display', e.target.value, activeBreakpoint)}
-            className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text"
-          >
-            <option value="block">Block</option>
-            <option value="inline">Inline</option>
-            <option value="inline-block">Inline Block</option>
-            <option value="flex">Flex</option>
-            <option value="inline-flex">Inline Flex</option>
-            <option value="none">None</option>
-          </select>
-        </div>
+        {/* Layout */}
+        <CollapsibleSection title="Layout" defaultOpen={true}>
+          {/* Display Property */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-light-text mb-2">Display</label>
+            <select
+              value={getStyleValue('display') || 'block'}
+              onChange={(e) => updateStyle('display', e.target.value, activeBreakpoint)}
+              className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text"
+            >
+              <option value="block">Block</option>
+              <option value="inline">Inline</option>
+              <option value="inline-block">Inline Block</option>
+              <option value="flex">Flex</option>
+              <option value="inline-flex">Inline Flex</option>
+              <option value="none">None</option>
+            </select>
+          </div>
 
-        {/* Element Alignment - for elements with limited width */}
+          {/* Element Alignment - for elements with limited width */}
         {(isMultiSelect || element) && (element?.type === 'section' || element?.type === 'row' || element?.type === 'button') && (() => {
           if (!element && !isMultiSelect) return null;
 
@@ -1713,12 +1718,13 @@ export const ElementSettings: React.FC = () => {
             </div>
           </>
         )}
+        </CollapsibleSection>
 
         {/* Background */}
         {(isMultiSelect || element) && (element?.type === 'section' || element?.type === 'row' || element?.type === 'button') && (
-          <div className="mb-4">
+          <CollapsibleSection title="Background" defaultOpen={true}>
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-light-text">Background</label>
+              <label className="block text-sm font-medium text-light-text">Type</label>
 
               {/* Background Type Icons */}
               <div className="flex items-center gap-1 bg-dark-panel border border-dark-border rounded p-0.5">
@@ -1967,34 +1973,36 @@ export const ElementSettings: React.FC = () => {
                 </div>
               </div>
             )}
-          </div>
+          </CollapsibleSection>
         )}
 
         {/* Border */}
-        <div className="mb-4">
-          <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Border</label>
-          <input
-            type="text"
-            value={getStyleValue('border')}
-            onChange={(e) => updateStyle('border', e.target.value, activeBreakpoint)}
-            className={`w-full px-3 py-2 bg-dark-panel rounded text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
-            placeholder={isMultiSelect && hasMultiSelectMixedValues('border') ? 'Mixed Values' : '1px solid #000'}
-          />
-        </div>
+        <CollapsibleSection title="Border" defaultOpen={true}>
+          <div className="mb-4">
+            <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Border</label>
+            <input
+              type="text"
+              value={getStyleValue('border')}
+              onChange={(e) => updateStyle('border', e.target.value, activeBreakpoint)}
+              className={`w-full px-3 py-2 bg-dark-panel rounded text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
+              placeholder={isMultiSelect && hasMultiSelectMixedValues('border') ? 'Mixed Values' : '1px solid #000'}
+            />
+          </div>
 
-        <div className="mb-4">
-          <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Border Radius</label>
-          <NumberInput
-            value={getStyleValue('borderRadius') || '0px'}
-            onChange={(val) => updateStyle('borderRadius', val, activeBreakpoint)}
-            min={0}
-            max={500}
-            step={1}
-            allowedUnits={['px', 'em', 'rem', '%']}
-            className={`w-full px-3 py-2 bg-dark-panel text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
-            placeholder={isMultiSelect && hasMultiSelectMixedValues('borderRadius') ? 'Mixed Values' : '0'}
-          />
-        </div>
+          <div className="mb-4">
+            <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Border Radius</label>
+            <NumberInput
+              value={getStyleValue('borderRadius') || '0px'}
+              onChange={(val) => updateStyle('borderRadius', val, activeBreakpoint)}
+              min={0}
+              max={500}
+              step={1}
+              allowedUnits={['px', 'em', 'rem', '%']}
+              className={`w-full px-3 py-2 bg-dark-panel text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
+              placeholder={isMultiSelect && hasMultiSelectMixedValues('borderRadius') ? 'Mixed Values' : '0'}
+            />
+          </div>
+        </CollapsibleSection>
       </div>
       )}
         </>
