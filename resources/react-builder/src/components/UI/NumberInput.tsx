@@ -82,19 +82,31 @@ export const NumberInput: React.FC<NumberInputProps> = ({
   };
 
   const handleNumBlur = () => {
-    // Check if user entered a value with a unit (e.g., "8em", "100%", "2rem")
     const trimmed = localNum.trim();
+
+    // Check for special keywords (auto, none, inherit)
+    const keywords = ['auto', 'none', 'inherit'];
+    if (keywords.includes(trimmed.toLowerCase()) && allowedUnits.includes(trimmed.toLowerCase())) {
+      console.log(`NumberInput: Detected keyword "${trimmed}"`);
+      setLocalNum('0');
+      setLocalUnit(trimmed.toLowerCase());
+      onChange(trimmed.toLowerCase());
+      return;
+    }
+
+    // Check if user entered a value with a unit (e.g., "8em", "100%", "2rem")
     const match = trimmed.match(/^(-?\d+\.?\d*)\s*([a-z%]*)$/i);
 
     if (match) {
       const num = parseFloat(match[1]);
-      const detectedUnit = match[2];
+      const detectedUnit = match[2] || ''; // Ensure empty string instead of undefined
 
       if (!isNaN(num)) {
         const clamped = clampValue(num);
 
         // If a unit was detected and it's in allowedUnits, switch to that unit
-        if (detectedUnit && allowedUnits.includes(detectedUnit)) {
+        if (detectedUnit.length > 0 && allowedUnits.includes(detectedUnit)) {
+          console.log(`NumberInput: Auto-detected unit "${detectedUnit}" for value ${clamped}`);
           setLocalNum(String(clamped));
           setLocalUnit(detectedUnit);
           emitChange(String(clamped), detectedUnit);
