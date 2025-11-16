@@ -3,6 +3,7 @@ import type { Element } from '../../types';
 import { BaseElement } from './BaseElement';
 import { useBuilderStore } from '../../store/builderStore';
 import { BackgroundRenderer } from './BackgroundRenderer';
+import * as FiIcons from 'react-icons/fi';
 
 interface ButtonProps {
   element: Element;
@@ -21,6 +22,12 @@ export const Button: React.FC<ButtonProps> = (props) => {
   const url = element.settings.url || '#';
   const target = element.settings.openInNewTab ? '_blank' : '_self';
   const customClasses = element.settings.elementClass || '';
+  const iconBefore = element.settings.iconBefore;
+  const iconAfter = element.settings.iconAfter;
+
+  // Get icon components
+  const IconBefore = iconBefore ? (FiIcons as any)[iconBefore] : null;
+  const IconAfter = iconAfter ? (FiIcons as any)[iconAfter] : null;
 
   const handleButtonClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -153,7 +160,11 @@ export const Button: React.FC<ButtonProps> = (props) => {
         <BackgroundRenderer element={element} />
 
         {/* Text Layer - positioned above background */}
-        <span className="button-content" style={buttonStyles}>{text}</span>
+        <span className="button-content" style={{...buttonStyles, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
+          {IconBefore && <IconBefore size={18} />}
+          {text}
+          {IconAfter && <IconAfter size={18} />}
+        </span>
       </a>
     </BaseElement>
   );
