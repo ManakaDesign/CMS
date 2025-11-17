@@ -4,6 +4,9 @@ import { FiTrash2, FiCopy, FiEye, FiEyeOff, FiDroplet, FiImage, FiVideo, FiAlign
 import { RiAlignItemLeftFill, RiAlignItemHorizontalCenterFill, RiAlignItemRightFill } from 'react-icons/ri';
 import { SpacingControl } from './SpacingControl';
 import { GlobalColorSwatches } from './GlobalColorSwatches';
+import { NumberInput } from '../UI/NumberInput';
+import { CollapsibleSection } from '../UI/CollapsibleSection';
+import { IconPicker } from '../UI/IconPicker';
 
 type BackgroundType = 'color' | 'gradient' | 'image' | 'video' | 'none';
 
@@ -62,6 +65,9 @@ export const ElementSettings: React.FC = () => {
   const [backgroundType, setBackgroundType] = useState<BackgroundType>('color');
   const [columnStyleMode, setColumnStyleMode] = useState<'normal' | 'hover'>('normal');
   const [columnBackgroundType, setColumnBackgroundType] = useState<BackgroundType>('color');
+  const [syncAllColumns, setSyncAllColumns] = useState<boolean>(false);
+  const [iconPickerOpen, setIconPickerOpen] = useState<'before' | 'after' | null>(null);
+  const [openSection, setOpenSection] = useState<string>('typography');
 
   // Initialize backgroundType based on what's stored in element
   useEffect(() => {
@@ -243,82 +249,7 @@ export const ElementSettings: React.FC = () => {
     return (breakpointStyles as any)[property] || '';
   };
 
-  // Update style without auto-px (for onChange)
-  const updateStyleDirect = (property: string, value: string, breakpoint: 'desktop' | 'tablet' | 'mobile' = 'desktop') => {
-    // Get fresh data from store to avoid stale closure
-    const store = useBuilderStore.getState();
-    const currentElements = store.elements;
-    const currentSelectedIds = store.selectedElementIds;
-    const isCurrentlyMultiSelect = currentSelectedIds.length > 1;
-
-    if (isCurrentlyMultiSelect) {
-      // Multi-select: batch update all selected elements
-      const elementIdsSet = new Set(currentSelectedIds);
-
-      const updatedElements = currentElements.map(el => {
-        if (!elementIdsSet.has(el.id)) return el;
-
-        if (styleMode === 'hover') {
-          const hoverStyles = (el as any).hoverStyles || {};
-          return {
-            ...el,
-            hoverStyles: {
-              ...hoverStyles,
-              [breakpoint]: {
-                ...hoverStyles[breakpoint],
-                [property]: value,
-              },
-            },
-          };
-        } else {
-          return {
-            ...el,
-            styles: {
-              ...el.styles,
-              [breakpoint]: {
-                ...el.styles[breakpoint],
-                [property]: value,
-              },
-            },
-          };
-        }
-      });
-
-      // Update all elements in a single operation
-      useBuilderStore.setState({ elements: updatedElements });
-      useBuilderStore.getState().addToHistory();
-      return;
-    }
-
-    if (!element) return;
-
-    if (styleMode === 'hover') {
-      // Update hover styles
-      const hoverStyles = (element as any).hoverStyles || {};
-      updateElement(element.id, {
-        hoverStyles: {
-          ...hoverStyles,
-          [breakpoint]: {
-            ...hoverStyles[breakpoint],
-            [property]: value,
-          },
-        },
-      } as any);
-    } else {
-      // Update normal styles
-      updateElement(element.id, {
-        styles: {
-          ...element.styles,
-          [breakpoint]: {
-            ...element.styles[breakpoint],
-            [property]: value,
-          },
-        },
-      });
-    }
-  };
-
-  // Update style with auto-px (for onBlur)
+  // Update style with auto-px
   const updateStyle = (property: string, value: string, breakpoint: 'desktop' | 'tablet' | 'mobile' = 'desktop') => {
     // Auto-append 'px' if only a number is provided (for spacing/size properties)
     const spacingProps = ['padding', 'margin', 'width', 'height', 'maxWidth', 'maxHeight', 'fontSize', 'borderRadius', 'gap'];
@@ -793,28 +724,33 @@ export const ElementSettings: React.FC = () => {
               {totalColumns > 1 && (
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-light-text mb-2">Column Gap</label>
-                  <input
-                    type="text"
+                  <NumberInput
                     value={element.settings.gap || '16px'}
-                    onChange={(e) => updateSetting('gap', e.target.value)}
-                    className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
-                    placeholder="16px"
+                    onChange={(val) => updateSetting('gap', val)}
+                    min={0}
+                    max={200}
+                    step={1}
+                    className="w-full px-3 py-2 bg-dark-panel border border-dark-border text-sm text-light-text"
+                    placeholder="16"
                   />
-                  <p className="text-xs text-light-muted mt-1">Space between columns (e.g., 0px, 16px, 2rem)</p>
+                  <p className="text-xs text-light-muted mt-1">Space between columns</p>
                 </div>
               )}
 
               {/* Min Height */}
               <div className="mt-4">
                 <label className="block text-sm font-medium text-light-text mb-2">Min Height</label>
-                <input
-                  type="text"
-                  value={element.settings.minHeight || ''}
-                  onChange={(e) => updateSetting('minHeight', e.target.value)}
-                  className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                <NumberInput
+                  value={element.settings.minHeight || 'auto'}
+                  onChange={(val) => updateSetting('minHeight', val)}
+                  min={0}
+                  max={2000}
+                  step={1}
+                  allowedUnits={['px', 'em', 'rem', '%', 'vh', 'vw', 'auto']}
+                  className="w-full px-3 py-2 bg-dark-panel border border-dark-border text-sm text-light-text"
                   placeholder="auto"
                 />
-                <p className="text-xs text-light-muted mt-1">Minimum height (e.g., 100px, 10vh, auto)</p>
+                <p className="text-xs text-light-muted mt-1">Minimum height</p>
               </div>
             </div>
           );
@@ -824,12 +760,15 @@ export const ElementSettings: React.FC = () => {
         {element.type === 'spacer' && (
           <div className="mb-4">
             <label className="block text-sm font-medium text-light-text mb-2">Height</label>
-            <input
-              type="text"
+            <NumberInput
               value={element.settings.height || '50px'}
-              onChange={(e) => updateSetting('height', e.target.value)}
-              className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
-              placeholder="50px"
+              onChange={(val) => updateSetting('height', val)}
+              min={0}
+              max={1000}
+              step={1}
+              allowedUnits={['px', 'em', 'rem', '%', 'vh']}
+              className="w-full px-3 py-2 bg-dark-panel border border-dark-border text-sm text-light-text"
+              placeholder="50"
             />
           </div>
         )}
@@ -891,17 +830,41 @@ export const ElementSettings: React.FC = () => {
         const updateColumnStyle = (property: string, value: string) => {
           if (columnStyleMode === 'hover') {
             const newColumnHoverStyles = [...columnHoverStyles];
-            newColumnHoverStyles[selectedColumnIndex] = {
-              ...columnHoverStyle,
-              [property]: value,
-            };
+            if (syncAllColumns) {
+              // Apply to all columns
+              const totalColumns = element.settings.columns || 2;
+              for (let i = 0; i < totalColumns; i++) {
+                newColumnHoverStyles[i] = {
+                  ...(newColumnHoverStyles[i] || {}),
+                  [property]: value,
+                };
+              }
+            } else {
+              // Apply to selected column only
+              newColumnHoverStyles[selectedColumnIndex] = {
+                ...columnHoverStyle,
+                [property]: value,
+              };
+            }
             updateSetting('columnHoverStyles', newColumnHoverStyles);
           } else {
             const newColumnStyles = [...columnStyles];
-            newColumnStyles[selectedColumnIndex] = {
-              ...columnStyle,
-              [property]: value,
-            };
+            if (syncAllColumns) {
+              // Apply to all columns
+              const totalColumns = element.settings.columns || 2;
+              for (let i = 0; i < totalColumns; i++) {
+                newColumnStyles[i] = {
+                  ...(newColumnStyles[i] || {}),
+                  [property]: value,
+                };
+              }
+            } else {
+              // Apply to selected column only
+              newColumnStyles[selectedColumnIndex] = {
+                ...columnStyle,
+                [property]: value,
+              };
+            }
             updateSetting('columnStyles', newColumnStyles);
           }
         };
@@ -958,7 +921,9 @@ export const ElementSettings: React.FC = () => {
                     <FiColumns size={16} />
                     Column {selectedColumnIndex + 1} Settings
                   </h3>
-                  <p className="text-xs text-green-400/70 mt-1">Customize this column independently</p>
+                  <p className="text-xs text-green-400/70 mt-1">
+                    {syncAllColumns ? 'Changes apply to all columns' : 'Customize this column independently'}
+                  </p>
                 </div>
                 <button
                   onClick={() => selectColumn(null)}
@@ -967,6 +932,23 @@ export const ElementSettings: React.FC = () => {
                   Back to Row
                 </button>
               </div>
+
+              {/* Sync All Columns Toggle */}
+              <label className="flex items-center justify-between p-3 bg-dark-panel rounded cursor-pointer">
+                <div className="flex flex-col pointer-events-none">
+                  <span className="text-sm font-medium text-light-text">Sync All Columns</span>
+                  <span className="text-xs text-light-muted">Apply changes to all columns at once</span>
+                </div>
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={syncAllColumns}
+                    onChange={(e) => setSyncAllColumns(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-dark-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-light-muted after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500 peer-checked:after:bg-white"></div>
+                </div>
+              </label>
 
               {/* Normal/Hover Toggle for Column */}
               <div className="flex items-center gap-1 bg-dark-panel border border-green-400/30 rounded p-0.5">
@@ -1295,16 +1277,43 @@ export const ElementSettings: React.FC = () => {
         {((isMultiSelect && selectedElements.length > 0) || element) &&
          (element?.type === 'text' || element?.type === 'heading' || element?.type === 'button' ||
           selectedElements[0]?.type === 'text' || selectedElements[0]?.type === 'heading' || selectedElements[0]?.type === 'button') && (
-          <>
+          <CollapsibleSection
+            title="Typography"
+            isOpen={openSection === 'typography'}
+            onToggle={() => setOpenSection(openSection === 'typography' ? '' : 'typography')}
+          >
+            {/* Font Family */}
+            <div className="mb-4">
+              <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Font Family</label>
+              <select
+                value={getStyleValue('fontFamily') || 'inherit'}
+                onChange={(e) => updateStyle('fontFamily', e.target.value, activeBreakpoint)}
+                className={`w-full px-3 py-2 bg-dark-panel rounded text-sm text-light-text ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
+              >
+                <option value="inherit">Default</option>
+                <option value="Inter, sans-serif">Inter</option>
+                <option value="Roboto, sans-serif">Roboto</option>
+                <option value="'Open Sans', sans-serif">Open Sans</option>
+                <option value="Montserrat, sans-serif">Montserrat</option>
+                <option value="Lato, sans-serif">Lato</option>
+                <option value="Poppins, sans-serif">Poppins</option>
+                <option value="Georgia, serif">Georgia</option>
+                <option value="'Times New Roman', serif">Times New Roman</option>
+                <option value="'Courier New', monospace">Courier New</option>
+              </select>
+            </div>
+
             <div className="mb-4">
               <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Font Size</label>
-              <input
-                type="text"
-                value={getStyleValue('fontSize')}
-                onChange={(e) => updateStyleDirect('fontSize', e.target.value, activeBreakpoint)}
-                onBlur={(e) => updateStyle('fontSize', e.target.value, activeBreakpoint)}
-                className={`w-full px-3 py-2 bg-dark-panel rounded text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
-                placeholder={isMultiSelect && hasMultiSelectMixedValues('fontSize') ? 'Mixed Values' : '16px'}
+              <NumberInput
+                value={getStyleValue('fontSize') || '16px'}
+                onChange={(val) => updateStyle('fontSize', val, activeBreakpoint)}
+                min={1}
+                max={200}
+                step={1}
+                allowedUnits={['px', 'em', 'rem', '%', 'vh', 'vw']}
+                className={`w-full px-3 py-2 bg-dark-panel text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
+                placeholder={isMultiSelect && hasMultiSelectMixedValues('fontSize') ? 'Mixed Values' : '16'}
               />
             </div>
             <div className="mb-4">
@@ -1322,15 +1331,71 @@ export const ElementSettings: React.FC = () => {
                 <option value="700">Bold</option>
               </select>
             </div>
+
+            {/* Text Style Toggles */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-light-text mb-2">Text Style</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    const currentWeight = getStyleValue('fontWeight');
+                    const isBold = currentWeight === 'bold' || currentWeight === '700' || currentWeight === '600';
+                    updateStyle('fontWeight', isBold ? 'normal' : 'bold', activeBreakpoint);
+                  }}
+                  className={`flex-1 px-3 py-2 rounded text-sm font-bold transition-colors ${
+                    (() => {
+                      const weight = getStyleValue('fontWeight');
+                      return weight === 'bold' || weight === '700' || weight === '600'
+                        ? 'bg-brand-primary text-white'
+                        : 'bg-dark-panel text-light-text hover:bg-dark-hover border border-dark-border';
+                    })()
+                  }`}
+                  title="Bold"
+                >
+                  B
+                </button>
+                <button
+                  onClick={() => {
+                    const current = getStyleValue('fontStyle');
+                    updateStyle('fontStyle', current === 'italic' ? 'normal' : 'italic', activeBreakpoint);
+                  }}
+                  className={`flex-1 px-3 py-2 rounded text-sm italic transition-colors ${
+                    getStyleValue('fontStyle') === 'italic'
+                      ? 'bg-brand-primary text-white'
+                      : 'bg-dark-panel text-light-text hover:bg-dark-hover border border-dark-border'
+                  }`}
+                  title="Italic"
+                >
+                  I
+                </button>
+                <button
+                  onClick={() => {
+                    const current = getStyleValue('textDecoration');
+                    updateStyle('textDecoration', current === 'underline' ? 'none' : 'underline', activeBreakpoint);
+                  }}
+                  className={`flex-1 px-3 py-2 rounded text-sm underline transition-colors ${
+                    getStyleValue('textDecoration') === 'underline'
+                      ? 'bg-brand-primary text-white'
+                      : 'bg-dark-panel text-light-text hover:bg-dark-hover border border-dark-border'
+                  }`}
+                  title="Underline"
+                >
+                  U
+                </button>
+              </div>
+            </div>
             <div className="mb-4">
               <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Line Height</label>
-              <input
-                type="text"
-                value={getStyleValue('lineHeight')}
-                onChange={(e) => updateStyleDirect('lineHeight', e.target.value, activeBreakpoint)}
-                onBlur={(e) => updateStyle('lineHeight', e.target.value, activeBreakpoint)}
-                className={`w-full px-3 py-2 bg-dark-panel rounded text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
-                placeholder={isMultiSelect && hasMultiSelectMixedValues('lineHeight') ? 'Mixed Values' : '1.5 or 24px'}
+              <NumberInput
+                value={getStyleValue('lineHeight') || '1.5'}
+                onChange={(val) => updateStyle('lineHeight', val, activeBreakpoint)}
+                min={0}
+                max={10}
+                step={0.1}
+                allowedUnits={['px', 'em', 'rem', '%', '']}
+                defaultUnit=""
+                className={`w-full px-3 py-2 bg-dark-panel text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
+                placeholder={isMultiSelect && hasMultiSelectMixedValues('lineHeight') ? 'Mixed Values' : '1.5'}
               />
             </div>
             <div className="mb-4">
@@ -1399,42 +1464,103 @@ export const ElementSettings: React.FC = () => {
                 </button>
               </div>
             </div>
-          </>
+
+            {/* Button Icons - only for button elements */}
+            {element?.type === 'button' && (
+              <>
+                {/* Icon Before */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-light-text mb-2">Icon Before Text</label>
+                  <button
+                    onClick={() => setIconPickerOpen('before')}
+                    className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text hover:bg-dark-hover transition-colors text-left flex items-center justify-between"
+                  >
+                    <span>{element.settings.iconBefore ? element.settings.iconBefore.replace('Fi', '') : 'Select Icon...'}</span>
+                    {element.settings.iconBefore && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateSetting('iconBefore', '');
+                        }}
+                        className="ml-2 p-1 hover:bg-dark-border rounded"
+                      >
+                        <FiX size={14} />
+                      </button>
+                    )}
+                  </button>
+                </div>
+
+                {/* Icon After */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-light-text mb-2">Icon After Text</label>
+                  <button
+                    onClick={() => setIconPickerOpen('after')}
+                    className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text hover:bg-dark-hover transition-colors text-left flex items-center justify-between"
+                  >
+                    <span>{element.settings.iconAfter ? element.settings.iconAfter.replace('Fi', '') : 'Select Icon...'}</span>
+                    {element.settings.iconAfter && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateSetting('iconAfter', '');
+                        }}
+                        className="ml-2 p-1 hover:bg-dark-border rounded"
+                      >
+                        <FiX size={14} />
+                      </button>
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
+          </CollapsibleSection>
         )}
 
         {/* Spacing */}
-        <SpacingControl
-          label="Padding"
-          value={getStyleValue('padding')}
-          onChange={(value) => updateStyle('padding', value, activeBreakpoint)}
-          className="mb-4"
-        />
+        <CollapsibleSection
+          title="Spacing"
+          isOpen={openSection === 'spacing'}
+          onToggle={() => setOpenSection(openSection === 'spacing' ? '' : 'spacing')}
+        >
+          <SpacingControl
+            label="Padding"
+            value={getStyleValue('padding')}
+            onChange={(value) => updateStyle('padding', value, activeBreakpoint)}
+            className="mb-4"
+          />
 
-        <SpacingControl
-          label="Margin"
-          value={getStyleValue('margin')}
-          onChange={(value) => updateStyle('margin', value, activeBreakpoint)}
-          className="mb-4"
-        />
+          <SpacingControl
+            label="Margin"
+            value={getStyleValue('margin')}
+            onChange={(value) => updateStyle('margin', value, activeBreakpoint)}
+            className="mb-4"
+          />
+        </CollapsibleSection>
 
-        {/* Display Property */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-light-text mb-2">Display</label>
-          <select
-            value={getStyleValue('display') || 'block'}
-            onChange={(e) => updateStyle('display', e.target.value, activeBreakpoint)}
-            className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text"
-          >
-            <option value="block">Block</option>
-            <option value="inline">Inline</option>
-            <option value="inline-block">Inline Block</option>
-            <option value="flex">Flex</option>
-            <option value="inline-flex">Inline Flex</option>
-            <option value="none">None</option>
-          </select>
-        </div>
+        {/* Layout */}
+        <CollapsibleSection
+          title="Layout"
+          isOpen={openSection === 'layout'}
+          onToggle={() => setOpenSection(openSection === 'layout' ? '' : 'layout')}
+        >
+          {/* Display Property */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-light-text mb-2">Display</label>
+            <select
+              value={getStyleValue('display') || 'block'}
+              onChange={(e) => updateStyle('display', e.target.value, activeBreakpoint)}
+              className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text"
+            >
+              <option value="block">Block</option>
+              <option value="inline">Inline</option>
+              <option value="inline-block">Inline Block</option>
+              <option value="flex">Flex</option>
+              <option value="inline-flex">Inline Flex</option>
+              <option value="none">None</option>
+            </select>
+          </div>
 
-        {/* Element Alignment - for elements with limited width */}
+          {/* Element Alignment - for elements with limited width */}
         {(isMultiSelect || element) && (element?.type === 'section' || element?.type === 'row' || element?.type === 'button') && (() => {
           if (!element && !isMultiSelect) return null;
 
@@ -1604,56 +1730,69 @@ export const ElementSettings: React.FC = () => {
           <>
             <div className="mb-4">
               <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Width</label>
-              <input
-                type="text"
-                value={getStyleValue('width')}
-                onChange={(e) => updateStyleDirect('width', e.target.value, activeBreakpoint)}
-                onBlur={(e) => updateStyle('width', e.target.value, activeBreakpoint)}
-                className={`w-full px-3 py-2 bg-dark-panel rounded text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
-                placeholder={isMultiSelect && hasMultiSelectMixedValues('width') ? 'Mixed Values' : 'auto, 100%, 500px'}
+              <NumberInput
+                value={getStyleValue('width') || 'auto'}
+                onChange={(val) => updateStyle('width', val, activeBreakpoint)}
+                min={0}
+                max={5000}
+                step={1}
+                allowedUnits={['px', 'em', 'rem', '%', 'vw', 'auto']}
+                className={`w-full px-3 py-2 bg-dark-panel text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
+                placeholder={isMultiSelect && hasMultiSelectMixedValues('width') ? 'Mixed Values' : 'auto'}
               />
             </div>
             <div className="mb-4">
               <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Max Width</label>
-              <input
-                type="text"
-                value={getStyleValue('maxWidth')}
-                onChange={(e) => updateStyleDirect('maxWidth', e.target.value, activeBreakpoint)}
-                onBlur={(e) => updateStyle('maxWidth', e.target.value, activeBreakpoint)}
-                className={`w-full px-3 py-2 bg-dark-panel rounded text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
-                placeholder={isMultiSelect && hasMultiSelectMixedValues('maxWidth') ? 'Mixed Values' : 'none, 100%, 1200px'}
+              <NumberInput
+                value={getStyleValue('maxWidth') || 'none'}
+                onChange={(val) => updateStyle('maxWidth', val, activeBreakpoint)}
+                min={0}
+                max={5000}
+                step={1}
+                allowedUnits={['px', 'em', 'rem', '%', 'vw', 'none']}
+                className={`w-full px-3 py-2 bg-dark-panel text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
+                placeholder={isMultiSelect && hasMultiSelectMixedValues('maxWidth') ? 'Mixed Values' : 'none'}
               />
             </div>
             <div className="mb-4">
               <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Height</label>
-              <input
-                type="text"
-                value={getStyleValue('height')}
-                onChange={(e) => updateStyleDirect('height', e.target.value, activeBreakpoint)}
-                onBlur={(e) => updateStyle('height', e.target.value, activeBreakpoint)}
-                className={`w-full px-3 py-2 bg-dark-panel rounded text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
-                placeholder={isMultiSelect && hasMultiSelectMixedValues('height') ? 'Mixed Values' : 'auto, 100%, 300px'}
+              <NumberInput
+                value={getStyleValue('height') || 'auto'}
+                onChange={(val) => updateStyle('height', val, activeBreakpoint)}
+                min={0}
+                max={5000}
+                step={1}
+                allowedUnits={['px', 'em', 'rem', '%', 'vh', 'auto']}
+                className={`w-full px-3 py-2 bg-dark-panel text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
+                placeholder={isMultiSelect && hasMultiSelectMixedValues('height') ? 'Mixed Values' : 'auto'}
               />
             </div>
             <div className="mb-4">
               <label className="block text-sm font-medium text-light-text mb-2">Max Height</label>
-              <input
-                type="text"
-                value={getStyleValue('maxHeight')}
-                onChange={(e) => updateStyleDirect('maxHeight', e.target.value, activeBreakpoint)}
-                onBlur={(e) => updateStyle('maxHeight', e.target.value, activeBreakpoint)}
-                className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
-                placeholder="none, 100vh, 600px"
+              <NumberInput
+                value={getStyleValue('maxHeight') || 'none'}
+                onChange={(val) => updateStyle('maxHeight', val, activeBreakpoint)}
+                min={0}
+                max={5000}
+                step={1}
+                allowedUnits={['px', 'em', 'rem', '%', 'vh', 'none']}
+                className="w-full px-3 py-2 bg-dark-panel border border-dark-border text-sm text-light-text placeholder-light-muted"
+                placeholder="none"
               />
             </div>
           </>
         )}
+        </CollapsibleSection>
 
         {/* Background */}
         {(isMultiSelect || element) && (element?.type === 'section' || element?.type === 'row' || element?.type === 'button') && (
-          <div className="mb-4">
+          <CollapsibleSection
+            title="Background"
+            isOpen={openSection === 'background'}
+            onToggle={() => setOpenSection(openSection === 'background' ? '' : 'background')}
+          >
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-light-text">Background</label>
+              <label className="block text-sm font-medium text-light-text">Type</label>
 
               {/* Background Type Icons */}
               <div className="flex items-center gap-1 bg-dark-panel border border-dark-border rounded p-0.5">
@@ -1902,35 +2041,59 @@ export const ElementSettings: React.FC = () => {
                 </div>
               </div>
             )}
-          </div>
+          </CollapsibleSection>
         )}
 
         {/* Border */}
-        <div className="mb-4">
-          <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Border</label>
-          <input
-            type="text"
-            value={getStyleValue('border')}
-            onChange={(e) => updateStyle('border', e.target.value, activeBreakpoint)}
-            className={`w-full px-3 py-2 bg-dark-panel rounded text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
-            placeholder={isMultiSelect && hasMultiSelectMixedValues('border') ? 'Mixed Values' : '1px solid #000'}
-          />
-        </div>
+        <CollapsibleSection
+          title="Border"
+          isOpen={openSection === 'border'}
+          onToggle={() => setOpenSection(openSection === 'border' ? '' : 'border')}
+        >
+          <div className="mb-4">
+            <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Border</label>
+            <input
+              type="text"
+              value={getStyleValue('border')}
+              onChange={(e) => updateStyle('border', e.target.value, activeBreakpoint)}
+              className={`w-full px-3 py-2 bg-dark-panel rounded text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
+              placeholder={isMultiSelect && hasMultiSelectMixedValues('border') ? 'Mixed Values' : '1px solid #000'}
+            />
+          </div>
 
-        <div className="mb-4">
-          <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Border Radius</label>
-          <input
-            type="text"
-            value={getStyleValue('borderRadius')}
-            onChange={(e) => updateStyleDirect('borderRadius', e.target.value, activeBreakpoint)}
-            onBlur={(e) => updateStyle('borderRadius', e.target.value, activeBreakpoint)}
-            className={`w-full px-3 py-2 bg-dark-panel rounded text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
-            placeholder={isMultiSelect && hasMultiSelectMixedValues('borderRadius') ? 'Mixed Values' : '4px'}
-          />
-        </div>
+          <div className="mb-4">
+            <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Border Radius</label>
+            <NumberInput
+              value={getStyleValue('borderRadius') || '0px'}
+              onChange={(val) => updateStyle('borderRadius', val, activeBreakpoint)}
+              min={0}
+              max={500}
+              step={1}
+              allowedUnits={['px', 'em', 'rem', '%']}
+              className={`w-full px-3 py-2 bg-dark-panel text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
+              placeholder={isMultiSelect && hasMultiSelectMixedValues('borderRadius') ? 'Mixed Values' : '0'}
+            />
+          </div>
+        </CollapsibleSection>
       </div>
       )}
         </>
+      )}
+
+      {/* Icon Picker Modal */}
+      {iconPickerOpen && element && element.type === 'button' && (
+        <IconPicker
+          selectedIcon={iconPickerOpen === 'before' ? element.settings.iconBefore : element.settings.iconAfter}
+          onSelect={(iconName) => {
+            if (iconPickerOpen === 'before') {
+              updateSetting('iconBefore', iconName);
+            } else {
+              updateSetting('iconAfter', iconName);
+            }
+            setIconPickerOpen(null);
+          }}
+          onClose={() => setIconPickerOpen(null)}
+        />
       )}
     </div>
   );

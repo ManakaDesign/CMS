@@ -67,6 +67,26 @@ export const Heading: React.FC<HeadingProps> = (props) => {
     }
   };
 
+  // Handle paste - only allow plain text
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const text = e.clipboardData.getData('text/plain');
+
+    // Insert text at cursor position
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      range.deleteContents();
+      const textNode = document.createTextNode(text);
+      range.insertNode(textNode);
+      // Move cursor to end of inserted text
+      range.setStartAfter(textNode);
+      range.setEndAfter(textNode);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+  };
+
   // Auto-focus and set initial content when editing starts
   useEffect(() => {
     if (isEditing && contentRef.current) {
@@ -91,6 +111,7 @@ export const Heading: React.FC<HeadingProps> = (props) => {
           suppressContentEditableWarning
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           className="outline-none min-h-[1em]"
         />
       ) : (

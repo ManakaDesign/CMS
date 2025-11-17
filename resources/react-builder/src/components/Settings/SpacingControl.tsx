@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, Link2, Minus } from 'lucide-react';
+import { NumberInput } from '../UI/NumberInput';
 
 interface SpacingControlProps {
   label: string;
@@ -49,12 +50,6 @@ export const SpacingControl: React.FC<SpacingControlProps> = ({
     setSides(parseValue(value));
   }, [value]);
 
-  // Auto-append 'px' if only number
-  const formatValue = (val: string): string => {
-    if (!val) return '0';
-    return /^\d+$/.test(val.trim()) ? `${val}px` : val;
-  };
-
   // Update individual side
   const updateSide = (side: 'top' | 'right' | 'bottom' | 'left', newValue: string) => {
     let newSides = { ...sides };
@@ -87,21 +82,11 @@ export const SpacingControl: React.FC<SpacingControlProps> = ({
     setSides(newSides);
 
     // Format and emit change
-    const top = newSides.top || '0';
-    const right = newSides.right || '0';
-    const bottom = newSides.bottom || '0';
-    const left = newSides.left || '0';
+    const top = newSides.top || '0px';
+    const right = newSides.right || '0px';
+    const bottom = newSides.bottom || '0px';
+    const left = newSides.left || '0px';
     onChange(`${top} ${right} ${bottom} ${left}`);
-  };
-
-  // Apply auto-px on blur
-  const handleBlur = (side: 'top' | 'right' | 'bottom' | 'left') => {
-    const currentValue = sides[side];
-    const formattedValue = formatValue(currentValue);
-
-    if (currentValue !== formattedValue) {
-      updateSide(side, formattedValue);
-    }
   };
 
   // Toggle link states
@@ -151,13 +136,14 @@ export const SpacingControl: React.FC<SpacingControlProps> = ({
         {/* Top */}
         <div className="flex items-center gap-1">
           <label className="text-xs text-light-muted w-12">Top</label>
-          <input
-            type="text"
-            value={sides.top}
-            onChange={(e) => updateSide('top', e.target.value)}
-            onBlur={() => handleBlur('top')}
-            className="flex-1 px-2 py-1.5 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
-            placeholder="0px"
+          <NumberInput
+            value={sides.top || '0px'}
+            onChange={(val) => updateSide('top', val)}
+            min={0}
+            max={1000}
+            step={1}
+            className="flex-1 px-2 py-1.5 bg-dark-panel border border-dark-border text-sm text-light-text"
+            placeholder="0"
           />
           <button
             onClick={toggleVertical}
@@ -173,13 +159,14 @@ export const SpacingControl: React.FC<SpacingControlProps> = ({
         {/* Bottom */}
         <div className="flex items-center gap-1">
           <label className="text-xs text-light-muted w-12">Bottom</label>
-          <input
-            type="text"
-            value={sides.bottom}
-            onChange={(e) => updateSide('bottom', e.target.value)}
-            onBlur={() => handleBlur('bottom')}
-            className="flex-1 px-2 py-1.5 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
-            placeholder="0px"
+          <NumberInput
+            value={sides.bottom || '0px'}
+            onChange={(val) => updateSide('bottom', val)}
+            min={0}
+            max={1000}
+            step={1}
+            className="flex-1 px-2 py-1.5 bg-dark-panel border border-dark-border text-sm text-light-text"
+            placeholder="0"
           />
           <button
             onClick={toggleVertical}
@@ -195,13 +182,14 @@ export const SpacingControl: React.FC<SpacingControlProps> = ({
         {/* Left */}
         <div className="flex items-center gap-1">
           <label className="text-xs text-light-muted w-12">Left</label>
-          <input
-            type="text"
-            value={sides.left}
-            onChange={(e) => updateSide('left', e.target.value)}
-            onBlur={() => handleBlur('left')}
-            className="flex-1 px-2 py-1.5 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
-            placeholder="0px"
+          <NumberInput
+            value={sides.left || '0px'}
+            onChange={(val) => updateSide('left', val)}
+            min={0}
+            max={1000}
+            step={1}
+            className="flex-1 px-2 py-1.5 bg-dark-panel border border-dark-border text-sm text-light-text"
+            placeholder="0"
           />
           <button
             onClick={toggleHorizontal}
@@ -217,13 +205,14 @@ export const SpacingControl: React.FC<SpacingControlProps> = ({
         {/* Right */}
         <div className="flex items-center gap-1">
           <label className="text-xs text-light-muted w-12">Right</label>
-          <input
-            type="text"
-            value={sides.right}
-            onChange={(e) => updateSide('right', e.target.value)}
-            onBlur={() => handleBlur('right')}
-            className="flex-1 px-2 py-1.5 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
-            placeholder="0px"
+          <NumberInput
+            value={sides.right || '0px'}
+            onChange={(val) => updateSide('right', val)}
+            min={0}
+            max={1000}
+            step={1}
+            className="flex-1 px-2 py-1.5 bg-dark-panel border border-dark-border text-sm text-light-text"
+            placeholder="0"
           />
           <button
             onClick={toggleHorizontal}

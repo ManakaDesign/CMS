@@ -7,6 +7,7 @@ import { DroppableCanvas } from '../components/DroppableCanvas';
 import { ElementsSidebar } from '../components/Sidebar/ElementsSidebar';
 import { ElementSettings } from '../components/Settings/ElementSettings';
 import { BreakpointSettings } from '../components/Settings/BreakpointSettings';
+import { GlobalSettings } from '../components/Settings/GlobalSettings';
 import { LayerTree } from '../components/LayerTree/LayerTree';
 import { CSSEditor } from '../components/CSSEditor/CSSEditor';
 import { localStorageService } from '../api/localStorageService';
@@ -17,14 +18,17 @@ export const BuilderDemo: React.FC = () => {
     page,
     elements,
     customCSS,
+    globalColors,
     selectedElementId,
     selectedElementIds,
     activeBreakpoint,
     breakpointWidths,
+    useFullWidthDesktop,
     isPreviewMode,
     setPage,
     setElements,
     setCustomCSS,
+    setGlobalColors,
     setActiveBreakpoint,
     togglePreviewMode,
     canUndo,
@@ -35,7 +39,7 @@ export const BuilderDemo: React.FC = () => {
 
   const [showBreakpointSettings, setShowBreakpointSettings] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [leftPanel, setLeftPanel] = useState<'elements' | 'layers' | 'css'>('elements');
+  const [leftPanel, setLeftPanel] = useState<'elements' | 'layers' | 'css' | 'settings'>('elements');
 
   // Load demo data on mount
   useEffect(() => {
@@ -44,13 +48,15 @@ export const BuilderDemo: React.FC = () => {
     const demoPage = localStorageService.getPage(pageId);
     const demoElements = localStorageService.getElements(pageId);
     const demoCSS = localStorageService.getCustomCSS(pageId);
+    const demoGlobalColors = localStorageService.getGlobalColors();
 
     if (demoPage) {
       setPage(demoPage);
       setElements(demoElements);
       setCustomCSS(demoCSS);
+      setGlobalColors(demoGlobalColors);
     }
-  }, [setPage, setElements, setCustomCSS]);
+  }, [setPage, setElements, setCustomCSS, setGlobalColors]);
 
   // Auto-save to localStorage
   useEffect(() => {
@@ -75,6 +81,17 @@ export const BuilderDemo: React.FC = () => {
       return () => clearTimeout(saveTimeout);
     }
   }, [page, customCSS]);
+
+  // Auto-save global colors to localStorage
+  useEffect(() => {
+    if (globalColors.length >= 0) {
+      const saveTimeout = setTimeout(() => {
+        localStorageService.saveGlobalColors(globalColors);
+      }, 1000); // Debounce saves
+
+      return () => clearTimeout(saveTimeout);
+    }
+  }, [globalColors]);
 
   const breakpoints = [
     { value: 'desktop' as Breakpoint, icon: FiMonitor, label: 'Desktop' },
@@ -271,15 +288,29 @@ export const BuilderDemo: React.FC = () => {
               >
                 <FiCode size={18} />
               </button>
+              <button
+                onClick={() => setLeftPanel('settings')}
+                className={`
+                  flex items-center justify-center p-3 transition-colors border-b border-dark-border
+                  ${leftPanel === 'settings'
+                    ? 'bg-brand-primary text-white'
+                    : 'text-light-muted hover:text-light-text hover:bg-dark-hover'
+                  }
+                `}
+                title="Global Settings"
+              >
+                <FiSettings size={18} />
+              </button>
             </div>
           )}
 
-          {/* Left Sidebar - Elements Library, Layer Tree, or CSS Editor */}
+          {/* Left Sidebar - Elements Library, Layer Tree, CSS Editor, or Settings */}
           {!isPreviewMode && (
             <div className="w-64 bg-dark-surface border-r border-dark-border overflow-y-auto flex-shrink-0">
               {leftPanel === 'elements' && <ElementsSidebar />}
               {leftPanel === 'layers' && <LayerTree />}
               {leftPanel === 'css' && <CSSEditor />}
+              {leftPanel === 'settings' && <GlobalSettings />}
             </div>
           )}
 
@@ -290,7 +321,7 @@ export const BuilderDemo: React.FC = () => {
                 className="bg-white shadow-lg mx-auto builder-canvas min-h-full"
                 style={{
                   maxWidth: activeBreakpoint === 'desktop'
-                    ? `${breakpointWidths.desktop}px`
+                    ? (useFullWidthDesktop ? '100%' : `${breakpointWidths.desktop}px`)
                     : activeBreakpoint === 'tablet'
                       ? `${breakpointWidths.tablet}px`
                       : `${breakpointWidths.mobile}px`,

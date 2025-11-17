@@ -29,6 +29,8 @@ export const Builder: React.FC = () => {
     isSaving,
     setPage,
     setElements,
+    setCustomCSS,
+    setGlobalColors,
     setActiveBreakpoint,
     togglePreviewMode,
     canUndo,
@@ -64,6 +66,13 @@ export const Builder: React.FC = () => {
         // Load elements from page content (JSON field)
         const pageElements = loadedPage.content?.elements || [];
         setElements(pageElements);
+
+        // Load custom CSS and global colors
+        const pageCustomCSS = loadedPage.content?.customCSS || '';
+        setCustomCSS(pageCustomCSS);
+
+        const pageGlobalColors = loadedPage.content?.globalColors || [];
+        setGlobalColors(pageGlobalColors);
       } catch (err: any) {
         setLoadError(err.response?.data?.message || 'Fehler beim Laden der Seite');
       } finally {
@@ -72,7 +81,7 @@ export const Builder: React.FC = () => {
     };
 
     loadPage();
-  }, [pageId, setPage, setElements]);
+  }, [pageId, setPage, setElements, setCustomCSS, setGlobalColors]);
 
   const handleSave = async () => {
     if (!page) return;
@@ -81,8 +90,15 @@ export const Builder: React.FC = () => {
     setSaveError(null);
 
     try {
+      // Get current state from store
+      const store = useBuilderStore.getState();
+
       await pagesApi.update(page.id, {
-        content: { elements },
+        content: {
+          elements,
+          customCSS: store.customCSS,
+          globalColors: store.globalColors,
+        },
       });
       console.log('Seite erfolgreich gespeichert');
     } catch (error: any) {

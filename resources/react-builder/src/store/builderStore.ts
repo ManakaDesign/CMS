@@ -30,6 +30,7 @@ interface BuilderStore {
   hoveredElementId: number | null;
   activeBreakpoint: Breakpoint;
   breakpointWidths: BreakpointWidths;
+  useFullWidthDesktop: boolean;
   isPreviewMode: boolean;
   isDragging: boolean;
   isSaving: boolean;
@@ -67,6 +68,7 @@ interface BuilderStore {
   // Actions - UI
   setActiveBreakpoint: (breakpoint: Breakpoint) => void;
   setBreakpointWidths: (widths: BreakpointWidths) => void;
+  setUseFullWidthDesktop: (useFullWidth: boolean) => void;
   togglePreviewMode: () => void;
   setIsDragging: (isDragging: boolean) => void;
   setIsSaving: (isSaving: boolean) => void;
@@ -105,6 +107,7 @@ export const useBuilderStore = create<BuilderStore>()(
         tablet: 768,
         mobile: 480,
       },
+      useFullWidthDesktop: true,
       isPreviewMode: false,
       isDragging: false,
       isSaving: false,
@@ -336,6 +339,8 @@ export const useBuilderStore = create<BuilderStore>()(
       setActiveBreakpoint: (breakpoint) => set({ activeBreakpoint: breakpoint }),
 
       setBreakpointWidths: (widths) => set({ breakpointWidths: widths }),
+
+      setUseFullWidthDesktop: (useFullWidth) => set({ useFullWidthDesktop: useFullWidth }),
 
       togglePreviewMode: () => set((state) => ({ isPreviewMode: !state.isPreviewMode })),
 
