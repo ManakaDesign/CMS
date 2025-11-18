@@ -1,7 +1,5 @@
-import React from 'react';
-import { useDroppable, DndContext, type DragEndEvent } from '@dnd-kit/core';
-import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import React, { useState } from 'react';
+import { useDroppable } from '@dnd-kit/core';
 import type { Element } from '../../types';
 import { BaseElement } from './BaseElement';
 import { useBuilderStore } from '../../store/builderStore';
@@ -146,16 +144,38 @@ export const Row: React.FC<RowProps> = (props) => {
     (key) => hoverStylesObj[key] && Object.keys(hoverStylesObj[key]).length > 0
   );
 
-  // Handle column reordering
-  const handleColumnDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
+  // Column drag state
+  const [draggedColumn, setDraggedColumn] = useState<number | null>(null);
+  const [dragOverColumn, setDragOverColumn] = useState<number | null>(null);
 
-    if (!over || active.id === over.id) return;
+  // Handle column reordering with simple drag & drop
+  const handleColumnDragStart = (columnIndex: number) => {
+    if (!isSelected) return;
+    setDraggedColumn(columnIndex);
+  };
 
-    const oldIndex = activeColumnOrder.indexOf(Number(active.id));
-    const newIndex = activeColumnOrder.indexOf(Number(over.id));
+  const handleColumnDragOver = (e: React.DragEvent, columnIndex: number) => {
+    e.preventDefault();
+    if (draggedColumn === null || draggedColumn === columnIndex) return;
+    setDragOverColumn(columnIndex);
+  };
 
-    if (oldIndex === -1 || newIndex === -1) return;
+  const handleColumnDrop = (columnIndex: number) => {
+    if (draggedColumn === null || draggedColumn === columnIndex) {
+      setDraggedColumn(null);
+      setDragOverColumn(null);
+      return;
+    }
+
+    // Get indices in the current order
+    const oldIndex = activeColumnOrder.indexOf(draggedColumn);
+    const newIndex = activeColumnOrder.indexOf(columnIndex);
+
+    if (oldIndex === -1 || newIndex === -1) {
+      setDraggedColumn(null);
+      setDragOverColumn(null);
+      return;
+    }
 
     // Create new order array
     const newOrder = [...activeColumnOrder];
@@ -174,10 +194,15 @@ export const Row: React.FC<RowProps> = (props) => {
         columnOrder: updatedColumnOrder,
       },
     });
+
+    setDraggedColumn(null);
+    setDragOverColumn(null);
   };
 
-  // Create sortable items array (column indices as strings for DndKit)
-  const sortableItems = activeColumnOrder.map((index: number) => String(index));
+  const handleColumnDragEnd = () => {
+    setDraggedColumn(null);
+    setDragOverColumn(null);
+  };
 
   return (
     <BaseElement element={element} isSelected={isSelected} isHovered={isHovered} onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} skipStyles={true}>
@@ -193,18 +218,15 @@ export const Row: React.FC<RowProps> = (props) => {
         <BackgroundRenderer element={element} />
 
         {/* Content Layer - padding and other styles applied here */}
-        {isSelected ? (
-          <DndContext onDragEnd={handleColumnDragEnd}>
-            <SortableContext items={sortableItems} strategy={verticalListSortingStrategy}>
-              <div className="relative z-10 grid row-content" style={{
-                width: '100%',
-                display: 'grid',
-                ...getContentStyles(),
-                gridTemplateColumns: `repeat(${columnsPerRow}, 1fr)`,
-                gap: element.settings.gap || '16px',
-                minHeight: element.settings.minHeight || 'auto'
-              }}>
-              {Array.from({ length: columnCount }).map((_, columnIndex) => {
+        <div className="relative z-10 grid row-content" style={{
+          width: '100%',
+          display: 'grid',
+          ...getContentStyles(),
+          gridTemplateColumns: `repeat(${columnsPerRow}, 1fr)`,
+          gap: element.settings.gap || '16px',
+          minHeight: element.settings.minHeight || 'auto'
+        }}>
+        {Array.from({ length: columnCount }).map((_, columnIndex) => {
           // Get column-specific styles
           const columnStyles = element.settings.columnStyles || [];
           const columnStyle = columnStyles[columnIndex] || {};
@@ -243,67 +265,17 @@ export const Row: React.FC<RowProps> = (props) => {
             columnId={columnId}
             columnClass={columnClass}
             cssOrder={cssOrder}
-            isSortable={true}
+            isDraggable={isSelected || false}
+            isDragged={draggedColumn === columnIndex}
+            isDragOver={dragOverColumn === columnIndex}
+            onDragStart={() => handleColumnDragStart(columnIndex)}
+            onDragOver={(e) => handleColumnDragOver(e, columnIndex)}
+            onDrop={() => handleColumnDrop(columnIndex)}
+            onDragEnd={handleColumnDragEnd}
           />
         );
         })}
         </div>
-            </SortableContext>
-          </DndContext>
-        ) : (
-          <div className="relative z-10 grid row-content" style={{
-            width: '100%',
-            display: 'grid',
-            ...getContentStyles(),
-            gridTemplateColumns: `repeat(${columnsPerRow}, 1fr)`,
-            gap: element.settings.gap || '16px',
-            minHeight: element.settings.minHeight || 'auto'
-          }}>
-          {Array.from({ length: columnCount }).map((_, columnIndex) => {
-          // Get column-specific styles
-          const columnStyles = element.settings.columnStyles || [];
-          const columnStyle = columnStyles[columnIndex] || {};
-
-          // Get column hover styles
-          const columnHoverStyles = element.settings.columnHoverStyles || [];
-          const columnHoverStyle = columnHoverStyles[columnIndex] || {};
-
-          // Get column background settings
-          const columnBackgrounds = element.settings.columnBackgrounds || [];
-          const columnBackground = columnBackgrounds[columnIndex] || {};
-
-          // Get column ID and classes
-          const columnIds = element.settings.columnIds || [];
-          const columnId = columnIds[columnIndex] || undefined;
-          const columnClasses = element.settings.columnClasses || [];
-          const columnClass = columnClasses[columnIndex] || '';
-
-          // Get CSS order from activeColumnOrder (position in array determines order)
-          const orderIndex = activeColumnOrder.indexOf(columnIndex);
-          const cssOrder = orderIndex >= 0 ? orderIndex : columnIndex;
-
-          return (
-          <RowColumn
-            key={columnIndex}
-            rowId={element.id}
-            rowElementId={element.id}
-            columnIndex={columnIndex}
-            columnCount={columnCount}
-            isRowSelected={isSelected || false}
-            children={columnGroups[columnIndex]}
-            columnStyle={columnStyle}
-            columnHoverStyle={columnHoverStyle}
-            columnBackground={columnBackground}
-            activeBreakpoint={activeBreakpoint}
-            columnId={columnId}
-            columnClass={columnClass}
-            cssOrder={cssOrder}
-            isSortable={false}
-          />
-        );
-        })}
-        </div>
-        )}
       </div>
     </BaseElement>
   );
@@ -324,27 +296,41 @@ interface RowColumnProps {
   columnId?: string;
   columnClass?: string;
   cssOrder: number;
-  isSortable: boolean;
+  isDraggable: boolean;
+  isDragged: boolean;
+  isDragOver: boolean;
+  onDragStart: () => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDrop: () => void;
+  onDragEnd: () => void;
 }
 
-const RowColumn: React.FC<RowColumnProps> = ({ rowId, rowElementId, columnIndex, columnCount: _columnCount, isRowSelected, children, columnStyle, columnHoverStyle, columnBackground, activeBreakpoint: _activeBreakpoint, columnId, columnClass, cssOrder, isSortable }) => {
+const RowColumn: React.FC<RowColumnProps> = ({
+  rowId,
+  rowElementId,
+  columnIndex,
+  columnCount: _columnCount,
+  isRowSelected,
+  children,
+  columnStyle,
+  columnHoverStyle,
+  columnBackground,
+  activeBreakpoint: _activeBreakpoint,
+  columnId,
+  columnClass,
+  cssOrder,
+  isDraggable,
+  isDragged,
+  isDragOver,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd
+}) => {
   const { selectedElementId, hoveredElementId, selectElement, hoverElement, isPreviewMode } = useBuilderStore();
 
-  // Use sortable for column reordering when row is selected
-  const {
-    attributes,
-    listeners,
-    setNodeRef: setSortableRef,
-    transform,
-    transition,
-    isDragging: isSortableDragging,
-  } = useSortable({
-    id: String(columnIndex),
-    disabled: !isSortable,
-  });
-
-  // Make column droppable (empty state only)
-  const { setNodeRef: setDroppableRef } = useDroppable({
+  // Make column droppable (for element drops)
+  const { setNodeRef } = useDroppable({
     id: `row-${rowId}-column-${columnIndex}`,
     data: {
       accepts: ['text', 'heading', 'button', 'image', 'video', 'spacer', 'divider', 'code'],
@@ -352,19 +338,6 @@ const RowColumn: React.FC<RowColumnProps> = ({ rowId, rowElementId, columnIndex,
       columnIndex, // Store which column this is
     },
   });
-
-  // Combine refs
-  const setNodeRef = (node: HTMLElement | null) => {
-    setSortableRef(node);
-    setDroppableRef(node);
-  };
-
-  // Apply sortable transform and transition
-  const sortableStyle = isSortable ? {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isSortableDragging ? 0.5 : 1,
-  } : {};
 
   const renderElement = (element: Element): React.ReactNode => {
     const Component = getElementComponent(element.type);
@@ -474,30 +447,48 @@ const RowColumn: React.FC<RowColumnProps> = ({ rowId, rowElementId, columnIndex,
       <div
         ref={setNodeRef}
         id={columnId}
-        className={`${columnClassName} relative transition-all overflow-hidden ${columnClass || ''}`.trim()}
+        onDragOver={(e) => {
+          if (isDraggable) {
+            e.stopPropagation();
+            onDragOver(e);
+          }
+        }}
+        onDrop={(e) => {
+          if (isDraggable) {
+            e.stopPropagation();
+            onDrop();
+          }
+        }}
+        className={`${columnClassName} relative transition-all overflow-hidden ${columnClass || ''} ${isDragged ? 'opacity-50' : ''} ${isDragOver ? 'ring-2 ring-green-500' : ''}`.trim()}
         style={{
           ...borderStyle,
           ...columnStyle,
           order: cssOrder,
-          ...sortableStyle,
         }}
       >
         {/* Column Background Layer */}
         {renderColumnBackground()}
 
-        {/* Drag Handle and Order Badge - only when sortable */}
-        {isSortable && (
+        {/* Drag Handle and Order Badge - only when draggable */}
+        {isDraggable && (
           <div className="absolute top-2 left-2 flex items-center gap-2 z-50">
             {/* Drag Handle */}
-            <button
-              {...attributes}
-              {...listeners}
+            <div
+              draggable={true}
+              onDragStart={(e) => {
+                e.stopPropagation();
+                onDragStart();
+              }}
+              onDragEnd={(e) => {
+                e.stopPropagation();
+                onDragEnd();
+              }}
               className="p-2 bg-green-500 text-white rounded shadow-lg cursor-move hover:bg-green-600 transition-colors"
               title="Drag to reorder column"
               onClick={(e) => e.stopPropagation()}
             >
               <FiMove size={16} />
-            </button>
+            </div>
             {/* Order Badge */}
             <div className="px-2 py-1 bg-green-500 text-white text-xs font-bold rounded shadow-lg">
               {cssOrder + 1}
