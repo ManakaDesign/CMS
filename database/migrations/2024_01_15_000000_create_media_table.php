@@ -35,11 +35,16 @@ return new class extends Migration
 
             $table->string('alt_text')->nullable();
             $table->text('caption')->nullable();
+
+            // Foreign keys (will be constrained after media_folders table is created)
+            $table->unsignedBigInteger('folder_id')->nullable();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+
             $table->timestamps();
 
             $table->index('mime_type');
             $table->index('user_id');
+            $table->index('folder_id');
         });
     }
 
