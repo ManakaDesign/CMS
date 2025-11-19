@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\Encoders\AutoEncoder;
+use Intervention\Image\Encoders\WebpEncoder;
+use Intervention\Image\Encoders\JpegEncoder;
 
 class MediaService
 {
@@ -119,15 +122,23 @@ class MediaService
         }
 
         // Save original
-        $extension = $file->getClientOriginalExtension();
+        $extension = strtolower($file->getClientOriginalExtension());
         $path = 'uploads/' . $filename;
-        Storage::disk('public')->put($path, $image->encode($extension)->toString());
+
+        // Encode based on extension (Intervention Image v3)
+        $encoded = match($extension) {
+            'jpg', 'jpeg' => $image->encode(new JpegEncoder(quality: 90)),
+            'webp' => $image->encode(new WebpEncoder(quality: 90)),
+            default => $image->encode(new AutoEncoder(quality: 90))
+        };
+
+        Storage::disk('public')->put($path, $encoded->toString());
         $result['path'] = $path;
 
         // Generate WebP version
         $webpFilename = Str::uuid() . '.webp';
         $webpPath = 'uploads/' . $webpFilename;
-        Storage::disk('public')->put($webpPath, $image->toWebp(80)->toString());
+        Storage::disk('public')->put($webpPath, $image->encode(new WebpEncoder(quality: 80))->toString());
         $result['webp_path'] = $webpPath;
 
         // Generate thumbnails
@@ -172,7 +183,7 @@ class MediaService
         $thumbnailFilename = Str::uuid() . '.webp';
         $thumbnailPath = 'uploads/thumbs/' . $thumbnailFilename;
 
-        Storage::disk('public')->put($thumbnailPath, $thumbnailImage->toWebp(80)->toString());
+        Storage::disk('public')->put($thumbnailPath, $thumbnailImage->encode(new WebpEncoder(quality: 80))->toString());
 
         return $thumbnailPath;
     }

@@ -77,8 +77,8 @@ const FolderTree: React.FC<FolderTreeProps> = ({
     return (
       <div key={folder.id}>
         <div
-          className={`flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-gray-100 group ${
-            isSelected ? 'bg-blue-50 text-blue-600' : ''
+          className={`flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-dark-hover group transition-colors ${
+            isSelected ? 'bg-brand-primary/10 text-brand-primary border-l-2 border-brand-primary' : 'text-light-text'
           }`}
           style={{ paddingLeft: `${level * 20 + 12}px` }}
         >
@@ -89,7 +89,7 @@ const FolderTree: React.FC<FolderTreeProps> = ({
                 e.stopPropagation();
                 toggleFolder(folder.id);
               }}
-              className="p-0.5 hover:bg-gray-200 rounded"
+              className="p-0.5 hover:bg-dark-border rounded"
             >
               {isExpanded ? <FiChevronDown size={14} /> : <FiChevronRight size={14} />}
             </button>
@@ -111,18 +111,18 @@ const FolderTree: React.FC<FolderTreeProps> = ({
                   if (e.key === 'Enter') handleUpdateFolder(folder.id);
                   if (e.key === 'Escape') setEditingFolderId(null);
                 }}
-                className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-2 py-1 text-sm bg-dark-panel border border-dark-border rounded text-light-text focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 autoFocus
               />
               <button
                 onClick={() => handleUpdateFolder(folder.id)}
-                className="p-1 text-green-600 hover:bg-green-50 rounded"
+                className="p-1 text-green-500 hover:bg-green-500/10 rounded"
               >
                 <FiCheck size={14} />
               </button>
               <button
                 onClick={() => setEditingFolderId(null)}
-                className="p-1 text-red-600 hover:bg-red-50 rounded"
+                className="p-1 text-red-500 hover:bg-red-500/10 rounded"
               >
                 <FiX size={14} />
               </button>
@@ -135,7 +135,7 @@ const FolderTree: React.FC<FolderTreeProps> = ({
               >
                 {folder.name}
               </span>
-              <span className="text-xs text-gray-500">{folder.media_count || 0}</span>
+              <span className="text-xs text-light-muted">{folder.media_count || 0}</span>
 
               {/* Action Buttons */}
               <div className="hidden group-hover:flex items-center gap-1">
@@ -144,7 +144,7 @@ const FolderTree: React.FC<FolderTreeProps> = ({
                     e.stopPropagation();
                     setCreatingParentId(folder.id);
                   }}
-                  className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                  className="p-1 text-brand-primary hover:bg-brand-primary/10 rounded"
                   title="Add subfolder"
                 >
                   <FiFolderPlus size={14} />
@@ -155,7 +155,7 @@ const FolderTree: React.FC<FolderTreeProps> = ({
                     setEditingFolderId(folder.id);
                     setEditingName(folder.name);
                   }}
-                  className="p-1 text-gray-600 hover:bg-gray-200 rounded"
+                  className="p-1 text-light-muted hover:bg-dark-border rounded"
                   title="Rename"
                 >
                   <FiEdit2 size={14} />
@@ -165,7 +165,7 @@ const FolderTree: React.FC<FolderTreeProps> = ({
                     e.stopPropagation();
                     handleDeleteFolder(folder.id);
                   }}
-                  className="p-1 text-red-600 hover:bg-red-50 rounded"
+                  className="p-1 text-red-500 hover:bg-red-500/10 rounded"
                   title="Delete"
                 >
                   <FiTrash2 size={14} />
@@ -178,10 +178,10 @@ const FolderTree: React.FC<FolderTreeProps> = ({
         {/* New Subfolder Input */}
         {creatingParentId === folder.id && (
           <div
-            className="flex items-center gap-2 px-3 py-2 bg-gray-50"
+            className="flex items-center gap-2 px-3 py-2 bg-dark-panel"
             style={{ paddingLeft: `${(level + 1) * 20 + 12}px` }}
           >
-            <FiFolder size={16} className="text-gray-400" />
+            <FiFolder size={16} className="text-light-muted" />
             <input
               type="text"
               value={newFolderName}
@@ -190,19 +190,19 @@ const FolderTree: React.FC<FolderTreeProps> = ({
                 if (e.key === 'Enter') handleCreateFolder();
                 if (e.key === 'Escape') setCreatingParentId(undefined);
               }}
-              placeholder="Folder name..."
-              className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Ordnername..."
+              className="flex-1 px-2 py-1 text-sm bg-dark-bg border border-dark-border rounded text-light-text focus:outline-none focus:ring-2 focus:ring-brand-primary"
               autoFocus
             />
             <button
               onClick={handleCreateFolder}
-              className="p-1 text-green-600 hover:bg-green-50 rounded"
+              className="p-1 text-green-500 hover:bg-green-500/10 rounded"
             >
               <FiCheck size={14} />
             </button>
             <button
               onClick={() => setCreatingParentId(undefined)}
-              className="p-1 text-red-600 hover:bg-red-50 rounded"
+              className="p-1 text-red-500 hover:bg-red-500/10 rounded"
             >
               <FiX size={14} />
             </button>
@@ -224,18 +224,18 @@ const FolderTree: React.FC<FolderTreeProps> = ({
       {/* All Media */}
       <div
         onClick={() => onFolderSelect(null)}
-        className={`flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-gray-100 ${
-          selectedFolderId === null ? 'bg-blue-50 text-blue-600' : ''
+        className={`flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-dark-hover transition-colors ${
+          selectedFolderId === null ? 'bg-brand-primary/10 text-brand-primary border-l-2 border-brand-primary' : 'text-light-text'
         }`}
       >
         <FiFolder size={16} />
-        <span className="flex-1 text-sm font-medium">All Media</span>
+        <span className="flex-1 text-sm font-medium">Alle Medien</span>
       </div>
 
       {/* New Root Folder Button */}
       {creatingParentId === null ? (
-        <div className="flex items-center gap-2 px-3 py-2 bg-gray-50">
-          <FiFolder size={16} className="text-gray-400" />
+        <div className="flex items-center gap-2 px-3 py-2 bg-dark-panel">
+          <FiFolder size={16} className="text-light-muted" />
           <input
             type="text"
             value={newFolderName}
@@ -244,19 +244,19 @@ const FolderTree: React.FC<FolderTreeProps> = ({
               if (e.key === 'Enter') handleCreateFolder();
               if (e.key === 'Escape') setCreatingParentId(undefined);
             }}
-            placeholder="Folder name..."
-            className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Ordnername..."
+            className="flex-1 px-2 py-1 text-sm bg-dark-bg border border-dark-border rounded text-light-text focus:outline-none focus:ring-2 focus:ring-brand-primary"
             autoFocus
           />
           <button
             onClick={handleCreateFolder}
-            className="p-1 text-green-600 hover:bg-green-50 rounded"
+            className="p-1 text-green-500 hover:bg-green-500/10 rounded"
           >
             <FiCheck size={14} />
           </button>
           <button
             onClick={() => setCreatingParentId(undefined)}
-            className="p-1 text-red-600 hover:bg-red-50 rounded"
+            className="p-1 text-red-500 hover:bg-red-500/10 rounded"
           >
             <FiX size={14} />
           </button>
@@ -264,14 +264,14 @@ const FolderTree: React.FC<FolderTreeProps> = ({
       ) : (
         <button
           onClick={() => setCreatingParentId(null)}
-          className="flex items-center gap-2 px-3 py-2 w-full text-left text-sm text-blue-600 hover:bg-blue-50"
+          className="flex items-center gap-2 px-3 py-2 w-full text-left text-sm text-brand-primary hover:bg-brand-primary/10 transition-colors"
         >
           <FiFolderPlus size={16} />
-          <span>New Folder</span>
+          <span>Neuer Ordner</span>
         </button>
       )}
 
-      <div className="border-t border-gray-200 mt-2 pt-2">
+      <div className="border-t border-dark-border mt-2 pt-2">
         {folders.map((folder) => renderFolder(folder))}
       </div>
     </div>
