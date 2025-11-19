@@ -7,6 +7,8 @@ import { GlobalColorSwatches } from './GlobalColorSwatches';
 import { NumberInput } from '../UI/NumberInput';
 import { CollapsibleSection } from '../UI/CollapsibleSection';
 import { IconPicker } from '../UI/IconPicker';
+import MediaPicker from '../admin/media/MediaPicker';
+import type { Media } from '../../types';
 
 type BackgroundType = 'color' | 'gradient' | 'image' | 'video' | 'none';
 
@@ -68,6 +70,7 @@ export const ElementSettings: React.FC = () => {
   const [syncAllColumns, setSyncAllColumns] = useState<boolean>(false);
   const [iconPickerOpen, setIconPickerOpen] = useState<'before' | 'after' | null>(null);
   const [openSection, setOpenSection] = useState<string>('typography');
+  const [mediaPickerOpen, setMediaPickerOpen] = useState<'image' | 'video' | 'backgroundImage' | 'backgroundVideo' | 'columnBackgroundImage' | null>(null);
 
   // Initialize backgroundType based on what's stored in element
   useEffect(() => {
@@ -83,6 +86,47 @@ export const ElementSettings: React.FC = () => {
       }
     }
   }, [element?.id]);
+
+  // Handle media selection from MediaPicker
+  const handleMediaSelect = (media: Media) => {
+    if (!element) return;
+
+    switch (mediaPickerOpen) {
+      case 'image':
+        updateSetting('src', media.url);
+        if (!element.settings.alt) {
+          updateSetting('alt', media.alt_text || media.original_filename);
+        }
+        break;
+      case 'video':
+        updateSetting('src', media.url);
+        break;
+      case 'backgroundImage':
+        updateSetting('backgroundImage', {
+          ...element.settings.backgroundImage,
+          url: media.url
+        });
+        break;
+      case 'backgroundVideo':
+        updateSetting('backgroundVideo', {
+          ...element.settings.backgroundVideo,
+          url: media.url
+        });
+        break;
+      case 'columnBackgroundImage':
+        if (selectedColumnIndex !== null) {
+          const currentBackground = element.settings.columnsBackground?.[selectedColumnIndex] || {};
+          const newColumnsBackground = [...(element.settings.columnsBackground || [])];
+          newColumnsBackground[selectedColumnIndex] = {
+            ...currentBackground,
+            imageUrl: media.url
+          };
+          updateSetting('columnsBackground', newColumnsBackground);
+        }
+        break;
+    }
+    setMediaPickerOpen(null);
+  };
 
   if (!element && !isMultiSelect) {
     return (
@@ -497,12 +541,22 @@ export const ElementSettings: React.FC = () => {
           <>
             <div className="mb-4">
               <label className="block text-sm font-medium text-light-text mb-2">Image URL</label>
-              <input
-                type="text"
-                value={element.settings.src || ''}
-                onChange={(e) => updateSetting('src', e.target.value)}
-                className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={element.settings.src || ''}
+                  onChange={(e) => updateSetting('src', e.target.value)}
+                  className="flex-1 px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                  placeholder="https://..."
+                />
+                <button
+                  onClick={() => setMediaPickerOpen('image')}
+                  className="px-4 py-2 bg-brand-primary text-white rounded hover:bg-primary-600 transition-colors text-sm whitespace-nowrap"
+                >
+                  <FiImage className="inline mr-1" size={14} />
+                  Browse
+                </button>
+              </div>
             </div>
             <div className="mb-4">
               <label className="block text-sm font-medium text-light-text mb-2">Alt Text</label>
@@ -533,19 +587,30 @@ export const ElementSettings: React.FC = () => {
             </div>
             <div className="mb-4">
               <label className="block text-sm font-medium text-light-text mb-2">Video URL</label>
-              <input
-                type="text"
-                value={element.settings.src || ''}
-                onChange={(e) => updateSetting('src', e.target.value)}
-                className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
-                placeholder={
-                  element.settings.provider === 'youtube'
-                    ? 'https://www.youtube.com/watch?v=...'
-                    : element.settings.provider === 'vimeo'
-                    ? 'https://vimeo.com/...'
-                    : 'https://example.com/video.mp4'
-                }
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={element.settings.src || ''}
+                  onChange={(e) => updateSetting('src', e.target.value)}
+                  className="flex-1 px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                  placeholder={
+                    element.settings.provider === 'youtube'
+                      ? 'https://www.youtube.com/watch?v=...'
+                      : element.settings.provider === 'vimeo'
+                      ? 'https://vimeo.com/...'
+                      : 'https://example.com/video.mp4'
+                  }
+                />
+                {(!element.settings.provider || element.settings.provider === 'direct') && (
+                  <button
+                    onClick={() => setMediaPickerOpen('video')}
+                    className="px-4 py-2 bg-brand-primary text-white rounded hover:bg-primary-600 transition-colors text-sm whitespace-nowrap"
+                  >
+                    <FiVideo className="inline mr-1" size={14} />
+                    Browse
+                  </button>
+                )}
+              </div>
               <p className="text-xs text-light-muted mt-1">
                 {element.settings.provider === 'youtube' && 'Enter YouTube video URL'}
                 {element.settings.provider === 'vimeo' && 'Enter Vimeo video URL'}
@@ -1179,13 +1244,22 @@ export const ElementSettings: React.FC = () => {
                 {/* Background Image */}
                 {columnBackgroundType === 'image' && (
                   <div className="space-y-2">
-                    <input
-                      type="text"
-                      value={(columnBackground.imageUrl as string) || ''}
-                      onChange={(e) => updateColumnBackgroundSetting('imageUrl', e.target.value)}
-                      placeholder="Image URL"
-                      className="w-full px-3 py-2 bg-dark-panel border border-green-400/30 rounded text-sm text-light-text placeholder-light-muted"
-                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={(columnBackground.imageUrl as string) || ''}
+                        onChange={(e) => updateColumnBackgroundSetting('imageUrl', e.target.value)}
+                        placeholder="Image URL"
+                        className="flex-1 px-3 py-2 bg-dark-panel border border-green-400/30 rounded text-sm text-light-text placeholder-light-muted"
+                      />
+                      <button
+                        onClick={() => setMediaPickerOpen('columnBackgroundImage')}
+                        className="px-3 py-2 bg-brand-primary text-white rounded hover:bg-primary-600 transition-colors text-sm whitespace-nowrap"
+                      >
+                        <FiImage className="inline mr-1" size={14} />
+                        Browse
+                      </button>
+                    </div>
                     <select
                       value={(columnBackground.imageSize as string) || 'cover'}
                       onChange={(e) => updateColumnBackgroundSetting('imageSize', e.target.value)}
@@ -1970,16 +2044,25 @@ export const ElementSettings: React.FC = () => {
               <div className="space-y-2">
                 <div>
                   <label className="text-xs text-light-muted mb-1 block">Image URL</label>
-                  <input
-                    type="text"
-                    value={(element.settings.backgroundImage?.url as string) || ''}
-                    onChange={(e) => updateSetting('backgroundImage', {
-                      ...element.settings.backgroundImage,
-                      url: e.target.value
-                    })}
-                    className="w-full px-2 py-1.5 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
-                    placeholder="https://..."
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={(element.settings.backgroundImage?.url as string) || ''}
+                      onChange={(e) => updateSetting('backgroundImage', {
+                        ...element.settings.backgroundImage,
+                        url: e.target.value
+                      })}
+                      className="flex-1 px-2 py-1.5 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                      placeholder="https://..."
+                    />
+                    <button
+                      onClick={() => setMediaPickerOpen('backgroundImage')}
+                      className="px-3 py-1.5 bg-brand-primary text-white rounded hover:bg-primary-600 transition-colors text-xs whitespace-nowrap"
+                    >
+                      <FiImage className="inline mr-1" size={12} />
+                      Browse
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="text-xs text-light-muted mb-1 block">Size</label>
@@ -2025,16 +2108,25 @@ export const ElementSettings: React.FC = () => {
               <div className="space-y-2">
                 <div>
                   <label className="text-xs text-light-muted mb-1 block">Video URL (.mp4)</label>
-                  <input
-                    type="text"
-                    value={(element.settings.backgroundVideo?.url as string) || ''}
-                    onChange={(e) => updateSetting('backgroundVideo', {
-                      ...element.settings.backgroundVideo,
-                      url: e.target.value
-                    })}
-                    className="w-full px-2 py-1.5 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
-                    placeholder="https://...video.mp4"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={(element.settings.backgroundVideo?.url as string) || ''}
+                      onChange={(e) => updateSetting('backgroundVideo', {
+                        ...element.settings.backgroundVideo,
+                        url: e.target.value
+                      })}
+                      className="flex-1 px-2 py-1.5 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                      placeholder="https://...video.mp4"
+                    />
+                    <button
+                      onClick={() => setMediaPickerOpen('backgroundVideo')}
+                      className="px-3 py-1.5 bg-brand-primary text-white rounded hover:bg-primary-600 transition-colors text-xs whitespace-nowrap"
+                    >
+                      <FiVideo className="inline mr-1" size={12} />
+                      Browse
+                    </button>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <input
@@ -2114,6 +2206,30 @@ export const ElementSettings: React.FC = () => {
             setIconPickerOpen(null);
           }}
           onClose={() => setIconPickerOpen(null)}
+        />
+      )}
+
+      {/* Media Picker Modal */}
+      {mediaPickerOpen && (
+        <MediaPicker
+          accept={
+            mediaPickerOpen === 'image' || mediaPickerOpen === 'backgroundImage' || mediaPickerOpen === 'columnBackgroundImage'
+              ? 'image'
+              : mediaPickerOpen === 'video' || mediaPickerOpen === 'backgroundVideo'
+              ? 'video'
+              : 'all'
+          }
+          title={
+            mediaPickerOpen === 'image'
+              ? 'Select Image'
+              : mediaPickerOpen === 'video'
+              ? 'Select Video'
+              : mediaPickerOpen === 'backgroundImage' || mediaPickerOpen === 'columnBackgroundImage'
+              ? 'Select Background Image'
+              : 'Select Background Video'
+          }
+          onSelect={handleMediaSelect}
+          onClose={() => setMediaPickerOpen(null)}
         />
       )}
     </div>
