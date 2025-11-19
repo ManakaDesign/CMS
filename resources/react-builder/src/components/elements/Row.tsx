@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import type { Element } from '../../types';
 import { BaseElement } from './BaseElement';
@@ -6,6 +6,7 @@ import { useBuilderStore } from '../../store/builderStore';
 import { getElementComponent } from './ElementRegistry';
 import { DropZone } from '../DropZone';
 import { BackgroundRenderer } from './BackgroundRenderer';
+import { FiMove } from 'react-icons/fi';
 
 interface RowProps {
   element: Element;
@@ -19,7 +20,7 @@ interface RowProps {
 
 export const Row: React.FC<RowProps> = (props) => {
   const { element, isSelected, isHovered, onClick, onMouseEnter, onMouseLeave } = props;
-  const { elements, activeBreakpoint } = useBuilderStore();
+  const { elements, activeBreakpoint, updateElement } = useBuilderStore();
 
   // Get total column count (always from settings.columns, now always a number)
   const columnCount: number = element.settings.columns || 1;
@@ -33,6 +34,15 @@ export const Row: React.FC<RowProps> = (props) => {
 
   // Get columns per row for current breakpoint
   const columnsPerRow = responsiveLayout[activeBreakpoint] || columnCount;
+
+  // Get column order for current breakpoint (default: [0, 1, 2, ...])
+  const defaultOrder = Array.from({ length: columnCount }, (_, i) => i);
+  const columnOrder = element.settings.columnOrder || {
+    desktop: defaultOrder,
+    tablet: defaultOrder,
+    mobile: defaultOrder,
+  };
+  const activeColumnOrder = columnOrder[activeBreakpoint] || defaultOrder;
 
   // Debug log
   console.log('Row Debug:', {
@@ -134,6 +144,66 @@ export const Row: React.FC<RowProps> = (props) => {
     (key) => hoverStylesObj[key] && Object.keys(hoverStylesObj[key]).length > 0
   );
 
+  // Column drag state
+  const [draggedColumn, setDraggedColumn] = useState<number | null>(null);
+  const [dragOverColumn, setDragOverColumn] = useState<number | null>(null);
+
+  // Handle column reordering with simple drag & drop
+  const handleColumnDragStart = (columnIndex: number) => {
+    if (!isSelected) return;
+    setDraggedColumn(columnIndex);
+  };
+
+  const handleColumnDragOver = (e: React.DragEvent, columnIndex: number) => {
+    e.preventDefault();
+    if (draggedColumn === null || draggedColumn === columnIndex) return;
+    setDragOverColumn(columnIndex);
+  };
+
+  const handleColumnDrop = (columnIndex: number) => {
+    if (draggedColumn === null || draggedColumn === columnIndex) {
+      setDraggedColumn(null);
+      setDragOverColumn(null);
+      return;
+    }
+
+    // Get indices in the current order
+    const oldIndex = activeColumnOrder.indexOf(draggedColumn);
+    const newIndex = activeColumnOrder.indexOf(columnIndex);
+
+    if (oldIndex === -1 || newIndex === -1) {
+      setDraggedColumn(null);
+      setDragOverColumn(null);
+      return;
+    }
+
+    // Create new order array
+    const newOrder = [...activeColumnOrder];
+    const [movedItem] = newOrder.splice(oldIndex, 1);
+    newOrder.splice(newIndex, 0, movedItem);
+
+    // Update column order for current breakpoint
+    const updatedColumnOrder = {
+      ...columnOrder,
+      [activeBreakpoint]: newOrder,
+    };
+
+    updateElement(element.id, {
+      settings: {
+        ...element.settings,
+        columnOrder: updatedColumnOrder,
+      },
+    });
+
+    setDraggedColumn(null);
+    setDragOverColumn(null);
+  };
+
+  const handleColumnDragEnd = () => {
+    setDraggedColumn(null);
+    setDragOverColumn(null);
+  };
+
   return (
     <BaseElement element={element} isSelected={isSelected} isHovered={isHovered} onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} skipStyles={true}>
       {/* Inject hover styles */}
@@ -175,6 +245,10 @@ export const Row: React.FC<RowProps> = (props) => {
           const columnClasses = element.settings.columnClasses || [];
           const columnClass = columnClasses[columnIndex] || '';
 
+          // Get CSS order from activeColumnOrder (position in array determines order)
+          const orderIndex = activeColumnOrder.indexOf(columnIndex);
+          const cssOrder = orderIndex >= 0 ? orderIndex : columnIndex;
+
           return (
           <RowColumn
             key={columnIndex}
@@ -190,6 +264,14 @@ export const Row: React.FC<RowProps> = (props) => {
             activeBreakpoint={activeBreakpoint}
             columnId={columnId}
             columnClass={columnClass}
+            cssOrder={cssOrder}
+            isDraggable={isSelected || false}
+            isDragged={draggedColumn === columnIndex}
+            isDragOver={dragOverColumn === columnIndex}
+            onDragStart={() => handleColumnDragStart(columnIndex)}
+            onDragOver={(e) => handleColumnDragOver(e, columnIndex)}
+            onDrop={() => handleColumnDrop(columnIndex)}
+            onDragEnd={handleColumnDragEnd}
           />
         );
         })}
@@ -213,12 +295,41 @@ interface RowColumnProps {
   activeBreakpoint: string;
   columnId?: string;
   columnClass?: string;
+  cssOrder: number;
+  isDraggable: boolean;
+  isDragged: boolean;
+  isDragOver: boolean;
+  onDragStart: () => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDrop: () => void;
+  onDragEnd: () => void;
 }
 
-const RowColumn: React.FC<RowColumnProps> = ({ rowId, rowElementId, columnIndex, columnCount: _columnCount, isRowSelected, children, columnStyle, columnHoverStyle, columnBackground, activeBreakpoint: _activeBreakpoint, columnId, columnClass }) => {
+const RowColumn: React.FC<RowColumnProps> = ({
+  rowId,
+  rowElementId,
+  columnIndex,
+  columnCount: _columnCount,
+  isRowSelected,
+  children,
+  columnStyle,
+  columnHoverStyle,
+  columnBackground,
+  activeBreakpoint: _activeBreakpoint,
+  columnId,
+  columnClass,
+  cssOrder,
+  isDraggable,
+  isDragged,
+  isDragOver,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd
+}) => {
   const { selectedElementId, hoveredElementId, selectElement, hoverElement, isPreviewMode } = useBuilderStore();
 
-  // Make column droppable (empty state only)
+  // Make column droppable (for element drops)
   const { setNodeRef } = useDroppable({
     id: `row-${rowId}-column-${columnIndex}`,
     data: {
@@ -334,15 +445,56 @@ const RowColumn: React.FC<RowColumnProps> = ({ rowId, rowElementId, columnIndex,
       )}
 
       <div
+        ref={setNodeRef}
         id={columnId}
-        className={`${columnClassName} relative transition-all overflow-hidden ${columnClass || ''}`.trim()}
+        onDragOver={(e) => {
+          if (isDraggable) {
+            e.stopPropagation();
+            onDragOver(e);
+          }
+        }}
+        onDrop={(e) => {
+          if (isDraggable) {
+            e.stopPropagation();
+            onDrop();
+          }
+        }}
+        className={`${columnClassName} relative transition-all overflow-hidden ${columnClass || ''} ${isDragged ? 'opacity-50' : ''} ${isDragOver ? 'ring-2 ring-green-500' : ''}`.trim()}
         style={{
           ...borderStyle,
           ...columnStyle,
+          order: cssOrder,
         }}
       >
         {/* Column Background Layer */}
         {renderColumnBackground()}
+
+        {/* Drag Handle and Order Badge - only when draggable */}
+        {isDraggable && (
+          <div className="absolute top-2 left-2 flex items-center gap-2 z-50">
+            {/* Drag Handle */}
+            <div
+              draggable={true}
+              onDragStart={(e) => {
+                e.stopPropagation();
+                onDragStart();
+              }}
+              onDragEnd={(e) => {
+                e.stopPropagation();
+                onDragEnd();
+              }}
+              className="p-2 bg-green-500 text-white rounded shadow-lg cursor-move hover:bg-green-600 transition-colors"
+              title="Drag to reorder column"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <FiMove size={16} />
+            </div>
+            {/* Order Badge */}
+            <div className="px-2 py-1 bg-green-500 text-white text-xs font-bold rounded shadow-lg">
+              {cssOrder + 1}
+            </div>
+          </div>
+        )}
 
         {/* Column Content Layer */}
         <div className="relative" style={{ zIndex: 1 }}>

@@ -1,6 +1,13 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
+import { Pages } from './pages/Pages';
+import { Menu } from './pages/Menu';
+import { Media } from './pages/Media';
+import { Plugins } from './pages/Plugins';
+import { Users } from './pages/Users';
+import { Mail } from './pages/Mail';
+import { Forms } from './pages/Forms';
 import { Builder } from './pages/Builder';
 import { BuilderDemo } from './pages/BuilderDemo';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -35,6 +42,62 @@ function App() {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/pages"
+          element={
+            <ProtectedRoute>
+              <Pages />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/menu"
+          element={
+            <ProtectedRoute>
+              <Menu />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/media"
+          element={
+            <ProtectedRoute>
+              <Media />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/plugins"
+          element={
+            <ProtectedRoute>
+              <Plugins />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute>
+              <Users />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/mail"
+          element={
+            <ProtectedRoute>
+              <Mail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/forms"
+          element={
+            <ProtectedRoute>
+              <Forms />
             </ProtectedRoute>
           }
         />

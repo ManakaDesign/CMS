@@ -688,29 +688,50 @@ export const ElementSettings: React.FC = () => {
                   <label className="block text-sm font-medium text-light-text mb-2">
                     Column Settings
                   </label>
-                  <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(totalColumns, 3)}, 1fr)` }}>
-                    {Array.from({ length: totalColumns }).map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => {
-                          selectColumn(index);
-                          setSettingsTab('design');
-                        }}
-                        className={`
-                          flex flex-col items-center gap-2 p-3 rounded transition-colors
-                          ${selectedColumnIndex === index
-                            ? 'bg-green-400/20 border-2 border-green-400'
-                            : 'bg-dark-panel border border-dark-border hover:bg-dark-hover'
-                          }
-                        `}
-                        title={`Edit Column ${index + 1}`}
-                      >
-                        <FiColumns size={20} className={selectedColumnIndex === index ? 'text-green-400' : 'text-light-muted'} />
-                        <span className="text-xs text-light-text">Col {index + 1}</span>
-                        <FiSettings size={14} className={selectedColumnIndex === index ? 'text-green-400' : 'text-light-muted'} />
-                      </button>
-                    ))}
-                  </div>
+                  {(() => {
+                    // Get column order for current breakpoint
+                    const defaultOrder = Array.from({ length: totalColumns }, (_, i) => i);
+                    const columnOrder = element.settings.columnOrder || {
+                      desktop: defaultOrder,
+                      tablet: defaultOrder,
+                      mobile: defaultOrder,
+                    };
+                    const activeColumnOrder = columnOrder[activeBreakpoint] || defaultOrder;
+
+                    return (
+                      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(totalColumns, 3)}, 1fr)` }}>
+                        {activeColumnOrder.map((columnIndex: number, displayPosition: number) => {
+                          const displayOrder = displayPosition + 1;
+
+                          return (
+                            <button
+                              key={columnIndex}
+                              onClick={() => {
+                                selectColumn(columnIndex);
+                                setSettingsTab('design');
+                              }}
+                              className={`
+                                flex flex-col items-center gap-2 p-3 rounded transition-colors relative
+                                ${selectedColumnIndex === columnIndex
+                                  ? 'bg-green-400/20 border-2 border-green-400'
+                                  : 'bg-dark-panel border border-dark-border hover:bg-dark-hover'
+                                }
+                              `}
+                              title={`Edit Column ${columnIndex + 1} (Order: ${displayOrder})`}
+                            >
+                              {/* Order Badge */}
+                              <div className="absolute top-1 right-1 px-1.5 py-0.5 bg-green-500 text-white text-[10px] font-bold rounded">
+                                {displayOrder}
+                              </div>
+                              <FiColumns size={20} className={selectedColumnIndex === columnIndex ? 'text-green-400' : 'text-light-muted'} />
+                              <span className="text-xs text-light-text">Col {columnIndex + 1}</span>
+                              <FiSettings size={14} className={selectedColumnIndex === columnIndex ? 'text-green-400' : 'text-light-muted'} />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
                   {selectedColumnIndex !== null && (
                     <p className="text-xs text-green-400 mt-2 flex items-center gap-1">
                       <FiSettings size={12} />
