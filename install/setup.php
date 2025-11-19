@@ -508,6 +508,7 @@ function runMigrationsManually(): void
                 `name` VARCHAR(255) NOT NULL,
                 `parent_id` BIGINT UNSIGNED NULL,
                 `user_id` BIGINT UNSIGNED NOT NULL,
+                `order` INT NOT NULL DEFAULT 0,
                 `created_at` TIMESTAMP NULL,
                 `updated_at` TIMESTAMP NULL,
                 INDEX `media_folders_parent_id_index` (`parent_id`),

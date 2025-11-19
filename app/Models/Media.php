@@ -42,6 +42,13 @@ class Media extends Model
         'disk' => 'public',
     ];
 
+    protected $appends = [
+        'url',
+        'webp_url',
+        'thumbnail_url',
+        'medium_url',
+    ];
+
     // ============================================
     // Relationships
     // ============================================
