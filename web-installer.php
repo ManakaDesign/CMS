@@ -21,8 +21,8 @@ $memoryLimit = '512M';
 @ini_set('memory_limit', $memoryLimit);
 
 // Check if already extracted
-if (file_exists($extractPath . '/install.php') && file_exists($extractPath . '/vendor/autoload.php')) {
-    header('Location: /install.php');
+if (file_exists($extractPath . '/install/setup.php') && file_exists($extractPath . '/vendor/autoload.php')) {
+    header('Location: /install/setup.php');
     exit;
 }
 
@@ -512,7 +512,7 @@ function displayInterface() {
                         btn.disabled = false;
                         btn.textContent = '✓ Continue to Installation';
                         btn.onclick = function() {
-                            window.location.href = '/install.php';
+                            window.location.href = '/install/setup.php';
                         };
                     } else {
                         message.className = 'error';
