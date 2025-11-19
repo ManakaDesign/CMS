@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => 'laravel/laravel',
-        'pretty_version' => 'dev-claude/analyze-progress-context-011CUrwcbeVoeABYz5xWsyU7',
-        'version' => 'dev-claude/analyze-progress-context-011CUrwcbeVoeABYz5xWsyU7',
-        'reference' => 'c868f83ba35e261b0a804c3908cb09bc7320c7b8',
+        'pretty_version' => 'dev-claude/continue-previous-work-01NWiRMhG9c2ZYPjMFjqmUk1',
+        'version' => 'dev-claude/continue-previous-work-01NWiRMhG9c2ZYPjMFjqmUk1',
+        'reference' => '0c5ca10cf4d2eb1fe545d344b8703d3de8072c76',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -376,6 +376,24 @@
                 0 => 'v12.37.0',
             ),
         ),
+        'intervention/gif' => array(
+            'pretty_version' => '4.2.2',
+            'version' => '4.2.2.0',
+            'reference' => '5999eac6a39aa760fb803bc809e8909ee67b451a',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../intervention/gif',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'intervention/image' => array(
+            'pretty_version' => '3.11.4',
+            'version' => '3.11.4.0',
+            'reference' => '8c49eb21a6d2572532d1bc425964264f3e496846',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../intervention/image',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
         'kodova/hamcrest-php' => array(
             'dev_requirement' => true,
             'replaced' => array(
@@ -392,9 +410,9 @@
             'dev_requirement' => false,
         ),
         'laravel/laravel' => array(
-            'pretty_version' => 'dev-claude/analyze-progress-context-011CUrwcbeVoeABYz5xWsyU7',
-            'version' => 'dev-claude/analyze-progress-context-011CUrwcbeVoeABYz5xWsyU7',
-            'reference' => 'c868f83ba35e261b0a804c3908cb09bc7320c7b8',
+            'pretty_version' => 'dev-claude/continue-previous-work-01NWiRMhG9c2ZYPjMFjqmUk1',
+            'version' => 'dev-claude/continue-previous-work-01NWiRMhG9c2ZYPjMFjqmUk1',
+            'reference' => '0c5ca10cf4d2eb1fe545d344b8703d3de8072c76',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
