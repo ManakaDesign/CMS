@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Media;
+use App\Services\MediaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -12,12 +13,28 @@ use Illuminate\Support\Str;
 
 class MediaController extends Controller
 {
+    protected MediaService $mediaService;
+
+    public function __construct(MediaService $mediaService)
+    {
+        $this->mediaService = $mediaService;
+    }
+
     /**
      * Display a listing of media
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Media::with('user:id,name');
+        $query = Media::with('user:id,name', 'folder:id,name');
+
+        // Filter by folder
+        if ($request->has('folder_id')) {
+            if ($request->folder_id === 'null' || $request->folder_id === null) {
+                $query->whereNull('folder_id');
+            } else {
+                $query->where('folder_id', $request->folder_id);
+            }
+        }
 
         // Filter by type
         if ($request->has('type')) {
@@ -51,9 +68,11 @@ class MediaController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'file' => 'required|file|max:10240', // 10MB max
+            'file' => 'required|file|max:51200', // 50MB max
             'alt_text' => 'nullable|string|max:255',
             'caption' => 'nullable|string',
+            'folder_id' => 'nullable|exists:media_folders,id',
+            'make_svg_colorable' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -64,34 +83,22 @@ class MediaController extends Controller
         }
 
         $file = $request->file('file');
-        $originalFilename = $file->getClientOriginalName();
-        $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
-        $path = $file->storeAs('uploads', $filename, 'public');
+        $makeSvgColorable = $request->boolean('make_svg_colorable', false);
 
-        // Get image dimensions if it's an image
-        $width = null;
-        $height = null;
-        if (str_starts_with($file->getMimeType(), 'image/')) {
-            try {
-                [$width, $height] = getimagesize($file->getRealPath());
-            } catch (\Exception $e) {
-                // Ignore if we can't get dimensions
-            }
-        }
+        // Process upload with MediaService
+        $processedData = $this->mediaService->processUpload($file, $makeSvgColorable);
 
+        // Create media record
         $media = Media::create([
-            'filename' => $filename,
-            'original_filename' => $originalFilename,
-            'path' => $path,
-            'disk' => 'public',
-            'mime_type' => $file->getMimeType(),
-            'size' => $file->getSize(),
-            'width' => $width,
-            'height' => $height,
+            ...$processedData,
             'alt_text' => $request->input('alt_text'),
             'caption' => $request->input('caption'),
+            'folder_id' => $request->input('folder_id'),
             'user_id' => $request->user()->id,
         ]);
+
+        // Load relationships
+        $media->load('user:id,name', 'folder:id,name');
 
         return response()->json([
             'message' => 'Media uploaded successfully',
@@ -117,6 +124,7 @@ class MediaController extends Controller
         $validator = Validator::make($request->all(), [
             'alt_text' => 'nullable|string|max:255',
             'caption' => 'nullable|string',
+            'folder_id' => 'nullable|exists:media_folders,id',
         ]);
 
         if ($validator->fails()) {
@@ -126,7 +134,8 @@ class MediaController extends Controller
             ], 422);
         }
 
-        $media->update($request->only(['alt_text', 'caption']));
+        $media->update($request->only(['alt_text', 'caption', 'folder_id']));
+        $media->load('user:id,name', 'folder:id,name');
 
         return response()->json([
             'message' => 'Media updated successfully',

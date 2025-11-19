@@ -3,6 +3,7 @@ import type {
   Page,
   Element,
   Media,
+  MediaFolder,
   Template,
   User,
   LoginRequest,
@@ -13,7 +14,6 @@ import type {
   CreateElementRequest,
   UpdateElementRequest,
   ReorderElementsRequest,
-  // UploadMediaRequest, // TODO: Implement media upload
   PaginatedResponse,
 } from '../types';
 
@@ -152,7 +152,7 @@ export const elementsApi = {
 // ============================================
 
 export const mediaApi = {
-  list: async (params?: { type?: string; search?: string; per_page?: number; page?: number }) => {
+  list: async (params?: { type?: string; search?: string; folder_id?: number | null; per_page?: number; page?: number }) => {
     const { data } = await apiClient.get<PaginatedResponse<Media>>('/media', { params });
     return data;
   },
@@ -162,11 +162,13 @@ export const mediaApi = {
     return data;
   },
 
-  upload: async (file: File, altText?: string, caption?: string) => {
+  upload: async (file: File, options?: { alt_text?: string; caption?: string; folder_id?: number; make_svg_colorable?: boolean }) => {
     const formData = new FormData();
     formData.append('file', file);
-    if (altText) formData.append('alt_text', altText);
-    if (caption) formData.append('caption', caption);
+    if (options?.alt_text) formData.append('alt_text', options.alt_text);
+    if (options?.caption) formData.append('caption', options.caption);
+    if (options?.folder_id) formData.append('folder_id', String(options.folder_id));
+    if (options?.make_svg_colorable) formData.append('make_svg_colorable', '1');
 
     const { data } = await apiClient.post<{ media: Media; message: string }>('/media', formData, {
       headers: {
@@ -176,7 +178,7 @@ export const mediaApi = {
     return data;
   },
 
-  update: async (mediaId: number, updates: { alt_text?: string; caption?: string }) => {
+  update: async (mediaId: number, updates: { alt_text?: string; caption?: string; folder_id?: number | null }) => {
     const { data } = await apiClient.put<{ media: Media; message: string }>(
       `/media/${mediaId}`,
       updates
@@ -186,6 +188,48 @@ export const mediaApi = {
 
   delete: async (mediaId: number) => {
     const { data } = await apiClient.delete<{ message: string }>(`/media/${mediaId}`);
+    return data;
+  },
+};
+
+// ============================================
+// Media Folders API
+// ============================================
+
+export const mediaFoldersApi = {
+  list: async () => {
+    const { data } = await apiClient.get<{ data: MediaFolder[] }>('/media/folders');
+    return data.data;
+  },
+
+  get: async (folderId: number) => {
+    const { data } = await apiClient.get<MediaFolder>(`/media/folders/${folderId}`);
+    return data;
+  },
+
+  create: async (folderData: { name: string; parent_id?: number }) => {
+    const { data } = await apiClient.post<{ folder: MediaFolder; message: string }>(
+      '/media/folders',
+      folderData
+    );
+    return data;
+  },
+
+  update: async (folderId: number, updates: { name?: string; parent_id?: number | null }) => {
+    const { data } = await apiClient.put<{ folder: MediaFolder; message: string }>(
+      `/media/folders/${folderId}`,
+      updates
+    );
+    return data;
+  },
+
+  delete: async (folderId: number) => {
+    const { data } = await apiClient.delete<{ message: string }>(`/media/folders/${folderId}`);
+    return data;
+  },
+
+  reorder: async (folders: Array<{ id: number; order: number }>) => {
+    const { data } = await apiClient.post<{ message: string }>('/media/folders/reorder', { folders });
     return data;
   },
 };

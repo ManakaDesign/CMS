@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ElementController;
 use App\Http\Controllers\Api\MediaController;
+use App\Http\Controllers\Api\MediaFolderController;
 use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Api\TemplateController;
 use Illuminate\Support\Facades\Route;
@@ -74,6 +75,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/{media}', [MediaController::class, 'show'])->name('show');
         Route::put('/{media}', [MediaController::class, 'update'])->name('update');
         Route::delete('/{media}', [MediaController::class, 'destroy'])->name('destroy');
+
+        // Media Folders
+        Route::prefix('folders')->name('folders.')->group(function () {
+            Route::get('/', [MediaFolderController::class, 'index'])->name('index');
+            Route::post('/', [MediaFolderController::class, 'store'])->name('store');
+            Route::get('/{folder}', [MediaFolderController::class, 'show'])->name('show');
+            Route::put('/{folder}', [MediaFolderController::class, 'update'])->name('update');
+            Route::delete('/{folder}', [MediaFolderController::class, 'destroy'])->name('destroy');
+            Route::post('/reorder', [MediaFolderController::class, 'reorder'])->name('reorder');
+        });
     });
 
     // Templates

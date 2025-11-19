@@ -160,6 +160,9 @@ export interface Media {
   filename: string;
   original_filename: string;
   path: string;
+  webp_path?: string;
+  thumbnail_path?: string;
+  medium_path?: string;
   disk: string;
   mime_type: string;
   size: number;
@@ -167,16 +170,50 @@ export interface Media {
   height?: number;
   alt_text?: string;
   caption?: string;
+  is_svg_colorable?: boolean;
+  metadata?: Record<string, any>;
   user_id: number;
+  folder_id?: number;
   created_at: string;
   updated_at: string;
 
   // Computed
   url?: string;
+  webp_url?: string;
+  thumbnail_url?: string;
+  medium_url?: string;
   human_size?: string;
   is_image?: boolean;
   is_video?: boolean;
+  is_svg?: boolean;
   dimensions?: string;
+
+  // Relations
+  folder?: MediaFolder;
+  user?: {
+    id: number;
+    name: string;
+  };
+}
+
+export interface MediaFolder {
+  id: number;
+  name: string;
+  parent_id?: number;
+  user_id: number;
+  order: number;
+  created_at: string;
+  updated_at: string;
+
+  // Computed
+  path?: string;
+  child_ids?: number[];
+
+  // Relations
+  parent?: MediaFolder;
+  children?: MediaFolder[];
+  media?: Media[];
+  media_count?: number;
 }
 
 // ============================================
