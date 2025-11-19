@@ -21,6 +21,18 @@ return new class extends Migration
             $table->unsignedBigInteger('size'); // in bytes
             $table->integer('width')->nullable();
             $table->integer('height')->nullable();
+
+            // SVG specific
+            $table->boolean('is_svg_colorable')->default(false);
+
+            // Additional metadata
+            $table->json('metadata')->nullable();
+
+            // Optimized versions
+            $table->string('webp_path')->nullable();
+            $table->string('thumbnail_path')->nullable();
+            $table->string('medium_path')->nullable();
+
             $table->string('alt_text')->nullable();
             $table->text('caption')->nullable();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
