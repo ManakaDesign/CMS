@@ -63,7 +63,8 @@ export type ElementType =
   | 'spacer'
   | 'divider'
   | 'video'
-  | 'code';
+  | 'code'
+  | 'icon';
 
 export interface ElementStyles {
   desktop?: CSSProperties;

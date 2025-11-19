@@ -11,6 +11,7 @@ import {
   FaMinus,
   FaVideo,
   FaCode,
+  FaStar,
 } from 'react-icons/fa';
 import { DraggableElement } from './DraggableElement';
 import type { ElementType } from '../../types';
@@ -32,6 +33,7 @@ const elementDefinitions: ElementDefinition[] = [
   { type: 'text', label: 'Text', icon: <FaFont />, category: 'Content' },
   { type: 'heading', label: 'Heading', icon: <FaHeading />, category: 'Content' },
   { type: 'button', label: 'Button', icon: <FaMousePointer />, category: 'Content' },
+  { type: 'icon', label: 'Icon', icon: <FaStar />, category: 'Content' },
 
   // Media
   { type: 'image', label: 'Image', icon: <FaImage />, category: 'Media' },

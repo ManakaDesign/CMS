@@ -15,7 +15,7 @@ type BackgroundType = 'color' | 'gradient' | 'image' | 'video' | 'none';
 // Element type groups for multiselect logic
 const ELEMENT_GROUPS = {
   container: ['section', 'row'],
-  content: ['text', 'heading', 'button', 'image', 'video', 'spacer', 'divider', 'code'],
+  content: ['text', 'heading', 'button', 'image', 'video', 'spacer', 'divider', 'code', 'icon'],
 } as const;
 
 // Helper to get element group
@@ -629,6 +629,32 @@ export const ElementSettings: React.FC = () => {
                 <option value="1/1">1:1 (Square)</option>
                 <option value="21/9">21:9 (Ultrawide)</option>
               </select>
+            </div>
+          </>
+        )}
+
+        {/* Icon Settings */}
+        {element.type === 'icon' && (
+          <>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-light-text mb-2">Icon</label>
+              <button
+                onClick={() => setIconPickerOpen('icon' as any)}
+                className="w-full px-4 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text hover:bg-dark-hover transition-colors text-left flex items-center justify-between"
+              >
+                <span>{element.settings.icon || 'FiStar'}</span>
+                <FiSettings size={16} />
+              </button>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-light-text mb-2">Icon Size (px)</label>
+              <NumberInput
+                value={element.settings.iconSize || 24}
+                onChange={(value) => updateSetting('iconSize', value)}
+                min={8}
+                max={256}
+                step={1}
+              />
             </div>
           </>
         )}
@@ -2194,11 +2220,19 @@ export const ElementSettings: React.FC = () => {
       )}
 
       {/* Icon Picker Modal */}
-      {iconPickerOpen && element && element.type === 'button' && (
+      {iconPickerOpen && element && (
         <IconPicker
-          selectedIcon={iconPickerOpen === 'before' ? element.settings.iconBefore : element.settings.iconAfter}
+          selectedIcon={
+            element.type === 'icon'
+              ? element.settings.icon
+              : iconPickerOpen === 'before'
+              ? element.settings.iconBefore
+              : element.settings.iconAfter
+          }
           onSelect={(iconName) => {
-            if (iconPickerOpen === 'before') {
+            if (element.type === 'icon') {
+              updateSetting('icon', iconName);
+            } else if (iconPickerOpen === 'before') {
               updateSetting('iconBefore', iconName);
             } else {
               updateSetting('iconAfter', iconName);
