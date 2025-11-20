@@ -162,7 +162,16 @@ export const mediaApi = {
     return data;
   },
 
-  upload: async (file: File, options?: { alt_text?: string; caption?: string; folder_id?: number; make_svg_colorable?: boolean }) => {
+  upload: async (
+    file: File,
+    options?: {
+      alt_text?: string;
+      caption?: string;
+      folder_id?: number;
+      make_svg_colorable?: boolean;
+      onProgress?: (progress: number) => void;
+    }
+  ) => {
     const formData = new FormData();
     formData.append('file', file);
     if (options?.alt_text) formData.append('alt_text', options.alt_text);
@@ -173,6 +182,12 @@ export const mediaApi = {
     const { data } = await apiClient.post<{ media: Media; message: string }>('/media', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
+      },
+      onUploadProgress: (progressEvent) => {
+        if (options?.onProgress && progressEvent.total) {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          options.onProgress(percentCompleted);
+        }
       },
     });
     return data;

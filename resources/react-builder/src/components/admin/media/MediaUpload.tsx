@@ -106,6 +106,15 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
         options.make_svg_colorable = true;
       }
 
+      // Add progress callback
+      options.onProgress = (progress: number) => {
+        setFiles((prev) =>
+          prev.map((f) =>
+            f.file === uploadFile.file ? { ...f, progress } : f
+          )
+        );
+      };
+
       const result = await mediaApi.upload(uploadFile.file, options);
 
       setFiles((prev) =>

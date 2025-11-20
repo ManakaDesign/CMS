@@ -71,16 +71,16 @@ const MediaGrid: React.FC<MediaGridProps> = ({
     <div className="flex flex-col h-full">
       {/* Select All Header */}
       {media.length > 0 && (
-        <div className="px-6 py-3 border-b border-gray-200 bg-white flex items-center gap-3">
+        <div className="px-6 py-3 border-b border-dark-border bg-dark-surface flex items-center gap-3">
           <button
             onClick={onSelectAll}
-            className="flex items-center gap-2 text-sm text-gray-700 hover:text-blue-600 transition-colors"
+            className="flex items-center gap-2 text-sm text-light-text hover:text-brand-primary transition-colors"
           >
             {allSelected ? <FiCheckSquare size={18} /> : <FiSquare size={18} />}
             <span>{allSelected ? 'Deselect All' : 'Select All'}</span>
           </button>
           {selectedMediaIds.size > 0 && (
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-400">
               {selectedMediaIds.size} selected
             </span>
           )}
