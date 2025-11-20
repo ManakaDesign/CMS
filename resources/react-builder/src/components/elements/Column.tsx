@@ -20,7 +20,7 @@ export const Column: React.FC<ColumnProps> = (props) => {
   const { setNodeRef, isOver } = useDroppable({
     id: `column-${element.id}`,
     data: {
-      accepts: ['text', 'heading', 'button', 'image', 'video', 'spacer', 'divider', 'code'],
+      accepts: ['text', 'heading', 'button', 'image', 'video', 'spacer', 'divider', 'code', 'icon'],
       parentId: element.id,
     },
   });
