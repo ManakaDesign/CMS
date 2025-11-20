@@ -47,6 +47,11 @@ class Media extends Model
         'webp_url',
         'thumbnail_url',
         'medium_url',
+        'is_image',
+        'is_video',
+        'is_svg',
+        'human_size',
+        'dimensions',
     ];
 
     // ============================================
