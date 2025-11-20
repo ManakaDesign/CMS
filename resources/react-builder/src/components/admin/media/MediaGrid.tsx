@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiImage, FiVideo, FiFile, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiImage, FiVideo, FiFile, FiChevronLeft, FiChevronRight, FiCheckSquare, FiSquare } from 'react-icons/fi';
 import type { Media } from '../../../types';
 
 interface MediaGridProps {
@@ -7,6 +7,9 @@ interface MediaGridProps {
   viewMode: 'grid' | 'list';
   isLoading: boolean;
   onMediaClick: (media: Media) => void;
+  selectedMediaIds: Set<number>;
+  onMediaSelect: (mediaId: number, isShiftKey: boolean, isCtrlKey: boolean) => void;
+  onSelectAll: () => void;
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
@@ -17,6 +20,9 @@ const MediaGrid: React.FC<MediaGridProps> = ({
   viewMode,
   isLoading,
   onMediaClick,
+  selectedMediaIds,
+  onMediaSelect,
+  onSelectAll,
   currentPage,
   totalPages,
   onPageChange,
@@ -59,20 +65,68 @@ const MediaGrid: React.FC<MediaGridProps> = ({
     );
   }
 
+  const allSelected = media.length > 0 && media.every((m) => selectedMediaIds.has(m.id));
+
   return (
     <div className="flex flex-col h-full">
+      {/* Select All Header */}
+      {media.length > 0 && (
+        <div className="px-6 py-3 border-b border-gray-200 bg-white flex items-center gap-3">
+          <button
+            onClick={onSelectAll}
+            className="flex items-center gap-2 text-sm text-gray-700 hover:text-blue-600 transition-colors"
+          >
+            {allSelected ? <FiCheckSquare size={18} /> : <FiSquare size={18} />}
+            <span>{allSelected ? 'Deselect All' : 'Select All'}</span>
+          </button>
+          {selectedMediaIds.size > 0 && (
+            <span className="text-sm text-gray-500">
+              {selectedMediaIds.size} selected
+            </span>
+          )}
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto">
         {viewMode === 'grid' ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-6">
             {media.map((item) => {
               const thumbnail = getMediaThumbnail(item);
+              const isSelected = selectedMediaIds.has(item.id);
 
               return (
                 <div
                   key={item.id}
-                  onClick={() => onMediaClick(item)}
-                  className="group relative aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
+                  onClick={(e) => {
+                    if (e.ctrlKey || e.metaKey || e.shiftKey) {
+                      onMediaSelect(item.id, e.shiftKey, e.ctrlKey || e.metaKey);
+                    } else {
+                      onMediaClick(item);
+                    }
+                  }}
+                  className={`group relative aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer transition-all ${
+                    isSelected
+                      ? 'ring-4 ring-blue-500'
+                      : 'hover:ring-2 hover:ring-blue-500'
+                  }`}
                 >
+                  {/* Checkbox */}
+                  <div
+                    className="absolute top-2 left-2 z-10"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onMediaSelect(item.id, false, true);
+                    }}
+                  >
+                    <div className={`w-6 h-6 rounded flex items-center justify-center transition-colors ${
+                      isSelected
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white/80 text-gray-700 opacity-0 group-hover:opacity-100'
+                    }`}>
+                      {isSelected ? <FiCheckSquare size={16} /> : <FiSquare size={16} />}
+                    </div>
+                  </div>
+
                   {/* Thumbnail/Icon */}
                   {thumbnail ? (
                     <img
@@ -87,7 +141,9 @@ const MediaGrid: React.FC<MediaGridProps> = ({
                   )}
 
                   {/* Overlay */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all" />
+                  <div className={`absolute inset-0 transition-all ${
+                    isSelected ? 'bg-blue-500/20' : 'bg-black/0 group-hover:bg-black/40'
+                  }`} />
 
                   {/* Info Overlay */}
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-3 opacity-0 group-hover:opacity-100 transition-opacity">

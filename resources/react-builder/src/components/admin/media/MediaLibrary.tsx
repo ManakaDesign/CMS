@@ -6,6 +6,7 @@ import FolderTree from './FolderTree';
 import MediaUpload from './MediaUpload';
 import MediaGrid from './MediaGrid';
 import MediaDetailModal from './MediaDetailModal';
+import MediaActionBar from './MediaActionBar';
 
 type ViewMode = 'grid' | 'list';
 type MediaTypeFilter = 'all' | 'image' | 'video';
@@ -16,6 +17,7 @@ const MediaLibrary: React.FC = () => {
   const [folders, setFolders] = useState<MediaFolder[]>([]);
   const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
+  const [selectedMediaIds, setSelectedMediaIds] = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [mediaTypeFilter, setMediaTypeFilter] = useState<MediaTypeFilter>('all');
@@ -116,6 +118,75 @@ const MediaLibrary: React.FC = () => {
   const handleFolderSelect = (folderId: number | null) => {
     setSelectedFolderId(folderId);
     setPage(1);
+    setSelectedMediaIds(new Set()); // Clear selection when changing folders
+  };
+
+  // Multiselect handlers
+  const handleMediaSelect = (mediaId: number, isShiftKey: boolean, isCtrlKey: boolean) => {
+    setSelectedMediaIds((prev) => {
+      const newSet = new Set(prev);
+
+      if (isCtrlKey) {
+        // Ctrl+Click: Toggle selection
+        if (newSet.has(mediaId)) {
+          newSet.delete(mediaId);
+        } else {
+          newSet.add(mediaId);
+        }
+      } else if (isShiftKey && newSet.size > 0) {
+        // Shift+Click: Range selection
+        const lastSelectedId = Array.from(newSet)[newSet.size - 1];
+        const currentIndex = media.findIndex((m) => m.id === mediaId);
+        const lastIndex = media.findIndex((m) => m.id === lastSelectedId);
+
+        const start = Math.min(currentIndex, lastIndex);
+        const end = Math.max(currentIndex, lastIndex);
+
+        for (let i = start; i <= end; i++) {
+          newSet.add(media[i].id);
+        }
+      } else {
+        // Regular click: Clear and select only this one
+        newSet.clear();
+        newSet.add(mediaId);
+      }
+
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = () => {
+    setSelectedMediaIds(new Set(media.map((m) => m.id)));
+  };
+
+  const handleClearSelection = () => {
+    setSelectedMediaIds(new Set());
+  };
+
+  const handleBulkMoveToFolder = async (folderId: number | null) => {
+    try {
+      await mediaApi.bulkMove(Array.from(selectedMediaIds), folderId);
+      setSelectedMediaIds(new Set());
+      loadMedia(); // Reload to reflect changes
+    } catch (error) {
+      console.error('Failed to move media:', error);
+      alert('Failed to move media files');
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Are you sure you want to delete ${selectedMediaIds.size} media file(s)? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await mediaApi.bulkDelete(Array.from(selectedMediaIds));
+      setSelectedMediaIds(new Set());
+      loadMedia(); // Reload to reflect changes
+    } catch (error) {
+      console.error('Failed to delete media:', error);
+      alert('Failed to delete media files');
+    }
   };
 
   return (
@@ -268,6 +339,9 @@ const MediaLibrary: React.FC = () => {
             viewMode={viewMode}
             isLoading={isLoading}
             onMediaClick={setSelectedMedia}
+            selectedMediaIds={selectedMediaIds}
+            onMediaSelect={handleMediaSelect}
+            onSelectAll={handleSelectAll}
             currentPage={page}
             totalPages={totalPages}
             onPageChange={setPage}
@@ -292,6 +366,17 @@ const MediaLibrary: React.FC = () => {
           onClose={() => setSelectedMedia(null)}
           onUpdate={handleMediaUpdate}
           onDelete={handleMediaDelete}
+        />
+      )}
+
+      {/* Action Bar (shown when items are selected) */}
+      {selectedMediaIds.size > 0 && (
+        <MediaActionBar
+          selectedCount={selectedMediaIds.size}
+          folders={folders}
+          onMoveToFolder={handleBulkMoveToFolder}
+          onDelete={handleBulkDelete}
+          onClearSelection={handleClearSelection}
         />
       )}
     </>

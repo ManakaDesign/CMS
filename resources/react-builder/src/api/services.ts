@@ -187,7 +187,22 @@ export const mediaApi = {
   },
 
   delete: async (mediaId: number) => {
-    const { data } = await apiClient.delete<{ message: string }>(`/media/${mediaId}`);
+    const { data} = await apiClient.delete<{ message: string }>(`/media/${mediaId}`);
+    return data;
+  },
+
+  bulkMove: async (mediaIds: number[], folderId: number | null) => {
+    const { data } = await apiClient.post<{ message: string; count: number }>('/media/bulk/move', {
+      media_ids: mediaIds,
+      folder_id: folderId,
+    });
+    return data;
+  },
+
+  bulkDelete: async (mediaIds: number[]) => {
+    const { data } = await apiClient.post<{ message: string; count: number }>('/media/bulk/delete', {
+      media_ids: mediaIds,
+    });
     return data;
   },
 };
