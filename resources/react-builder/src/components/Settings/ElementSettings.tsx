@@ -1446,131 +1446,140 @@ export const ElementSettings: React.FC = () => {
 
         {/* Typography */}
         {((isMultiSelect && selectedElements.length > 0) || element) &&
-         (element?.type === 'text' || element?.type === 'heading' || element?.type === 'button' ||
-          selectedElements[0]?.type === 'text' || selectedElements[0]?.type === 'heading' || selectedElements[0]?.type === 'button') && (
+         (element?.type === 'text' || element?.type === 'heading' || element?.type === 'button' || element?.type === 'icon' ||
+          selectedElements[0]?.type === 'text' || selectedElements[0]?.type === 'heading' || selectedElements[0]?.type === 'button' || selectedElements[0]?.type === 'icon') && (
           <CollapsibleSection
             title="Typography"
             isOpen={openSection === 'typography'}
             onToggle={() => setOpenSection(openSection === 'typography' ? '' : 'typography')}
           >
-            {/* Font Family */}
-            <div className="mb-4">
-              <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Font Family</label>
-              <select
-                value={getStyleValue('fontFamily') || 'inherit'}
-                onChange={(e) => updateStyle('fontFamily', e.target.value, activeBreakpoint)}
-                className={`w-full px-3 py-2 bg-dark-panel rounded text-sm text-light-text ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
-              >
-                <option value="inherit">Default</option>
-                <option value="Inter, sans-serif">Inter</option>
-                <option value="Roboto, sans-serif">Roboto</option>
-                <option value="'Open Sans', sans-serif">Open Sans</option>
-                <option value="Montserrat, sans-serif">Montserrat</option>
-                <option value="Lato, sans-serif">Lato</option>
-                <option value="Poppins, sans-serif">Poppins</option>
-                <option value="Georgia, serif">Georgia</option>
-                <option value="'Times New Roman', serif">Times New Roman</option>
-                <option value="'Courier New', monospace">Courier New</option>
-              </select>
-            </div>
+            {/* Only show text-specific fields for text, heading, button elements */}
+            {element?.type !== 'icon' && (
+              <>
+                {/* Font Family */}
+                <div className="mb-4">
+                  <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Font Family</label>
+                  <select
+                    value={getStyleValue('fontFamily') || 'inherit'}
+                    onChange={(e) => updateStyle('fontFamily', e.target.value, activeBreakpoint)}
+                    className={`w-full px-3 py-2 bg-dark-panel rounded text-sm text-light-text ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
+                  >
+                    <option value="inherit">Default</option>
+                    <option value="Inter, sans-serif">Inter</option>
+                    <option value="Roboto, sans-serif">Roboto</option>
+                    <option value="'Open Sans', sans-serif">Open Sans</option>
+                    <option value="Montserrat, sans-serif">Montserrat</option>
+                    <option value="Lato, sans-serif">Lato</option>
+                    <option value="Poppins, sans-serif">Poppins</option>
+                    <option value="Georgia, serif">Georgia</option>
+                    <option value="'Times New Roman', serif">Times New Roman</option>
+                    <option value="'Courier New', monospace">Courier New</option>
+                  </select>
+                </div>
 
-            <div className="mb-4">
-              <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Font Size</label>
-              <NumberInput
-                value={getStyleValue('fontSize') || '16px'}
-                onChange={(val) => updateStyle('fontSize', val, activeBreakpoint)}
-                min={1}
-                max={200}
-                step={1}
-                allowedUnits={['px', 'em', 'rem', '%', 'vh', 'vw']}
-                className={`w-full px-3 py-2 bg-dark-panel text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
-                placeholder={isMultiSelect && hasMultiSelectMixedValues('fontSize') ? 'Mixed Values' : '16'}
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-light-text mb-2">Font Weight</label>
-              <select
-                value={getStyleValue('fontWeight') || 'normal'}
-                onChange={(e) => updateStyle('fontWeight', e.target.value, activeBreakpoint)}
-                className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
-              >
-                <option value="normal">Normal</option>
-                <option value="bold">Bold</option>
-                <option value="300">Light</option>
-                <option value="500">Medium</option>
-                <option value="600">Semi Bold</option>
-                <option value="700">Bold</option>
-              </select>
-            </div>
+                <div className="mb-4">
+                  <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Font Size</label>
+                  <NumberInput
+                    value={getStyleValue('fontSize') || '16px'}
+                    onChange={(val) => updateStyle('fontSize', val, activeBreakpoint)}
+                    min={1}
+                    max={200}
+                    step={1}
+                    allowedUnits={['px', 'em', 'rem', '%', 'vh', 'vw']}
+                    className={`w-full px-3 py-2 bg-dark-panel text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
+                    placeholder={isMultiSelect && hasMultiSelectMixedValues('fontSize') ? 'Mixed Values' : '16'}
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-light-text mb-2">Font Weight</label>
+                  <select
+                    value={getStyleValue('fontWeight') || 'normal'}
+                    onChange={(e) => updateStyle('fontWeight', e.target.value, activeBreakpoint)}
+                    className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                  >
+                    <option value="normal">Normal</option>
+                    <option value="bold">Bold</option>
+                    <option value="300">Light</option>
+                    <option value="500">Medium</option>
+                    <option value="600">Semi Bold</option>
+                    <option value="700">Bold</option>
+                  </select>
+                </div>
 
-            {/* Text Style Toggles */}
+                {/* Text Style Toggles */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-light-text mb-2">Text Style</label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        const currentWeight = getStyleValue('fontWeight');
+                        const isBold = currentWeight === 'bold' || currentWeight === '700' || currentWeight === '600';
+                        updateStyle('fontWeight', isBold ? 'normal' : 'bold', activeBreakpoint);
+                      }}
+                      className={`flex-1 px-3 py-2 rounded text-sm font-bold transition-colors ${
+                        (() => {
+                          const weight = getStyleValue('fontWeight');
+                          return weight === 'bold' || weight === '700' || weight === '600'
+                            ? 'bg-brand-primary text-white'
+                            : 'bg-dark-panel text-light-text hover:bg-dark-hover border border-dark-border';
+                        })()
+                      }`}
+                      title="Bold"
+                    >
+                      B
+                    </button>
+                    <button
+                      onClick={() => {
+                        const current = getStyleValue('fontStyle');
+                        updateStyle('fontStyle', current === 'italic' ? 'normal' : 'italic', activeBreakpoint);
+                      }}
+                      className={`flex-1 px-3 py-2 rounded text-sm italic transition-colors ${
+                        getStyleValue('fontStyle') === 'italic'
+                          ? 'bg-brand-primary text-white'
+                          : 'bg-dark-panel text-light-text hover:bg-dark-hover border border-dark-border'
+                      }`}
+                      title="Italic"
+                    >
+                      I
+                    </button>
+                    <button
+                      onClick={() => {
+                        const current = getStyleValue('textDecoration');
+                        updateStyle('textDecoration', current === 'underline' ? 'none' : 'underline', activeBreakpoint);
+                      }}
+                      className={`flex-1 px-3 py-2 rounded text-sm underline transition-colors ${
+                        getStyleValue('textDecoration') === 'underline'
+                          ? 'bg-brand-primary text-white'
+                          : 'bg-dark-panel text-light-text hover:bg-dark-hover border border-dark-border'
+                      }`}
+                      title="Underline"
+                    >
+                      U
+                    </button>
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Line Height</label>
+                  <NumberInput
+                    value={getStyleValue('lineHeight') || '1.5'}
+                    onChange={(val) => updateStyle('lineHeight', val, activeBreakpoint)}
+                    min={0}
+                    max={10}
+                    step={0.1}
+                    allowedUnits={['px', 'em', 'rem', '%', '']}
+                    defaultUnit=""
+                    className={`w-full px-3 py-2 bg-dark-panel text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
+                    placeholder={isMultiSelect && hasMultiSelectMixedValues('lineHeight') ? 'Mixed Values' : '1.5'}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Icon Color or Text Color */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-light-text mb-2">Text Style</label>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    const currentWeight = getStyleValue('fontWeight');
-                    const isBold = currentWeight === 'bold' || currentWeight === '700' || currentWeight === '600';
-                    updateStyle('fontWeight', isBold ? 'normal' : 'bold', activeBreakpoint);
-                  }}
-                  className={`flex-1 px-3 py-2 rounded text-sm font-bold transition-colors ${
-                    (() => {
-                      const weight = getStyleValue('fontWeight');
-                      return weight === 'bold' || weight === '700' || weight === '600'
-                        ? 'bg-brand-primary text-white'
-                        : 'bg-dark-panel text-light-text hover:bg-dark-hover border border-dark-border';
-                    })()
-                  }`}
-                  title="Bold"
-                >
-                  B
-                </button>
-                <button
-                  onClick={() => {
-                    const current = getStyleValue('fontStyle');
-                    updateStyle('fontStyle', current === 'italic' ? 'normal' : 'italic', activeBreakpoint);
-                  }}
-                  className={`flex-1 px-3 py-2 rounded text-sm italic transition-colors ${
-                    getStyleValue('fontStyle') === 'italic'
-                      ? 'bg-brand-primary text-white'
-                      : 'bg-dark-panel text-light-text hover:bg-dark-hover border border-dark-border'
-                  }`}
-                  title="Italic"
-                >
-                  I
-                </button>
-                <button
-                  onClick={() => {
-                    const current = getStyleValue('textDecoration');
-                    updateStyle('textDecoration', current === 'underline' ? 'none' : 'underline', activeBreakpoint);
-                  }}
-                  className={`flex-1 px-3 py-2 rounded text-sm underline transition-colors ${
-                    getStyleValue('textDecoration') === 'underline'
-                      ? 'bg-brand-primary text-white'
-                      : 'bg-dark-panel text-light-text hover:bg-dark-hover border border-dark-border'
-                  }`}
-                  title="Underline"
-                >
-                  U
-                </button>
-              </div>
-            </div>
-            <div className="mb-4">
-              <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Line Height</label>
-              <NumberInput
-                value={getStyleValue('lineHeight') || '1.5'}
-                onChange={(val) => updateStyle('lineHeight', val, activeBreakpoint)}
-                min={0}
-                max={10}
-                step={0.1}
-                allowedUnits={['px', 'em', 'rem', '%', '']}
-                defaultUnit=""
-                className={`w-full px-3 py-2 bg-dark-panel text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
-                placeholder={isMultiSelect && hasMultiSelectMixedValues('lineHeight') ? 'Mixed Values' : '1.5'}
-              />
-            </div>
-            <div className="mb-4">
-              <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Text Color</label>
+              <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>
+                {element?.type === 'icon' ? 'Icon Color' : 'Text Color'}
+              </label>
               <div className="flex gap-2 items-center">
                 <input
                   type="color"
@@ -1591,6 +1600,9 @@ export const ElementSettings: React.FC = () => {
               )}
               <GlobalColorSwatches onColorSelect={(color) => updateStyle('color', color, activeBreakpoint)} />
             </div>
+
+            {/* Text Alignment - only for text elements */}
+            {element?.type !== 'icon' && (
             <div className="mb-4">
               <label className="block text-sm font-medium text-light-text mb-2">Text Alignment</label>
               <div className="flex items-center gap-1 bg-dark-panel border border-dark-border rounded p-1">
@@ -1635,6 +1647,7 @@ export const ElementSettings: React.FC = () => {
                 </button>
               </div>
             </div>
+            )}
 
             {/* Button Icons - only for button elements */}
             {element?.type === 'button' && (
