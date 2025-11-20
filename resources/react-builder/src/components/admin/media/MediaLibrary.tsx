@@ -93,11 +93,10 @@ const MediaLibrary: React.FC = () => {
     setIsUploadOpen(false);
   };
 
-  const handleMediaUpdate = (updatedMedia: Media) => {
-    setMedia((prev) =>
-      prev.map((item) => (item.id === updatedMedia.id ? updatedMedia : item))
-    );
-    setSelectedMedia(updatedMedia);
+  const handleMediaUpdate = (_updatedMedia: Media) => {
+    // Reload media list to reflect folder changes
+    loadMedia();
+    setSelectedMedia(null);
   };
 
   const handleMediaDelete = (mediaId: number) => {
