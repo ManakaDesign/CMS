@@ -118,6 +118,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/', [MediaController::class, 'index'])->name('index');
         Route::post('/', [MediaController::class, 'store'])->name('store');
 
+        // Bulk actions - Must come before {media} route
+        Route::post('/bulk/move', [MediaController::class, 'bulkMove'])->name('bulk.move');
+        Route::post('/bulk/delete', [MediaController::class, 'bulkDestroy'])->name('bulk.delete');
+
         // Media Folders - Must come BEFORE {media} routes to avoid route conflict
         Route::prefix('folders')->name('folders.')->group(function () {
             Route::get('/', [MediaFolderController::class, 'index'])->name('index');

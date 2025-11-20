@@ -158,4 +158,72 @@ class MediaController extends Controller
             'message' => 'Media deleted successfully',
         ]);
     }
+
+    /**
+     * Bulk move media files to a folder
+     */
+    public function bulkMove(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'media_ids' => 'required|array|min:1',
+            'media_ids.*' => 'required|exists:media,id',
+            'folder_id' => 'nullable|exists:media_folders,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $mediaIds = $request->input('media_ids');
+        $folderId = $request->input('folder_id');
+
+        // Update all media items
+        Media::whereIn('id', $mediaIds)->update([
+            'folder_id' => $folderId,
+        ]);
+
+        return response()->json([
+            'message' => count($mediaIds) . ' media file(s) moved successfully',
+            'count' => count($mediaIds),
+        ]);
+    }
+
+    /**
+     * Bulk delete media files
+     */
+    public function bulkDestroy(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'media_ids' => 'required|array|min:1',
+            'media_ids.*' => 'required|exists:media,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $mediaIds = $request->input('media_ids');
+
+        // Get all media items
+        $mediaItems = Media::whereIn('id', $mediaIds)->get();
+
+        // Delete files from storage
+        foreach ($mediaItems as $media) {
+            $media->deleteFile();
+        }
+
+        // Delete database records
+        Media::whereIn('id', $mediaIds)->delete();
+
+        return response()->json([
+            'message' => count($mediaIds) . ' media file(s) deleted successfully',
+            'count' => count($mediaIds),
+        ]);
+    }
 }
