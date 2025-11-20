@@ -1969,7 +1969,7 @@ export const ElementSettings: React.FC = () => {
         </CollapsibleSection>
 
         {/* Background */}
-        {(isMultiSelect || element) && (element?.type === 'section' || element?.type === 'row' || element?.type === 'button') && (
+        {(isMultiSelect || element) && (element?.type === 'section' || element?.type === 'row' || element?.type === 'button' || element?.type === 'icon') && (
           <CollapsibleSection
             title="Background"
             isOpen={openSection === 'background'}
