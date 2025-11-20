@@ -5,7 +5,6 @@ import { BaseElement } from './BaseElement';
 
 interface IconProps {
   element: Element;
-  children?: React.ReactNode;
   isSelected?: boolean;
   isHovered?: boolean;
   onClick?: () => void;
@@ -13,14 +12,9 @@ interface IconProps {
   onMouseLeave?: () => void;
 }
 
-export const Icon: React.FC<IconProps> = ({
-  element,
-  isSelected,
-  isHovered,
-  onClick,
-  onMouseEnter,
-  onMouseLeave,
-}) => {
+export const Icon: React.FC<IconProps> = (props) => {
+  const { element, ...baseProps } = props;
+
   // Get icon name from settings
   const iconName = element.settings.icon || 'FiStar';
 
@@ -31,14 +25,7 @@ export const Icon: React.FC<IconProps> = ({
   const iconSize = element.settings.iconSize || 24;
 
   return (
-    <BaseElement
-      element={element}
-      isSelected={isSelected}
-      isHovered={isHovered}
-      onClick={onClick}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-    >
+    <BaseElement element={element} {...baseProps}>
       <div
         style={{
           display: 'inline-flex',
