@@ -672,8 +672,15 @@ export const ElementSettings: React.FC = () => {
                       </div>
                       <button
                         onClick={() => {
-                          updateSetting('svgUrl', '');
-                          updateSetting('svgAlt', '');
+                          if (element) {
+                            updateElement(element.id, {
+                              settings: {
+                                ...element.settings,
+                                svgUrl: '',
+                                svgAlt: '',
+                              },
+                            });
+                          }
                         }}
                         className="p-1 hover:bg-dark-hover rounded transition-colors"
                       >
