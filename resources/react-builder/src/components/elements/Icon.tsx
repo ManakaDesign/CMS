@@ -24,6 +24,14 @@ export const Icon: React.FC<IconProps> = (props) => {
   // Parse iconSize to get numeric value
   const sizeValue = typeof iconSize === 'string' ? parseInt(iconSize) : iconSize;
 
+  // Debug log
+  console.log('Icon Element:', {
+    iconType,
+    svgUrl: element.settings.svgUrl,
+    icon: element.settings.icon,
+    allSettings: element.settings,
+  });
+
   // Render React Icon (color controlled by CSS)
   if (iconType === 'react') {
     const iconName = element.settings.icon || 'FiStar';
@@ -46,6 +54,7 @@ export const Icon: React.FC<IconProps> = (props) => {
 
   // Render SVG from Media Library with color control via mask
   if (iconType === 'svg' && element.settings.svgUrl) {
+    console.log('Rendering SVG icon with URL:', element.settings.svgUrl);
     // Check if this is an SVG file
     const isSvg = element.settings.svgUrl.toLowerCase().endsWith('.svg');
 
@@ -90,6 +99,7 @@ export const Icon: React.FC<IconProps> = (props) => {
   }
 
   // Fallback
+  console.log('Rendering fallback icon');
   return (
     <BaseElement element={element} {...baseProps}>
       <div

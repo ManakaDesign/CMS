@@ -125,8 +125,16 @@ export const ElementSettings: React.FC = () => {
         }
         break;
       case 'iconSvg':
-        updateSetting('svgUrl', media.url);
-        updateSetting('svgAlt', media.alt_text || media.original_filename);
+        // Update both svgUrl and svgAlt in a single batch by updating element directly
+        if (element) {
+          updateElement(element.id, {
+            settings: {
+              ...element.settings,
+              svgUrl: media.url,
+              svgAlt: media.alt_text || media.original_filename,
+            },
+          });
+        }
         break;
     }
     setMediaPickerOpen(null);
