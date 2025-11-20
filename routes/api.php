@@ -117,11 +117,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::prefix('media')->name('api.media.')->group(function () {
         Route::get('/', [MediaController::class, 'index'])->name('index');
         Route::post('/', [MediaController::class, 'store'])->name('store');
-        Route::get('/{media}', [MediaController::class, 'show'])->name('show');
-        Route::put('/{media}', [MediaController::class, 'update'])->name('update');
-        Route::delete('/{media}', [MediaController::class, 'destroy'])->name('destroy');
 
-        // Media Folders
+        // Media Folders - Must come BEFORE {media} routes to avoid route conflict
         Route::prefix('folders')->name('folders.')->group(function () {
             Route::get('/', [MediaFolderController::class, 'index'])->name('index');
             Route::post('/', [MediaFolderController::class, 'store'])->name('store');
@@ -130,6 +127,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::delete('/{folder}', [MediaFolderController::class, 'destroy'])->name('destroy');
             Route::post('/reorder', [MediaFolderController::class, 'reorder'])->name('reorder');
         });
+
+        // Media resource routes - These come AFTER folders to prevent 'folders' being matched as {media}
+        Route::get('/{media}', [MediaController::class, 'show'])->name('show');
+        Route::put('/{media}', [MediaController::class, 'update'])->name('update');
+        Route::delete('/{media}', [MediaController::class, 'destroy'])->name('destroy');
     });
 
     // Templates
