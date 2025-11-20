@@ -26,6 +26,41 @@ Route::prefix('public')->group(function () {
     Route::get('/pages/{page:slug}', [PageController::class, 'show'])->name('api.public.pages.show');
 });
 
+// DEBUG ROUTES - Remove after debugging
+Route::get('/debug/ping', function () {
+    return response()->json([
+        'success' => true,
+        'message' => 'API is reachable!',
+        'timestamp' => now()->toIso8601String(),
+    ]);
+});
+
+Route::get('/debug/auth', function () {
+    return response()->json([
+        'success' => true,
+        'is_authenticated' => auth()->check(),
+        'user_id' => auth()->id(),
+        'user_email' => auth()->user()?->email,
+    ]);
+})->middleware(['auth:sanctum']);
+
+Route::get('/debug/folders', function () {
+    try {
+        $folders = \App\Models\MediaFolder::all();
+        return response()->json([
+            'success' => true,
+            'count' => $folders->count(),
+            'folders' => $folders,
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ], 500);
+    }
+})->middleware(['auth:sanctum']);
+
 // Authentication routes (no auth required)
 Route::prefix('auth')->name('api.auth.')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->name('login');
