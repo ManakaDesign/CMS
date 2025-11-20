@@ -70,7 +70,7 @@ export const ElementSettings: React.FC = () => {
   const [syncAllColumns, setSyncAllColumns] = useState<boolean>(false);
   const [iconPickerOpen, setIconPickerOpen] = useState<'before' | 'after' | null>(null);
   const [openSection, setOpenSection] = useState<string>('typography');
-  const [mediaPickerOpen, setMediaPickerOpen] = useState<'image' | 'video' | 'backgroundImage' | 'backgroundVideo' | 'columnBackgroundImage' | null>(null);
+  const [mediaPickerOpen, setMediaPickerOpen] = useState<'image' | 'video' | 'backgroundImage' | 'backgroundVideo' | 'columnBackgroundImage' | 'iconSvg' | null>(null);
 
   // Initialize backgroundType based on what's stored in element
   useEffect(() => {
@@ -123,6 +123,10 @@ export const ElementSettings: React.FC = () => {
           };
           updateSetting('columnsBackground', newColumnsBackground);
         }
+        break;
+      case 'iconSvg':
+        updateSetting('svgUrl', media.url);
+        updateSetting('svgAlt', media.alt_text || media.original_filename);
         break;
     }
     setMediaPickerOpen(null);
@@ -637,15 +641,61 @@ export const ElementSettings: React.FC = () => {
         {element.type === 'icon' && (
           <>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-light-text mb-2">Icon</label>
-              <button
-                onClick={() => setIconPickerOpen('icon' as any)}
-                className="w-full px-4 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text hover:bg-dark-hover transition-colors text-left flex items-center justify-between"
+              <label className="block text-sm font-medium text-light-text mb-2">Icon Type</label>
+              <select
+                value={element.settings.iconType || 'react'}
+                onChange={(e) => updateSetting('iconType', e.target.value)}
+                className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text"
               >
-                <span>{element.settings.icon || 'FiStar'}</span>
-                <FiSettings size={16} />
-              </button>
+                <option value="react">React Icon</option>
+                <option value="svg">SVG from Media</option>
+              </select>
             </div>
+
+            {element.settings.iconType === 'svg' ? (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-light-text mb-2">SVG Icon</label>
+                {element.settings.svgUrl ? (
+                  <div className="relative">
+                    <div className="w-full px-4 py-3 bg-dark-panel border border-dark-border rounded flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <img src={element.settings.svgUrl} alt="Icon" className="w-8 h-8 object-contain" />
+                        <span className="text-sm text-light-text">{element.settings.svgAlt || 'SVG Icon'}</span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          updateSetting('svgUrl', '');
+                          updateSetting('svgAlt', '');
+                        }}
+                        className="p-1 hover:bg-dark-hover rounded transition-colors"
+                      >
+                        <FiX size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setMediaPickerOpen('iconSvg')}
+                    className="w-full px-4 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text hover:bg-dark-hover transition-colors text-left flex items-center justify-between"
+                  >
+                    <span>Select SVG</span>
+                    <FiImage size={16} />
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-light-text mb-2">Icon</label>
+                <button
+                  onClick={() => setIconPickerOpen('icon' as any)}
+                  className="w-full px-4 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text hover:bg-dark-hover transition-colors text-left flex items-center justify-between"
+                >
+                  <span>{element.settings.icon || 'FiStar'}</span>
+                  <FiSettings size={16} />
+                </button>
+              </div>
+            )}
+
             <div className="mb-4">
               <label className="block text-sm font-medium text-light-text mb-2">Icon Size (px)</label>
               <NumberInput
@@ -2247,7 +2297,7 @@ export const ElementSettings: React.FC = () => {
       {mediaPickerOpen && (
         <MediaPicker
           accept={
-            mediaPickerOpen === 'image' || mediaPickerOpen === 'backgroundImage' || mediaPickerOpen === 'columnBackgroundImage'
+            mediaPickerOpen === 'image' || mediaPickerOpen === 'backgroundImage' || mediaPickerOpen === 'columnBackgroundImage' || mediaPickerOpen === 'iconSvg'
               ? 'image'
               : mediaPickerOpen === 'video' || mediaPickerOpen === 'backgroundVideo'
               ? 'video'
@@ -2260,7 +2310,11 @@ export const ElementSettings: React.FC = () => {
               ? 'Select Video'
               : mediaPickerOpen === 'backgroundImage' || mediaPickerOpen === 'columnBackgroundImage'
               ? 'Select Background Image'
-              : 'Select Background Video'
+              : mediaPickerOpen === 'backgroundVideo'
+              ? 'Select Background Video'
+              : mediaPickerOpen === 'iconSvg'
+              ? 'Select SVG Icon'
+              : 'Select Media'
           }
           onSelect={handleMediaSelect}
           onClose={() => setMediaPickerOpen(null)}

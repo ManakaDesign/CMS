@@ -15,15 +15,81 @@ interface IconProps {
 export const Icon: React.FC<IconProps> = (props) => {
   const { element, ...baseProps } = props;
 
-  // Get icon name from settings
-  const iconName = element.settings.icon || 'FiStar';
-
-  // Get the icon component from react-icons
-  const IconComponent = (FiIcons as any)[iconName] || FiIcons.FiStar;
+  // Get icon type: 'react' or 'svg'
+  const iconType = element.settings.iconType || 'react';
 
   // Get icon size from settings (default 24px)
   const iconSize = element.settings.iconSize || 24;
 
+  // Parse iconSize to get numeric value
+  const sizeValue = typeof iconSize === 'string' ? parseInt(iconSize) : iconSize;
+
+  // Render React Icon (color controlled by CSS)
+  if (iconType === 'react') {
+    const iconName = element.settings.icon || 'FiStar';
+    const IconComponent = (FiIcons as any)[iconName] || FiIcons.FiStar;
+
+    return (
+      <BaseElement element={element} {...baseProps}>
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <IconComponent size={sizeValue} style={{ color: 'currentColor' }} />
+        </div>
+      </BaseElement>
+    );
+  }
+
+  // Render SVG from Media Library with color control via mask
+  if (iconType === 'svg' && element.settings.svgUrl) {
+    // Check if this is an SVG file
+    const isSvg = element.settings.svgUrl.toLowerCase().endsWith('.svg');
+
+    return (
+      <BaseElement element={element} {...baseProps}>
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: `${sizeValue}px`,
+            height: `${sizeValue}px`,
+            // Use SVG as mask to allow color control
+            ...(isSvg && {
+              backgroundColor: 'currentColor',
+              WebkitMaskImage: `url(${element.settings.svgUrl})`,
+              maskImage: `url(${element.settings.svgUrl})`,
+              WebkitMaskRepeat: 'no-repeat',
+              maskRepeat: 'no-repeat',
+              WebkitMaskPosition: 'center',
+              maskPosition: 'center',
+              WebkitMaskSize: 'contain',
+              maskSize: 'contain',
+            }),
+          }}
+        >
+          {/* Show image fallback for non-SVG files */}
+          {!isSvg && (
+            <img
+              src={element.settings.svgUrl}
+              alt={element.settings.svgAlt || 'Icon'}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+              }}
+            />
+          )}
+        </div>
+      </BaseElement>
+    );
+  }
+
+  // Fallback
   return (
     <BaseElement element={element} {...baseProps}>
       <div
@@ -33,7 +99,7 @@ export const Icon: React.FC<IconProps> = (props) => {
           justifyContent: 'center',
         }}
       >
-        <IconComponent size={iconSize} />
+        <FiIcons.FiStar size={sizeValue} style={{ color: 'currentColor' }} />
       </div>
     </BaseElement>
   );

@@ -157,13 +157,13 @@ export const NumberInput: React.FC<NumberInputProps> = ({
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         disabled={disabled || localUnit === 'auto'}
-        className={`${className} flex-1 rounded-r-none`}
+        className={`w-full px-3 py-2 bg-dark-panel border border-dark-border rounded-l text-sm text-light-text placeholder-light-muted focus:outline-none focus:border-brand-primary ${className} flex-1 rounded-r-none`}
       />
       <select
         value={localUnit}
         onChange={handleUnitChange}
         disabled={disabled}
-        className="w-20 px-2 py-2 bg-dark-hover border-l border-dark-border rounded-r text-xs text-light-text focus:outline-none focus:border-brand-primary"
+        className="w-20 px-2 py-2 bg-dark-hover border border-l-0 border-dark-border rounded-r text-xs text-light-text focus:outline-none focus:border-brand-primary"
       >
         {allowedUnits.map(unit => (
           <option key={unit} value={unit}>{unit}</option>
