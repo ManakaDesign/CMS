@@ -44,3 +44,11 @@ Route::get('/clear-cache-secret-route', function () {
 Route::get('/public/admin/{any?}', function () {
     return view('admin');
 })->where('any', '.*');
+
+// Fallback login route (Sanctum redirect target)
+Route::get('/login', function () {
+    return response()->json([
+        'error' => 'Unauthenticated',
+        'message' => 'Please login via /api/auth/login'
+    ], 401);
+})->name('login');

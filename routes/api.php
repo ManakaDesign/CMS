@@ -35,12 +35,22 @@ Route::get('/debug/ping', function () {
     ]);
 });
 
+Route::get('/debug/headers', function () {
+    return response()->json([
+        'success' => true,
+        'authorization_header' => request()->header('Authorization'),
+        'bearer_token' => request()->bearerToken(),
+        'all_headers' => request()->headers->all(),
+    ]);
+});
+
 Route::get('/debug/auth', function () {
     return response()->json([
         'success' => true,
         'is_authenticated' => auth()->check(),
         'user_id' => auth()->id(),
         'user_email' => auth()->user()?->email,
+        'bearer_token_received' => request()->bearerToken() ? 'yes' : 'no',
     ]);
 })->middleware(['auth:sanctum']);
 
