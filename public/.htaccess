@@ -18,6 +18,15 @@
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
 
+    # SPA Routes for Admin Panel - Handle all /admin routes
+    # Exclude actual asset files (js, css, images, fonts)
+    RewriteCond %{REQUEST_URI} ^/admin
+    RewriteCond %{REQUEST_URI} !^/admin/assets/
+    RewriteCond %{REQUEST_URI} !^/admin/.*\.(js|css|svg|png|jpg|jpeg|gif|ico|woff|woff2|ttf|eot|webp)$
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L]
+
     # Send Requests To Front Controller...
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f

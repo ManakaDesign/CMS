@@ -41,7 +41,13 @@ Route::get('/clear-cache-secret-route', function () {
 });
 
 // Admin Panel - React SPA
+// Support both /public/admin (when document root is project root)
+// and /admin (when document root is /public folder)
 Route::get('/public/admin/{any?}', function () {
+    return view('admin');
+})->where('any', '.*');
+
+Route::get('/admin/{any?}', function () {
     return view('admin');
 })->where('any', '.*');
 
