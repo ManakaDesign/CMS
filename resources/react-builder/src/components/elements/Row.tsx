@@ -333,7 +333,7 @@ const RowColumn: React.FC<RowColumnProps> = ({
   const { setNodeRef } = useDroppable({
     id: `row-${rowId}-column-${columnIndex}`,
     data: {
-      accepts: ['text', 'heading', 'button', 'image', 'video', 'spacer', 'divider', 'code'],
+      accepts: ['text', 'heading', 'button', 'image', 'video', 'spacer', 'divider', 'code', 'icon'],
       parentId: rowId,
       columnIndex, // Store which column this is
     },
@@ -505,7 +505,7 @@ const RowColumn: React.FC<RowColumnProps> = ({
             id={`row-${rowId}-col-${columnIndex}-drop-before-0`}
             parentId={rowId}
             position="before"
-            accepts={['text', 'heading', 'button', 'image', 'video', 'spacer', 'divider', 'code']}
+            accepts={['text', 'heading', 'button', 'image', 'video', 'spacer', 'divider', 'code', 'icon']}
             index={0}
             columnIndex={columnIndex}
           />
@@ -519,7 +519,7 @@ const RowColumn: React.FC<RowColumnProps> = ({
                 id={`row-${rowId}-col-${columnIndex}-drop-after-${child.id}`}
                 parentId={rowId}
                 position="after"
-                accepts={['text', 'heading', 'button', 'image', 'video', 'spacer', 'divider', 'code']}
+                accepts={['text', 'heading', 'button', 'image', 'video', 'spacer', 'divider', 'code', 'icon']}
                 index={child.order + 1}
                 columnIndex={columnIndex}
               />

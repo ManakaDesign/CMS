@@ -14,6 +14,9 @@ class Media extends Model
         'filename',
         'original_filename',
         'path',
+        'webp_path',
+        'thumbnail_path',
+        'medium_path',
         'disk',
         'mime_type',
         'size',
@@ -21,17 +24,34 @@ class Media extends Model
         'height',
         'alt_text',
         'caption',
+        'is_svg_colorable',
+        'metadata',
         'user_id',
+        'folder_id',
     ];
 
     protected $casts = [
         'size' => 'integer',
         'width' => 'integer',
         'height' => 'integer',
+        'is_svg_colorable' => 'boolean',
+        'metadata' => 'array',
     ];
 
     protected $attributes = [
         'disk' => 'public',
+    ];
+
+    protected $appends = [
+        'url',
+        'webp_url',
+        'thumbnail_url',
+        'medium_url',
+        'is_image',
+        'is_video',
+        'is_svg',
+        'human_size',
+        'dimensions',
     ];
 
     // ============================================
@@ -44,6 +64,14 @@ class Media extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Media belongs to a folder
+     */
+    public function folder(): BelongsTo
+    {
+        return $this->belongsTo(MediaFolder::class, 'folder_id');
     }
 
     // ============================================
@@ -84,6 +112,39 @@ class Media extends Model
     public function getUrlAttribute(): string
     {
         return Storage::disk($this->disk)->url($this->path);
+    }
+
+    /**
+     * Get WebP version URL
+     */
+    public function getWebpUrlAttribute(): ?string
+    {
+        if (!$this->webp_path) {
+            return null;
+        }
+        return Storage::disk($this->disk)->url($this->webp_path);
+    }
+
+    /**
+     * Get thumbnail URL
+     */
+    public function getThumbnailUrlAttribute(): ?string
+    {
+        if (!$this->thumbnail_path) {
+            return $this->url;
+        }
+        return Storage::disk($this->disk)->url($this->thumbnail_path);
+    }
+
+    /**
+     * Get medium size URL
+     */
+    public function getMediumUrlAttribute(): ?string
+    {
+        if (!$this->medium_path) {
+            return $this->url;
+        }
+        return Storage::disk($this->disk)->url($this->medium_path);
     }
 
     /**
@@ -135,24 +196,31 @@ class Media extends Model
     // ============================================
 
     /**
-     * Delete media file from storage
+     * Delete media file from storage (including all optimized versions)
      */
     public function deleteFile(): bool
     {
-        return Storage::disk($this->disk)->delete($this->path);
+        $deleted = Storage::disk($this->disk)->delete($this->path);
+
+        // Delete optimized versions
+        if ($this->webp_path) {
+            Storage::disk($this->disk)->delete($this->webp_path);
+        }
+        if ($this->thumbnail_path) {
+            Storage::disk($this->disk)->delete($this->thumbnail_path);
+        }
+        if ($this->medium_path) {
+            Storage::disk($this->disk)->delete($this->medium_path);
+        }
+
+        return $deleted;
     }
 
     /**
-     * Get thumbnail URL (for images)
+     * Check if media is SVG
      */
-    public function getThumbnailUrl(?int $width = 150, ?int $height = 150): ?string
+    public function getIsSvgAttribute(): bool
     {
-        if (!$this->is_image) {
-            return null;
-        }
-
-        // TODO: Implement thumbnail generation with Intervention Image
-        // For now, return original URL
-        return $this->url;
+        return $this->mime_type === 'image/svg+xml';
     }
 }

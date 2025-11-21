@@ -21,7 +21,7 @@ $memoryLimit = '512M';
 @ini_set('memory_limit', $memoryLimit);
 
 // Check if already extracted
-if (file_exists($extractPath . '/install/setup.php')) {
+if (file_exists($extractPath . '/install/setup.php') && file_exists($extractPath . '/vendor/autoload.php')) {
     header('Location: /install/setup.php');
     exit;
 }

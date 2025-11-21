@@ -185,6 +185,8 @@ function getDefaultSettings(type: ElementType): Record<string, any> {
       return { style: 'solid', color: '#e5e7eb', width: '100%', height: '1px' };
     case 'code':
       return { code: '// Your code here', language: 'javascript' };
+    case 'icon':
+      return { icon: 'FiStar', iconSize: 24 };
     default:
       return {};
   }
@@ -222,6 +224,11 @@ function getDefaultStyles(type: ElementType): Record<string, any> {
       return {
         display: 'inline-block',
         padding: '12px 24px',
+      };
+    case 'icon':
+      return {
+        color: '#000000',
+        fontSize: '24px',
       };
     default:
       return {};

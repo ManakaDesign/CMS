@@ -502,6 +502,21 @@ function runMigrationsManually(): void
                 FOREIGN KEY (`page_id`) REFERENCES `pages`(`id`) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ",
+        'media_folders' => "
+            CREATE TABLE IF NOT EXISTS `media_folders` (
+                `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `name` VARCHAR(255) NOT NULL,
+                `parent_id` BIGINT UNSIGNED NULL,
+                `user_id` BIGINT UNSIGNED NOT NULL,
+                `order` INT NOT NULL DEFAULT 0,
+                `created_at` TIMESTAMP NULL,
+                `updated_at` TIMESTAMP NULL,
+                INDEX `media_folders_parent_id_index` (`parent_id`),
+                INDEX `media_folders_user_id_index` (`user_id`),
+                FOREIGN KEY (`parent_id`) REFERENCES `media_folders`(`id`) ON DELETE CASCADE,
+                FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ",
         'media' => "
             CREATE TABLE IF NOT EXISTS `media` (
                 `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -513,14 +528,22 @@ function runMigrationsManually(): void
                 `size` BIGINT UNSIGNED NOT NULL,
                 `width` INT NULL,
                 `height` INT NULL,
+                `is_svg_colorable` BOOLEAN NOT NULL DEFAULT 0,
+                `metadata` JSON NULL,
+                `webp_path` VARCHAR(255) NULL,
+                `thumbnail_path` VARCHAR(255) NULL,
+                `medium_path` VARCHAR(255) NULL,
                 `alt_text` VARCHAR(255) NULL,
                 `caption` TEXT NULL,
+                `folder_id` BIGINT UNSIGNED NULL,
                 `user_id` BIGINT UNSIGNED NOT NULL,
                 `created_at` TIMESTAMP NULL,
                 `updated_at` TIMESTAMP NULL,
                 INDEX `media_mime_type_index` (`mime_type`),
                 INDEX `media_user_id_index` (`user_id`),
-                FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+                INDEX `media_folder_id_index` (`folder_id`),
+                FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+                FOREIGN KEY (`folder_id`) REFERENCES `media_folders`(`id`) ON DELETE SET NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ",
         'site_settings' => "
@@ -584,7 +607,8 @@ function getMigrationNameForTable(string $tableName): string
         'pages' => '2025_11_05_130251_create_pages_table',
         'templates' => '2025_11_05_130317_create_templates_table',
         'elements' => '2025_11_05_130318_create_elements_table',
-        'media' => '2025_11_05_130318_create_media_table',
+        'media' => '2024_01_15_000000_create_media_table',
+        'media_folders' => '2024_01_15_000001_create_media_folders_table',
         'site_settings' => '2025_11_05_130319_create_site_settings_table',
         'personal_access_tokens' => '2025_11_05_130320_create_personal_access_tokens_table',
     ];

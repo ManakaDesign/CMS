@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ElementController;
 use App\Http\Controllers\Api\MediaController;
+use App\Http\Controllers\Api\MediaFolderController;
 use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Api\TemplateController;
 use Illuminate\Support\Facades\Route;
@@ -24,6 +25,51 @@ Route::prefix('public')->group(function () {
     Route::get('/pages', [PageController::class, 'index'])->name('api.public.pages.index');
     Route::get('/pages/{page:slug}', [PageController::class, 'show'])->name('api.public.pages.show');
 });
+
+// DEBUG ROUTES - Remove after debugging
+Route::get('/debug/ping', function () {
+    return response()->json([
+        'success' => true,
+        'message' => 'API is reachable!',
+        'timestamp' => now()->toIso8601String(),
+    ]);
+});
+
+Route::get('/debug/headers', function () {
+    return response()->json([
+        'success' => true,
+        'authorization_header' => request()->header('Authorization'),
+        'bearer_token' => request()->bearerToken(),
+        'all_headers' => request()->headers->all(),
+    ]);
+});
+
+Route::get('/debug/auth', function () {
+    return response()->json([
+        'success' => true,
+        'is_authenticated' => auth()->check(),
+        'user_id' => auth()->id(),
+        'user_email' => auth()->user()?->email,
+        'bearer_token_received' => request()->bearerToken() ? 'yes' : 'no',
+    ]);
+})->middleware(['auth:sanctum']);
+
+Route::get('/debug/folders', function () {
+    try {
+        $folders = \App\Models\MediaFolder::all();
+        return response()->json([
+            'success' => true,
+            'count' => $folders->count(),
+            'folders' => $folders,
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ], 500);
+    }
+})->middleware(['auth:sanctum']);
 
 // Authentication routes (no auth required)
 Route::prefix('auth')->name('api.auth.')->group(function () {
@@ -71,6 +117,22 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::prefix('media')->name('api.media.')->group(function () {
         Route::get('/', [MediaController::class, 'index'])->name('index');
         Route::post('/', [MediaController::class, 'store'])->name('store');
+
+        // Bulk actions - Must come before {media} route
+        Route::post('/bulk/move', [MediaController::class, 'bulkMove'])->name('bulk.move');
+        Route::post('/bulk/delete', [MediaController::class, 'bulkDestroy'])->name('bulk.delete');
+
+        // Media Folders - Must come BEFORE {media} routes to avoid route conflict
+        Route::prefix('folders')->name('folders.')->group(function () {
+            Route::get('/', [MediaFolderController::class, 'index'])->name('index');
+            Route::post('/', [MediaFolderController::class, 'store'])->name('store');
+            Route::get('/{folder}', [MediaFolderController::class, 'show'])->name('show');
+            Route::put('/{folder}', [MediaFolderController::class, 'update'])->name('update');
+            Route::delete('/{folder}', [MediaFolderController::class, 'destroy'])->name('destroy');
+            Route::post('/reorder', [MediaFolderController::class, 'reorder'])->name('reorder');
+        });
+
+        // Media resource routes - These come AFTER folders to prevent 'folders' being matched as {media}
         Route::get('/{media}', [MediaController::class, 'show'])->name('show');
         Route::put('/{media}', [MediaController::class, 'update'])->name('update');
         Route::delete('/{media}', [MediaController::class, 'destroy'])->name('destroy');

@@ -7,13 +7,15 @@ import { GlobalColorSwatches } from './GlobalColorSwatches';
 import { NumberInput } from '../UI/NumberInput';
 import { CollapsibleSection } from '../UI/CollapsibleSection';
 import { IconPicker } from '../UI/IconPicker';
+import MediaPicker from '../admin/media/MediaPicker';
+import type { Media } from '../../types';
 
 type BackgroundType = 'color' | 'gradient' | 'image' | 'video' | 'none';
 
 // Element type groups for multiselect logic
 const ELEMENT_GROUPS = {
   container: ['section', 'row'],
-  content: ['text', 'heading', 'button', 'image', 'video', 'spacer', 'divider', 'code'],
+  content: ['text', 'heading', 'button', 'image', 'video', 'spacer', 'divider', 'code', 'icon'],
 } as const;
 
 // Helper to get element group
@@ -68,6 +70,7 @@ export const ElementSettings: React.FC = () => {
   const [syncAllColumns, setSyncAllColumns] = useState<boolean>(false);
   const [iconPickerOpen, setIconPickerOpen] = useState<'before' | 'after' | null>(null);
   const [openSection, setOpenSection] = useState<string>('typography');
+  const [mediaPickerOpen, setMediaPickerOpen] = useState<'image' | 'video' | 'backgroundImage' | 'backgroundVideo' | 'columnBackgroundImage' | 'iconSvg' | null>(null);
 
   // Initialize backgroundType based on what's stored in element
   useEffect(() => {
@@ -83,6 +86,59 @@ export const ElementSettings: React.FC = () => {
       }
     }
   }, [element?.id]);
+
+  // Handle media selection from MediaPicker
+  const handleMediaSelect = (media: Media) => {
+    if (!element) return;
+
+    switch (mediaPickerOpen) {
+      case 'image':
+        updateSetting('src', media.url);
+        if (!element.settings.alt) {
+          updateSetting('alt', media.alt_text || media.original_filename);
+        }
+        break;
+      case 'video':
+        updateSetting('src', media.url);
+        break;
+      case 'backgroundImage':
+        updateSetting('backgroundImage', {
+          ...element.settings.backgroundImage,
+          url: media.url
+        });
+        break;
+      case 'backgroundVideo':
+        updateSetting('backgroundVideo', {
+          ...element.settings.backgroundVideo,
+          url: media.url
+        });
+        break;
+      case 'columnBackgroundImage':
+        if (selectedColumnIndex !== null) {
+          const currentBackground = element.settings.columnsBackground?.[selectedColumnIndex] || {};
+          const newColumnsBackground = [...(element.settings.columnsBackground || [])];
+          newColumnsBackground[selectedColumnIndex] = {
+            ...currentBackground,
+            imageUrl: media.url
+          };
+          updateSetting('columnsBackground', newColumnsBackground);
+        }
+        break;
+      case 'iconSvg':
+        // Update both svgUrl and svgAlt in a single batch by updating element directly
+        if (element) {
+          updateElement(element.id, {
+            settings: {
+              ...element.settings,
+              svgUrl: media.url,
+              svgAlt: media.alt_text || media.original_filename,
+            },
+          });
+        }
+        break;
+    }
+    setMediaPickerOpen(null);
+  };
 
   if (!element && !isMultiSelect) {
     return (
@@ -497,12 +553,22 @@ export const ElementSettings: React.FC = () => {
           <>
             <div className="mb-4">
               <label className="block text-sm font-medium text-light-text mb-2">Image URL</label>
-              <input
-                type="text"
-                value={element.settings.src || ''}
-                onChange={(e) => updateSetting('src', e.target.value)}
-                className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={element.settings.src || ''}
+                  onChange={(e) => updateSetting('src', e.target.value)}
+                  className="flex-1 px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                  placeholder="https://..."
+                />
+                <button
+                  onClick={() => setMediaPickerOpen('image')}
+                  className="px-4 py-2 bg-brand-primary text-white rounded hover:bg-primary-600 transition-colors text-sm whitespace-nowrap"
+                >
+                  <FiImage className="inline mr-1" size={14} />
+                  Browse
+                </button>
+              </div>
             </div>
             <div className="mb-4">
               <label className="block text-sm font-medium text-light-text mb-2">Alt Text</label>
@@ -533,19 +599,30 @@ export const ElementSettings: React.FC = () => {
             </div>
             <div className="mb-4">
               <label className="block text-sm font-medium text-light-text mb-2">Video URL</label>
-              <input
-                type="text"
-                value={element.settings.src || ''}
-                onChange={(e) => updateSetting('src', e.target.value)}
-                className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
-                placeholder={
-                  element.settings.provider === 'youtube'
-                    ? 'https://www.youtube.com/watch?v=...'
-                    : element.settings.provider === 'vimeo'
-                    ? 'https://vimeo.com/...'
-                    : 'https://example.com/video.mp4'
-                }
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={element.settings.src || ''}
+                  onChange={(e) => updateSetting('src', e.target.value)}
+                  className="flex-1 px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                  placeholder={
+                    element.settings.provider === 'youtube'
+                      ? 'https://www.youtube.com/watch?v=...'
+                      : element.settings.provider === 'vimeo'
+                      ? 'https://vimeo.com/...'
+                      : 'https://example.com/video.mp4'
+                  }
+                />
+                {(!element.settings.provider || element.settings.provider === 'direct') && (
+                  <button
+                    onClick={() => setMediaPickerOpen('video')}
+                    className="px-4 py-2 bg-brand-primary text-white rounded hover:bg-primary-600 transition-colors text-sm whitespace-nowrap"
+                  >
+                    <FiVideo className="inline mr-1" size={14} />
+                    Browse
+                  </button>
+                )}
+              </div>
               <p className="text-xs text-light-muted mt-1">
                 {element.settings.provider === 'youtube' && 'Enter YouTube video URL'}
                 {element.settings.provider === 'vimeo' && 'Enter Vimeo video URL'}
@@ -564,6 +641,85 @@ export const ElementSettings: React.FC = () => {
                 <option value="1/1">1:1 (Square)</option>
                 <option value="21/9">21:9 (Ultrawide)</option>
               </select>
+            </div>
+          </>
+        )}
+
+        {/* Icon Settings */}
+        {element.type === 'icon' && (
+          <>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-light-text mb-2">Icon Type</label>
+              <select
+                value={element.settings.iconType || 'react'}
+                onChange={(e) => updateSetting('iconType', e.target.value)}
+                className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text"
+              >
+                <option value="react">React Icon</option>
+                <option value="svg">SVG from Media</option>
+              </select>
+            </div>
+
+            {element.settings.iconType === 'svg' ? (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-light-text mb-2">SVG Icon</label>
+                {element.settings.svgUrl ? (
+                  <div className="relative">
+                    <div className="w-full px-4 py-3 bg-dark-panel border border-dark-border rounded flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <img src={element.settings.svgUrl} alt="Icon" className="w-8 h-8 object-contain" />
+                        <span className="text-sm text-light-text">{element.settings.svgAlt || 'SVG Icon'}</span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          if (element) {
+                            updateElement(element.id, {
+                              settings: {
+                                ...element.settings,
+                                svgUrl: '',
+                                svgAlt: '',
+                              },
+                            });
+                          }
+                        }}
+                        className="p-1 hover:bg-dark-hover rounded transition-colors"
+                      >
+                        <FiX size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setMediaPickerOpen('iconSvg')}
+                    className="w-full px-4 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text hover:bg-dark-hover transition-colors text-left flex items-center justify-between"
+                  >
+                    <span>Select SVG</span>
+                    <FiImage size={16} />
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-light-text mb-2">Icon</label>
+                <button
+                  onClick={() => setIconPickerOpen('icon' as any)}
+                  className="w-full px-4 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text hover:bg-dark-hover transition-colors text-left flex items-center justify-between"
+                >
+                  <span>{element.settings.icon || 'FiStar'}</span>
+                  <FiSettings size={16} />
+                </button>
+              </div>
+            )}
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-light-text mb-2">Icon Size (px)</label>
+              <NumberInput
+                value={element.settings.iconSize || 24}
+                onChange={(value) => updateSetting('iconSize', value)}
+                min={8}
+                max={256}
+                step={1}
+              />
             </div>
           </>
         )}
@@ -1179,13 +1335,22 @@ export const ElementSettings: React.FC = () => {
                 {/* Background Image */}
                 {columnBackgroundType === 'image' && (
                   <div className="space-y-2">
-                    <input
-                      type="text"
-                      value={(columnBackground.imageUrl as string) || ''}
-                      onChange={(e) => updateColumnBackgroundSetting('imageUrl', e.target.value)}
-                      placeholder="Image URL"
-                      className="w-full px-3 py-2 bg-dark-panel border border-green-400/30 rounded text-sm text-light-text placeholder-light-muted"
-                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={(columnBackground.imageUrl as string) || ''}
+                        onChange={(e) => updateColumnBackgroundSetting('imageUrl', e.target.value)}
+                        placeholder="Image URL"
+                        className="flex-1 px-3 py-2 bg-dark-panel border border-green-400/30 rounded text-sm text-light-text placeholder-light-muted"
+                      />
+                      <button
+                        onClick={() => setMediaPickerOpen('columnBackgroundImage')}
+                        className="px-3 py-2 bg-brand-primary text-white rounded hover:bg-primary-600 transition-colors text-sm whitespace-nowrap"
+                      >
+                        <FiImage className="inline mr-1" size={14} />
+                        Browse
+                      </button>
+                    </div>
                     <select
                       value={(columnBackground.imageSize as string) || 'cover'}
                       onChange={(e) => updateColumnBackgroundSetting('imageSize', e.target.value)}
@@ -1296,131 +1461,140 @@ export const ElementSettings: React.FC = () => {
 
         {/* Typography */}
         {((isMultiSelect && selectedElements.length > 0) || element) &&
-         (element?.type === 'text' || element?.type === 'heading' || element?.type === 'button' ||
-          selectedElements[0]?.type === 'text' || selectedElements[0]?.type === 'heading' || selectedElements[0]?.type === 'button') && (
+         (element?.type === 'text' || element?.type === 'heading' || element?.type === 'button' || element?.type === 'icon' ||
+          selectedElements[0]?.type === 'text' || selectedElements[0]?.type === 'heading' || selectedElements[0]?.type === 'button' || selectedElements[0]?.type === 'icon') && (
           <CollapsibleSection
             title="Typography"
             isOpen={openSection === 'typography'}
             onToggle={() => setOpenSection(openSection === 'typography' ? '' : 'typography')}
           >
-            {/* Font Family */}
-            <div className="mb-4">
-              <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Font Family</label>
-              <select
-                value={getStyleValue('fontFamily') || 'inherit'}
-                onChange={(e) => updateStyle('fontFamily', e.target.value, activeBreakpoint)}
-                className={`w-full px-3 py-2 bg-dark-panel rounded text-sm text-light-text ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
-              >
-                <option value="inherit">Default</option>
-                <option value="Inter, sans-serif">Inter</option>
-                <option value="Roboto, sans-serif">Roboto</option>
-                <option value="'Open Sans', sans-serif">Open Sans</option>
-                <option value="Montserrat, sans-serif">Montserrat</option>
-                <option value="Lato, sans-serif">Lato</option>
-                <option value="Poppins, sans-serif">Poppins</option>
-                <option value="Georgia, serif">Georgia</option>
-                <option value="'Times New Roman', serif">Times New Roman</option>
-                <option value="'Courier New', monospace">Courier New</option>
-              </select>
-            </div>
+            {/* Only show text-specific fields for text, heading, button elements */}
+            {element?.type !== 'icon' && (
+              <>
+                {/* Font Family */}
+                <div className="mb-4">
+                  <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Font Family</label>
+                  <select
+                    value={getStyleValue('fontFamily') || 'inherit'}
+                    onChange={(e) => updateStyle('fontFamily', e.target.value, activeBreakpoint)}
+                    className={`w-full px-3 py-2 bg-dark-panel rounded text-sm text-light-text ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
+                  >
+                    <option value="inherit">Default</option>
+                    <option value="Inter, sans-serif">Inter</option>
+                    <option value="Roboto, sans-serif">Roboto</option>
+                    <option value="'Open Sans', sans-serif">Open Sans</option>
+                    <option value="Montserrat, sans-serif">Montserrat</option>
+                    <option value="Lato, sans-serif">Lato</option>
+                    <option value="Poppins, sans-serif">Poppins</option>
+                    <option value="Georgia, serif">Georgia</option>
+                    <option value="'Times New Roman', serif">Times New Roman</option>
+                    <option value="'Courier New', monospace">Courier New</option>
+                  </select>
+                </div>
 
-            <div className="mb-4">
-              <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Font Size</label>
-              <NumberInput
-                value={getStyleValue('fontSize') || '16px'}
-                onChange={(val) => updateStyle('fontSize', val, activeBreakpoint)}
-                min={1}
-                max={200}
-                step={1}
-                allowedUnits={['px', 'em', 'rem', '%', 'vh', 'vw']}
-                className={`w-full px-3 py-2 bg-dark-panel text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
-                placeholder={isMultiSelect && hasMultiSelectMixedValues('fontSize') ? 'Mixed Values' : '16'}
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-light-text mb-2">Font Weight</label>
-              <select
-                value={getStyleValue('fontWeight') || 'normal'}
-                onChange={(e) => updateStyle('fontWeight', e.target.value, activeBreakpoint)}
-                className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
-              >
-                <option value="normal">Normal</option>
-                <option value="bold">Bold</option>
-                <option value="300">Light</option>
-                <option value="500">Medium</option>
-                <option value="600">Semi Bold</option>
-                <option value="700">Bold</option>
-              </select>
-            </div>
+                <div className="mb-4">
+                  <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Font Size</label>
+                  <NumberInput
+                    value={getStyleValue('fontSize') || '16px'}
+                    onChange={(val) => updateStyle('fontSize', val, activeBreakpoint)}
+                    min={1}
+                    max={200}
+                    step={1}
+                    allowedUnits={['px', 'em', 'rem', '%', 'vh', 'vw']}
+                    className={`w-full px-3 py-2 bg-dark-panel text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
+                    placeholder={isMultiSelect && hasMultiSelectMixedValues('fontSize') ? 'Mixed Values' : '16'}
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-light-text mb-2">Font Weight</label>
+                  <select
+                    value={getStyleValue('fontWeight') || 'normal'}
+                    onChange={(e) => updateStyle('fontWeight', e.target.value, activeBreakpoint)}
+                    className="w-full px-3 py-2 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                  >
+                    <option value="normal">Normal</option>
+                    <option value="bold">Bold</option>
+                    <option value="300">Light</option>
+                    <option value="500">Medium</option>
+                    <option value="600">Semi Bold</option>
+                    <option value="700">Bold</option>
+                  </select>
+                </div>
 
-            {/* Text Style Toggles */}
+                {/* Text Style Toggles */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-light-text mb-2">Text Style</label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        const currentWeight = getStyleValue('fontWeight');
+                        const isBold = currentWeight === 'bold' || currentWeight === '700' || currentWeight === '600';
+                        updateStyle('fontWeight', isBold ? 'normal' : 'bold', activeBreakpoint);
+                      }}
+                      className={`flex-1 px-3 py-2 rounded text-sm font-bold transition-colors ${
+                        (() => {
+                          const weight = getStyleValue('fontWeight');
+                          return weight === 'bold' || weight === '700' || weight === '600'
+                            ? 'bg-brand-primary text-white'
+                            : 'bg-dark-panel text-light-text hover:bg-dark-hover border border-dark-border';
+                        })()
+                      }`}
+                      title="Bold"
+                    >
+                      B
+                    </button>
+                    <button
+                      onClick={() => {
+                        const current = getStyleValue('fontStyle');
+                        updateStyle('fontStyle', current === 'italic' ? 'normal' : 'italic', activeBreakpoint);
+                      }}
+                      className={`flex-1 px-3 py-2 rounded text-sm italic transition-colors ${
+                        getStyleValue('fontStyle') === 'italic'
+                          ? 'bg-brand-primary text-white'
+                          : 'bg-dark-panel text-light-text hover:bg-dark-hover border border-dark-border'
+                      }`}
+                      title="Italic"
+                    >
+                      I
+                    </button>
+                    <button
+                      onClick={() => {
+                        const current = getStyleValue('textDecoration');
+                        updateStyle('textDecoration', current === 'underline' ? 'none' : 'underline', activeBreakpoint);
+                      }}
+                      className={`flex-1 px-3 py-2 rounded text-sm underline transition-colors ${
+                        getStyleValue('textDecoration') === 'underline'
+                          ? 'bg-brand-primary text-white'
+                          : 'bg-dark-panel text-light-text hover:bg-dark-hover border border-dark-border'
+                      }`}
+                      title="Underline"
+                    >
+                      U
+                    </button>
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Line Height</label>
+                  <NumberInput
+                    value={getStyleValue('lineHeight') || '1.5'}
+                    onChange={(val) => updateStyle('lineHeight', val, activeBreakpoint)}
+                    min={0}
+                    max={10}
+                    step={0.1}
+                    allowedUnits={['px', 'em', 'rem', '%', '']}
+                    defaultUnit=""
+                    className={`w-full px-3 py-2 bg-dark-panel text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
+                    placeholder={isMultiSelect && hasMultiSelectMixedValues('lineHeight') ? 'Mixed Values' : '1.5'}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Icon Color or Text Color */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-light-text mb-2">Text Style</label>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    const currentWeight = getStyleValue('fontWeight');
-                    const isBold = currentWeight === 'bold' || currentWeight === '700' || currentWeight === '600';
-                    updateStyle('fontWeight', isBold ? 'normal' : 'bold', activeBreakpoint);
-                  }}
-                  className={`flex-1 px-3 py-2 rounded text-sm font-bold transition-colors ${
-                    (() => {
-                      const weight = getStyleValue('fontWeight');
-                      return weight === 'bold' || weight === '700' || weight === '600'
-                        ? 'bg-brand-primary text-white'
-                        : 'bg-dark-panel text-light-text hover:bg-dark-hover border border-dark-border';
-                    })()
-                  }`}
-                  title="Bold"
-                >
-                  B
-                </button>
-                <button
-                  onClick={() => {
-                    const current = getStyleValue('fontStyle');
-                    updateStyle('fontStyle', current === 'italic' ? 'normal' : 'italic', activeBreakpoint);
-                  }}
-                  className={`flex-1 px-3 py-2 rounded text-sm italic transition-colors ${
-                    getStyleValue('fontStyle') === 'italic'
-                      ? 'bg-brand-primary text-white'
-                      : 'bg-dark-panel text-light-text hover:bg-dark-hover border border-dark-border'
-                  }`}
-                  title="Italic"
-                >
-                  I
-                </button>
-                <button
-                  onClick={() => {
-                    const current = getStyleValue('textDecoration');
-                    updateStyle('textDecoration', current === 'underline' ? 'none' : 'underline', activeBreakpoint);
-                  }}
-                  className={`flex-1 px-3 py-2 rounded text-sm underline transition-colors ${
-                    getStyleValue('textDecoration') === 'underline'
-                      ? 'bg-brand-primary text-white'
-                      : 'bg-dark-panel text-light-text hover:bg-dark-hover border border-dark-border'
-                  }`}
-                  title="Underline"
-                >
-                  U
-                </button>
-              </div>
-            </div>
-            <div className="mb-4">
-              <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Line Height</label>
-              <NumberInput
-                value={getStyleValue('lineHeight') || '1.5'}
-                onChange={(val) => updateStyle('lineHeight', val, activeBreakpoint)}
-                min={0}
-                max={10}
-                step={0.1}
-                allowedUnits={['px', 'em', 'rem', '%', '']}
-                defaultUnit=""
-                className={`w-full px-3 py-2 bg-dark-panel text-sm text-light-text placeholder-light-muted ${isMultiSelect ? 'border border-brand-orange/30' : 'border border-dark-border'}`}
-                placeholder={isMultiSelect && hasMultiSelectMixedValues('lineHeight') ? 'Mixed Values' : '1.5'}
-              />
-            </div>
-            <div className="mb-4">
-              <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>Text Color</label>
+              <label className={`block text-sm font-medium mb-2 ${isMultiSelect ? 'text-orange-300' : 'text-light-text'}`}>
+                {element?.type === 'icon' ? 'Icon Color' : 'Text Color'}
+              </label>
               <div className="flex gap-2 items-center">
                 <input
                   type="color"
@@ -1441,6 +1615,9 @@ export const ElementSettings: React.FC = () => {
               )}
               <GlobalColorSwatches onColorSelect={(color) => updateStyle('color', color, activeBreakpoint)} />
             </div>
+
+            {/* Text Alignment - only for text elements */}
+            {element?.type !== 'icon' && (
             <div className="mb-4">
               <label className="block text-sm font-medium text-light-text mb-2">Text Alignment</label>
               <div className="flex items-center gap-1 bg-dark-panel border border-dark-border rounded p-1">
@@ -1485,6 +1662,7 @@ export const ElementSettings: React.FC = () => {
                 </button>
               </div>
             </div>
+            )}
 
             {/* Button Icons - only for button elements */}
             {element?.type === 'button' && (
@@ -1806,7 +1984,7 @@ export const ElementSettings: React.FC = () => {
         </CollapsibleSection>
 
         {/* Background */}
-        {(isMultiSelect || element) && (element?.type === 'section' || element?.type === 'row' || element?.type === 'button') && (
+        {(isMultiSelect || element) && (element?.type === 'section' || element?.type === 'row' || element?.type === 'button' || element?.type === 'icon') && (
           <CollapsibleSection
             title="Background"
             isOpen={openSection === 'background'}
@@ -1970,16 +2148,25 @@ export const ElementSettings: React.FC = () => {
               <div className="space-y-2">
                 <div>
                   <label className="text-xs text-light-muted mb-1 block">Image URL</label>
-                  <input
-                    type="text"
-                    value={(element.settings.backgroundImage?.url as string) || ''}
-                    onChange={(e) => updateSetting('backgroundImage', {
-                      ...element.settings.backgroundImage,
-                      url: e.target.value
-                    })}
-                    className="w-full px-2 py-1.5 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
-                    placeholder="https://..."
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={(element.settings.backgroundImage?.url as string) || ''}
+                      onChange={(e) => updateSetting('backgroundImage', {
+                        ...element.settings.backgroundImage,
+                        url: e.target.value
+                      })}
+                      className="flex-1 px-2 py-1.5 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                      placeholder="https://..."
+                    />
+                    <button
+                      onClick={() => setMediaPickerOpen('backgroundImage')}
+                      className="px-3 py-1.5 bg-brand-primary text-white rounded hover:bg-primary-600 transition-colors text-xs whitespace-nowrap"
+                    >
+                      <FiImage className="inline mr-1" size={12} />
+                      Browse
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="text-xs text-light-muted mb-1 block">Size</label>
@@ -2025,16 +2212,25 @@ export const ElementSettings: React.FC = () => {
               <div className="space-y-2">
                 <div>
                   <label className="text-xs text-light-muted mb-1 block">Video URL (.mp4)</label>
-                  <input
-                    type="text"
-                    value={(element.settings.backgroundVideo?.url as string) || ''}
-                    onChange={(e) => updateSetting('backgroundVideo', {
-                      ...element.settings.backgroundVideo,
-                      url: e.target.value
-                    })}
-                    className="w-full px-2 py-1.5 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
-                    placeholder="https://...video.mp4"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={(element.settings.backgroundVideo?.url as string) || ''}
+                      onChange={(e) => updateSetting('backgroundVideo', {
+                        ...element.settings.backgroundVideo,
+                        url: e.target.value
+                      })}
+                      className="flex-1 px-2 py-1.5 bg-dark-panel border border-dark-border rounded text-sm text-light-text placeholder-light-muted"
+                      placeholder="https://...video.mp4"
+                    />
+                    <button
+                      onClick={() => setMediaPickerOpen('backgroundVideo')}
+                      className="px-3 py-1.5 bg-brand-primary text-white rounded hover:bg-primary-600 transition-colors text-xs whitespace-nowrap"
+                    >
+                      <FiVideo className="inline mr-1" size={12} />
+                      Browse
+                    </button>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <input
@@ -2102,11 +2298,19 @@ export const ElementSettings: React.FC = () => {
       )}
 
       {/* Icon Picker Modal */}
-      {iconPickerOpen && element && element.type === 'button' && (
+      {iconPickerOpen && element && (
         <IconPicker
-          selectedIcon={iconPickerOpen === 'before' ? element.settings.iconBefore : element.settings.iconAfter}
+          selectedIcon={
+            element.type === 'icon'
+              ? element.settings.icon
+              : iconPickerOpen === 'before'
+              ? element.settings.iconBefore
+              : element.settings.iconAfter
+          }
           onSelect={(iconName) => {
-            if (iconPickerOpen === 'before') {
+            if (element.type === 'icon') {
+              updateSetting('icon', iconName);
+            } else if (iconPickerOpen === 'before') {
               updateSetting('iconBefore', iconName);
             } else {
               updateSetting('iconAfter', iconName);
@@ -2114,6 +2318,34 @@ export const ElementSettings: React.FC = () => {
             setIconPickerOpen(null);
           }}
           onClose={() => setIconPickerOpen(null)}
+        />
+      )}
+
+      {/* Media Picker Modal */}
+      {mediaPickerOpen && (
+        <MediaPicker
+          accept={
+            mediaPickerOpen === 'image' || mediaPickerOpen === 'backgroundImage' || mediaPickerOpen === 'columnBackgroundImage' || mediaPickerOpen === 'iconSvg'
+              ? 'image'
+              : mediaPickerOpen === 'video' || mediaPickerOpen === 'backgroundVideo'
+              ? 'video'
+              : 'all'
+          }
+          title={
+            mediaPickerOpen === 'image'
+              ? 'Select Image'
+              : mediaPickerOpen === 'video'
+              ? 'Select Video'
+              : mediaPickerOpen === 'backgroundImage' || mediaPickerOpen === 'columnBackgroundImage'
+              ? 'Select Background Image'
+              : mediaPickerOpen === 'backgroundVideo'
+              ? 'Select Background Video'
+              : mediaPickerOpen === 'iconSvg'
+              ? 'Select SVG Icon'
+              : 'Select Media'
+          }
+          onSelect={handleMediaSelect}
+          onClose={() => setMediaPickerOpen(null)}
         />
       )}
     </div>
