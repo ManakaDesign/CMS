@@ -217,6 +217,146 @@ export interface MediaFolder {
   media_count?: number;
 }
 
+export interface Menu {
+  id: number;
+  name: string;
+  slug: string;
+  location?: string;
+  type: MenuLayoutType;
+  design_settings: MenuDesignSettings;
+  is_active: boolean;
+  order: number;
+  created_at: string;
+  updated_at: string;
+
+  // Relations
+  items?: MenuItemNav[];
+}
+
+export interface MenuItemNav {
+  id: number;
+  menu_id: number;
+  parent_id?: number;
+  type: 'page' | 'url' | 'group';
+  label: string;
+  url?: string;
+  page_id?: number;
+  open_in_new_tab: boolean;
+  is_group: boolean;
+  columns?: number;
+  icon?: string;
+  icon_type?: 'react' | 'svg';
+  icon_svg_url?: string;
+  custom_styles?: Record<string, any>;
+  visibility_desktop: boolean;
+  visibility_mobile: boolean;
+  order: number;
+  created_at: string;
+  updated_at: string;
+
+  // Relations
+  menu?: Menu;
+  parent?: MenuItemNav;
+  children?: MenuItemNav[];
+  page?: Page;
+}
+
+export type MenuLayoutType =
+  | 'horizontal'
+  | 'centered'
+  | 'split'
+  | 'vertical'
+  | 'fullscreen';
+
+export type SubmenuStyle =
+  | 'dropdown'
+  | 'mega'
+  | 'fullscreen'
+  | 'sidebar';
+
+export type MobileMenuStyle =
+  | 'burger-sidebar'
+  | 'burger-fullscreen'
+  | 'bottom-nav'
+  | 'desktop';
+
+export interface MenuDesignSettings {
+  // Layout
+  layout?: MenuLayoutType;
+  submenuStyle?: SubmenuStyle;
+  mobileStyle?: MobileMenuStyle;
+
+  // Colors
+  backgroundColor?: string;
+  linkColor?: string;
+  linkHoverColor?: string;
+  activeTextColor?: string;
+  activeBackgroundColor?: string;
+
+  // Logo
+  logoUrl?: string;
+  logoAlt?: string;
+  logoWidth?: number;
+  logoHeight?: number;
+
+  // Features
+  stickyHeader?: boolean;
+  transparentToSolid?: boolean;
+  showSearchBar?: boolean;
+  showCtaButton?: boolean;
+  ctaButtonText?: string;
+  ctaButtonUrl?: string;
+  showSocialIcons?: boolean;
+  socialLinks?: {
+    platform: string;
+    url: string;
+  }[];
+
+  // Custom styles
+  customCss?: string;
+}
+
+export interface CreateMenuRequest {
+  name: string;
+  slug?: string;
+  location?: string;
+  type?: MenuLayoutType;
+  design_settings?: MenuDesignSettings;
+  is_active?: boolean;
+  order?: number;
+}
+
+export interface UpdateMenuRequest extends Partial<CreateMenuRequest> {}
+
+export interface CreateMenuItemRequest {
+  menu_id: number;
+  parent_id?: number;
+  type: 'page' | 'url' | 'group';
+  label: string;
+  url?: string;
+  page_id?: number;
+  open_in_new_tab?: boolean;
+  is_group?: boolean;
+  columns?: number;
+  icon?: string;
+  icon_type?: 'react' | 'svg';
+  icon_svg_url?: string;
+  custom_styles?: Record<string, any>;
+  visibility_desktop?: boolean;
+  visibility_mobile?: boolean;
+  order?: number;
+}
+
+export interface UpdateMenuItemRequest extends Partial<Omit<CreateMenuItemRequest, 'menu_id'>> {}
+
+export interface ReorderMenuItemsRequest {
+  items: Array<{
+    id: number;
+    order: number;
+    parent_id?: number;
+  }>;
+}
+
 // ============================================
 // Builder Types
 // ============================================

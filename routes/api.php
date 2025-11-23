@@ -4,6 +4,8 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ElementController;
 use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\MediaFolderController;
+use App\Http\Controllers\Api\MenuController;
+use App\Http\Controllers\Api\MenuItemController;
 use App\Http\Controllers\Api\PageController;
 use App\Http\Controllers\Api\TemplateController;
 use Illuminate\Support\Facades\Route;
@@ -145,6 +147,34 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/{template}', [TemplateController::class, 'show'])->name('show');
         Route::put('/{template}', [TemplateController::class, 'update'])->name('update');
         Route::delete('/{template}', [TemplateController::class, 'destroy'])->name('destroy');
+    });
+
+    // Menus
+    Route::prefix('menus')->name('api.menus.')->group(function () {
+        Route::get('/', [MenuController::class, 'index'])->name('index');
+        Route::post('/', [MenuController::class, 'store'])->name('store');
+        Route::get('/{menu}', [MenuController::class, 'show'])->name('show');
+        Route::put('/{menu}', [MenuController::class, 'update'])->name('update');
+        Route::delete('/{menu}', [MenuController::class, 'destroy'])->name('destroy');
+
+        // Menu actions
+        Route::post('/{menu}/duplicate', [MenuController::class, 'duplicate'])->name('duplicate');
+
+        // Menu Items (nested under menus)
+        Route::prefix('{menu}/items')->name('items.')->group(function () {
+            Route::get('/', [MenuItemController::class, 'index'])->name('index');
+        });
+    });
+
+    // Menu Items (standalone routes)
+    Route::prefix('menu-items')->name('api.menu-items.')->group(function () {
+        Route::post('/', [MenuItemController::class, 'store'])->name('store');
+        Route::get('/{menuItem}', [MenuItemController::class, 'show'])->name('show');
+        Route::put('/{menuItem}', [MenuItemController::class, 'update'])->name('update');
+        Route::delete('/{menuItem}', [MenuItemController::class, 'destroy'])->name('destroy');
+
+        // Menu item actions
+        Route::post('/reorder', [MenuItemController::class, 'reorder'])->name('reorder');
     });
 
     // User info
