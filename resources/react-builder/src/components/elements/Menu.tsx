@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { Element } from '../../types';
-import type { MenuNav, MenuItemNav } from '../../types';
+import type { Element, MenuNav, MenuItemNav } from '../../types';
 import { BaseElement } from './BaseElement';
 import { useBuilderStore } from '../../store/builderStore';
 import api from '../../services/api';
@@ -13,6 +12,70 @@ interface MenuProps {
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
 }
+
+// Separate MenuItem Component to use hooks properly
+interface MenuItemComponentProps {
+  item: MenuItemNav;
+  depth: number;
+  settings: any;
+}
+
+const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, depth, settings }) => {
+  const [showSubmenu, setShowSubmenu] = useState(false);
+  const hasChildren = item.children && item.children.length > 0;
+
+  return (
+    <li
+      style={{
+        display: depth === 0 ? 'inline-block' : 'block',
+        position: 'relative',
+      }}
+      onMouseEnter={() => setShowSubmenu(true)}
+      onMouseLeave={() => setShowSubmenu(false)}
+    >
+      <a
+        href={item.computed_url || '#'}
+        onClick={(e) => e.preventDefault()}
+        style={{
+          display: 'block',
+          padding: depth === 0 ? '12px 16px' : '8px 12px',
+          color: settings?.colors.link_color || '#333',
+          textDecoration: 'none',
+          transition: 'all 0.2s ease',
+          fontSize: depth === 0 ? '16px' : '14px',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.color = settings?.colors.link_hover || '#007bff';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = settings?.colors.link_color || '#333';
+        }}
+      >
+        {item.label} {hasChildren && <span>▾</span>}
+      </a>
+      {hasChildren && showSubmenu && (
+        <ul style={{
+          listStyle: 'none',
+          padding: '8px 0',
+          margin: 0,
+          position: 'absolute',
+          top: '100%',
+          left: 0,
+          backgroundColor: settings?.colors.background || '#fff',
+          border: '1px solid #e5e7eb',
+          borderRadius: '4px',
+          minWidth: '200px',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+          zIndex: 1000,
+        }}>
+          {item.children?.map((child) => (
+            <MenuItemComponent key={child.id} item={child} depth={depth + 1} settings={settings} />
+          ))}
+        </ul>
+      )}
+    </li>
+  );
+};
 
 export const Menu: React.FC<MenuProps> = (props) => {
   const { element, onClick, ...baseProps } = props;
@@ -64,63 +127,6 @@ export const Menu: React.FC<MenuProps> = (props) => {
   if (activeBreakpoint === 'mobile') {
     breakpointStyles = { ...breakpointStyles, ...element.styles.mobile };
   }
-
-  const renderMenuItem = (item: MenuItemNav, depth: number = 0): React.ReactNode => {
-    const [showSubmenu, setShowSubmenu] = React.useState(false);
-    const hasChildren = item.children && item.children.length > 0;
-    const settings = menu?.design_settings;
-
-    return (
-      <li
-        key={item.id}
-        style={{
-          display: depth === 0 ? 'inline-block' : 'block',
-          position: 'relative',
-        }}
-        onMouseEnter={() => setShowSubmenu(true)}
-        onMouseLeave={() => setShowSubmenu(false)}
-      >
-        <a
-          href={item.computed_url || '#'}
-          onClick={(e) => e.preventDefault()}
-          style={{
-            display: 'block',
-            padding: depth === 0 ? '12px 16px' : '8px 12px',
-            color: settings?.colors.link_color || '#333',
-            textDecoration: 'none',
-            transition: 'all 0.2s ease',
-            fontSize: depth === 0 ? '16px' : '14px',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = settings?.colors.link_hover || '#007bff';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = settings?.colors.link_color || '#333';
-          }}
-        >
-          {item.label} {hasChildren && <span>▾</span>}
-        </a>
-        {hasChildren && showSubmenu && (
-          <ul style={{
-            listStyle: 'none',
-            padding: '8px 0',
-            margin: 0,
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            backgroundColor: settings?.colors.background || '#fff',
-            border: '1px solid #e5e7eb',
-            borderRadius: '4px',
-            minWidth: '200px',
-            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-            zIndex: 1000,
-          }}>
-            {item.children?.map((child) => renderMenuItem(child, depth + 1))}
-          </ul>
-        )}
-      </li>
-    );
-  };
 
   const menuContent = () => {
     if (isLoading) {
@@ -254,7 +260,9 @@ export const Menu: React.FC<MenuProps> = (props) => {
                   display: 'flex',
                   gap: '4px',
                 }}>
-                  {rootItems.map((item) => renderMenuItem(item))}
+                  {rootItems.map((item) => (
+                    <MenuItemComponent key={item.id} item={item} depth={0} settings={settings} />
+                  ))}
                 </ul>
               </nav>
             </div>
@@ -278,7 +286,9 @@ export const Menu: React.FC<MenuProps> = (props) => {
                   display: 'flex',
                   gap: '4px',
                 }}>
-                  {rootItems.map((item) => renderMenuItem(item))}
+                  {rootItems.map((item) => (
+                    <MenuItemComponent key={item.id} item={item} depth={0} settings={settings} />
+                  ))}
                 </ul>
               </nav>
             </div>
@@ -296,13 +306,17 @@ export const Menu: React.FC<MenuProps> = (props) => {
             }}>
               <nav>
                 <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', gap: '4px' }}>
-                  {leftItems.map((item) => renderMenuItem(item))}
+                  {leftItems.map((item) => (
+                    <MenuItemComponent key={item.id} item={item} depth={0} settings={settings} />
+                  ))}
                 </ul>
               </nav>
               {renderLogo()}
               <nav>
                 <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', gap: '4px' }}>
-                  {rightItems.map((item) => renderMenuItem(item))}
+                  {rightItems.map((item) => (
+                    <MenuItemComponent key={item.id} item={item} depth={0} settings={settings} />
+                  ))}
                 </ul>
               </nav>
             </div>
@@ -367,7 +381,9 @@ export const Menu: React.FC<MenuProps> = (props) => {
                 display: 'flex',
                 gap: '4px',
               }}>
-                {rootItems.map((item) => renderMenuItem(item))}
+                {rootItems.map((item) => (
+                  <MenuItemComponent key={item.id} item={item} depth={0} settings={settings} />
+                ))}
               </ul>
             </nav>
           );
