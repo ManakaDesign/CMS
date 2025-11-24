@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type {
   MenuNav,
   MenuDesignSettings,
   MenuLayoutType,
   SubmenuStyle,
   MobileView,
+  Media,
 } from '../../types';
-import { FiCheck } from 'react-icons/fi';
+import { FiCheck, FiImage, FiTrash2 } from 'react-icons/fi';
+import MediaPicker from '../admin/media/MediaPicker';
 
 interface MenuDesignTabProps {
   menu: MenuNav;
@@ -15,6 +17,7 @@ interface MenuDesignTabProps {
 
 export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) => {
   const settings = menu.design_settings;
+  const [showMediaPicker, setShowMediaPicker] = useState(false);
 
   const handleLayoutTypeChange = (layoutType: MenuLayoutType) => {
     onUpdate({ layout_type: layoutType });
@@ -53,6 +56,34 @@ export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) 
     onUpdate({
       submenu_config: {
         ...settings.submenu_config,
+        [key]: value,
+      },
+    });
+  };
+
+  const handleLogoSelect = (media: Media) => {
+    onUpdate({
+      logo: {
+        ...settings.logo,
+        media_id: media.id,
+      },
+    });
+    setShowMediaPicker(false);
+  };
+
+  const handleLogoRemove = () => {
+    onUpdate({
+      logo: {
+        ...settings.logo,
+        media_id: undefined,
+      },
+    });
+  };
+
+  const handleLogoSizeChange = (key: 'width' | 'height', value: string) => {
+    onUpdate({
+      logo: {
+        ...settings.logo,
         [key]: value,
       },
     });
@@ -225,6 +256,75 @@ export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) 
         </div>
       </Section>
 
+      {/* Logo Section */}
+      <Section title="Logo">
+        <div className="space-y-4">
+          {settings.logo?.media_id ? (
+            <div className="border-2 border-dark-border rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-medium text-light-text">Logo ausgewählt</span>
+                <button
+                  onClick={handleLogoRemove}
+                  className="p-2 text-red-500 hover:bg-red-500/10 rounded transition-colors"
+                  title="Logo entfernen"
+                >
+                  <FiTrash2 size={16} />
+                </button>
+              </div>
+              <div className="bg-dark-surface rounded p-4 flex items-center justify-center min-h-[120px]">
+                <img
+                  src={`/storage/media/${settings.logo.media_id}`}
+                  alt="Logo"
+                  style={{
+                    maxWidth: settings.logo.width || 'auto',
+                    maxHeight: settings.logo.height || 'auto',
+                  }}
+                  className="max-w-full max-h-32 object-contain"
+                />
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowMediaPicker(true)}
+              className="w-full border-2 border-dashed border-dark-border hover:border-brand-primary rounded-lg p-8 flex flex-col items-center justify-center gap-3 transition-colors group"
+            >
+              <FiImage className="text-light-muted group-hover:text-brand-primary" size={32} />
+              <span className="text-sm font-medium text-light-text">Logo aus Mediathek wählen</span>
+              <span className="text-xs text-light-muted">Klicken zum Auswählen</span>
+            </button>
+          )}
+
+          {settings.logo?.media_id && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-light-text mb-2">
+                  Breite
+                </label>
+                <input
+                  type="text"
+                  value={settings.logo.width}
+                  onChange={(e) => handleLogoSizeChange('width', e.target.value)}
+                  placeholder="auto, 200px"
+                  className="w-full px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text focus:outline-none focus:border-brand-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-light-text mb-2">
+                  Höhe
+                </label>
+                <input
+                  type="text"
+                  value={settings.logo.height}
+                  onChange={(e) => handleLogoSizeChange('height', e.target.value)}
+                  placeholder="auto, 60px"
+                  className="w-full px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text focus:outline-none focus:border-brand-primary"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </Section>
+
       {/* Colors Section */}
       <Section title="Farben & Styling">
         <div className="space-y-4">
@@ -291,6 +391,16 @@ export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) 
           />
         </div>
       </Section>
+
+      {/* Media Picker Modal */}
+      {showMediaPicker && (
+        <MediaPicker
+          onSelect={handleLogoSelect}
+          onClose={() => setShowMediaPicker(false)}
+          accept="image"
+          title="Logo auswählen"
+        />
+      )}
     </div>
   );
 };

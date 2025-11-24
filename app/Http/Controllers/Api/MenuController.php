@@ -19,6 +19,11 @@ class MenuController extends Controller
             ->orderBy('order')
             ->get();
 
+        // Add 'items' as alias for frontend compatibility
+        $menus->each(function ($menu) {
+            $menu->items = $menu->rootItems;
+        });
+
         return response()->json($menus);
     }
 
@@ -33,6 +38,7 @@ class MenuController extends Controller
             'description' => 'nullable|string',
             'design_settings' => 'nullable|array',
             'is_active' => 'boolean',
+            'is_global' => 'boolean',
             'order' => 'integer',
         ]);
 
@@ -43,6 +49,8 @@ class MenuController extends Controller
 
         $menu = Menu::create($validated);
         $menu->load(['rootItems.childrenRecursive']);
+        // Add 'items' as alias for frontend compatibility
+        $menu->items = $menu->rootItems;
 
         return response()->json($menu, 201);
     }
@@ -53,6 +61,8 @@ class MenuController extends Controller
     public function show(Menu $menu): JsonResponse
     {
         $menu->load(['rootItems.childrenRecursive']);
+        // Add 'items' as alias for frontend compatibility
+        $menu->items = $menu->rootItems;
         return response()->json($menu);
     }
 
@@ -67,11 +77,14 @@ class MenuController extends Controller
             'description' => 'nullable|string',
             'design_settings' => 'nullable|array',
             'is_active' => 'boolean',
+            'is_global' => 'boolean',
             'order' => 'integer',
         ]);
 
         $menu->update($validated);
         $menu->load(['rootItems.childrenRecursive']);
+        // Add 'items' as alias for frontend compatibility
+        $menu->items = $menu->rootItems;
 
         return response()->json($menu);
     }
