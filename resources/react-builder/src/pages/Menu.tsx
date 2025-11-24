@@ -13,6 +13,8 @@ import {
   FiChevronRight,
 } from 'react-icons/fi';
 import { MenuNav, MenuDesignSettings } from '../types';
+import { MenuDesignTab } from '../components/Menu/MenuDesignTab';
+import { MenuPreview } from '../components/Menu/MenuPreview';
 import api from '../services/api';
 
 export const Menu: React.FC = () => {
@@ -329,114 +331,6 @@ const MenuStructureTab: React.FC<{ menu: MenuNav; onUpdate: () => void }> = ({ m
       <p className="text-sm text-light-muted">
         Wird in Kürze implementiert...
       </p>
-    </div>
-  );
-};
-
-const MenuDesignTab: React.FC<{
-  menu: MenuNav;
-  onUpdate: (settings: Partial<MenuDesignSettings>) => void;
-}> = ({ menu }) => {
-  return (
-    <div className="bg-dark-panel border border-dark-border rounded-lg p-8 text-center">
-      <FiEdit2 className="mx-auto text-light-muted mb-4" size={48} />
-      <h3 className="text-lg font-semibold text-light-text mb-2">Menü-Design</h3>
-      <p className="text-light-muted mb-4">
-        Hier können Sie das Design und die Optionen Ihres Menüs anpassen
-      </p>
-      <p className="text-sm text-light-muted">
-        Wird in Kürze implementiert...
-      </p>
-    </div>
-  );
-};
-
-const MenuPreview: React.FC<{ menu: MenuNav }> = ({ menu }) => {
-  const settings = menu.design_settings;
-
-  return (
-    <div className="p-4">
-      <div className="bg-dark-panel border border-dark-border rounded-lg overflow-hidden">
-        {/* Preview Header */}
-        <div className="border-b border-dark-border p-3 bg-dark-surface">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-2 h-2 rounded-full bg-red-500"></div>
-            <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-            <div className="w-2 h-2 rounded-full bg-green-500"></div>
-            <span className="text-xs text-light-muted ml-2">Browser Vorschau</span>
-          </div>
-        </div>
-
-        {/* Menu Preview Content */}
-        <div
-          className="p-4"
-          style={{
-            backgroundColor: settings?.colors?.background || '#1a1a1a',
-          }}
-        >
-          <div className="flex items-center gap-6">
-            <div className="text-lg font-bold text-light-text">Your Logo</div>
-            <div className="flex gap-4">
-              {[' Home', 'Über uns', 'Leistungen', 'Kontakt'].map((item, i) => (
-                <div
-                  key={i}
-                  className="px-3 py-2 rounded text-sm transition-colors cursor-pointer"
-                  style={{
-                    color: i === 0 ? settings?.colors?.active_text : settings?.colors?.link_color,
-                    backgroundColor: i === 0 ? settings?.colors?.active_background : 'transparent',
-                  }}
-                >
-                  {item}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Preview Info */}
-        <div className="p-3 bg-dark-surface border-t border-dark-border">
-          <div className="text-xs text-light-muted space-y-1">
-            <div>Layout: {settings?.layout_type || 'horizontal_standard'}</div>
-            <div>Submenü: {settings?.submenu_style || 'dropdown_flyout'}</div>
-            {settings?.features?.sticky_header && (
-              <div className="text-brand-primary">Sticky Header aktiviert</div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Additional Preview Info */}
-      <div className="mt-4 p-4 bg-dark-panel border border-dark-border rounded-lg">
-        <h4 className="text-sm font-semibold text-light-text mb-3">Aktive Features</h4>
-        <div className="flex flex-wrap gap-2">
-          {settings?.features?.sticky_header && (
-            <span className="px-2 py-1 bg-brand-primary/10 text-brand-primary text-xs rounded">
-              Sticky Header
-            </span>
-          )}
-          {settings?.features?.search_bar && (
-            <span className="px-2 py-1 bg-brand-primary/10 text-brand-primary text-xs rounded">
-              Search Bar
-            </span>
-          )}
-          {settings?.features?.cta_button && (
-            <span className="px-2 py-1 bg-brand-primary/10 text-brand-primary text-xs rounded">
-              CTA Button
-            </span>
-          )}
-          {settings?.features?.social_icons && (
-            <span className="px-2 py-1 bg-brand-primary/10 text-brand-primary text-xs rounded">
-              Social Icons
-            </span>
-          )}
-          {!settings?.features?.sticky_header &&
-            !settings?.features?.search_bar &&
-            !settings?.features?.cta_button &&
-            !settings?.features?.social_icons && (
-              <span className="text-xs text-light-muted">Keine Features aktiviert</span>
-            )}
-        </div>
-      </div>
     </div>
   );
 };
