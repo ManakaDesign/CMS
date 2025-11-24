@@ -1,5 +1,5 @@
 import React from 'react';
-import { MenuNav } from '../../types';
+import type { MenuNav } from '../../types';
 
 interface MenuPreviewProps {
   menu: MenuNav;
@@ -46,7 +46,7 @@ export const MenuPreview: React.FC<MenuPreviewProps> = ({ menu }) => {
               Logo
             </div>
             <div className="flex gap-4">
-              {menuItems.slice(2).map((item, i) => renderMenuItem(item, false, true))}
+              {menuItems.slice(2).map((item) => renderMenuItem(item, false, true))}
             </div>
           </div>
         );

@@ -12,7 +12,7 @@ import {
   FiFile,
   FiGrid,
 } from 'react-icons/fi';
-import { MenuNav, MenuItemNav, Page } from '../../types';
+import type { MenuNav, MenuItemNav, Page } from '../../types';
 import api from '../../services/api';
 
 interface MenuStructureTabProps {
@@ -48,7 +48,7 @@ export const MenuStructureTab: React.FC<MenuStructureTabProps> = ({ menu, onUpda
       setPages(pagesRes.data);
 
       // Auto-expand all items initially
-      const allIds = new Set(itemsRes.data.map((item: MenuItemNav) => item.id));
+      const allIds = new Set<number>(itemsRes.data.map((item: MenuItemNav) => item.id));
       setExpandedIds(allIds);
     } catch (error) {
       console.error('Failed to load menu items:', error);

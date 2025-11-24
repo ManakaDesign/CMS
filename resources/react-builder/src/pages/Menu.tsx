@@ -3,16 +3,12 @@ import { MainLayout } from '../components/Layout/MainLayout';
 import {
   FiMenu,
   FiPlus,
-  FiEdit2,
   FiTrash2,
   FiCopy,
-  FiMoreVertical,
   FiEye,
   FiEyeOff,
-  FiChevronDown,
-  FiChevronRight,
 } from 'react-icons/fi';
-import { MenuNav, MenuDesignSettings } from '../types';
+import type { MenuNav, MenuDesignSettings } from '../types';
 import { MenuDesignTab } from '../components/Menu/MenuDesignTab';
 import { MenuPreview } from '../components/Menu/MenuPreview';
 import { MenuStructureTab } from '../components/Menu/MenuStructureTab';

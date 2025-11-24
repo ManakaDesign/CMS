@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import {
+import React from 'react';
+import type {
   MenuNav,
   MenuDesignSettings,
   MenuLayoutType,
