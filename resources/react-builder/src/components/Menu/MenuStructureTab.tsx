@@ -45,7 +45,8 @@ export const MenuStructureTab: React.FC<MenuStructureTabProps> = ({ menu, onUpda
         api.get('/pages'),
       ]);
       setItems(itemsRes.data);
-      setPages(pagesRes.data);
+      // Handle paginated response from Laravel
+      setPages(Array.isArray(pagesRes.data) ? pagesRes.data : (pagesRes.data.data || []));
 
       // Auto-expand all items initially
       const allIds = new Set<number>(itemsRes.data.map((item: MenuItemNav) => item.id));
