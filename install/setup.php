@@ -575,6 +575,46 @@ function runMigrationsManually(): void
                 INDEX `personal_access_tokens_tokenable_type_tokenable_id_index` (`tokenable_type`, `tokenable_id`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ",
+        'menus' => "
+            CREATE TABLE IF NOT EXISTS `menus` (
+                `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `name` VARCHAR(255) NOT NULL,
+                `location` VARCHAR(255) NULL,
+                `description` TEXT NULL,
+                `design_settings` JSON NULL,
+                `is_active` BOOLEAN NOT NULL DEFAULT 1,
+                `order` INT NOT NULL DEFAULT 0,
+                `created_at` TIMESTAMP NULL,
+                `updated_at` TIMESTAMP NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ",
+        'menu_items' => "
+            CREATE TABLE IF NOT EXISTS `menu_items` (
+                `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `menu_id` BIGINT UNSIGNED NOT NULL,
+                `parent_id` BIGINT UNSIGNED NULL,
+                `label` VARCHAR(255) NOT NULL,
+                `url` VARCHAR(255) NULL,
+                `page_id` BIGINT UNSIGNED NULL,
+                `type` VARCHAR(255) NOT NULL DEFAULT 'link',
+                `target` VARCHAR(255) NOT NULL DEFAULT '_self',
+                `icon_type` VARCHAR(255) NULL,
+                `icon_name` VARCHAR(255) NULL,
+                `icon_media_id` BIGINT UNSIGNED NULL,
+                `custom_styles` JSON NULL,
+                `mega_menu_config` JSON NULL,
+                `order` INT NOT NULL DEFAULT 0,
+                `is_visible` BOOLEAN NOT NULL DEFAULT 1,
+                `css_class` VARCHAR(255) NULL,
+                `created_at` TIMESTAMP NULL,
+                `updated_at` TIMESTAMP NULL,
+                INDEX `menu_items_menu_id_parent_id_order_index` (`menu_id`, `parent_id`, `order`),
+                FOREIGN KEY (`menu_id`) REFERENCES `menus`(`id`) ON DELETE CASCADE,
+                FOREIGN KEY (`parent_id`) REFERENCES `menu_items`(`id`) ON DELETE CASCADE,
+                FOREIGN KEY (`page_id`) REFERENCES `pages`(`id`) ON DELETE CASCADE,
+                FOREIGN KEY (`icon_media_id`) REFERENCES `media`(`id`) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ",
     ];
 
     // Execute each table creation
@@ -611,6 +651,8 @@ function getMigrationNameForTable(string $tableName): string
         'media_folders' => '2024_01_15_000001_create_media_folders_table',
         'site_settings' => '2025_11_05_130319_create_site_settings_table',
         'personal_access_tokens' => '2025_11_05_130320_create_personal_access_tokens_table',
+        'menus' => '2025_11_24_104104_create_menus_table',
+        'menu_items' => '2025_11_24_104114_create_menu_items_table',
     ];
 
     return $migrationMap[$tableName] ?? $tableName;
