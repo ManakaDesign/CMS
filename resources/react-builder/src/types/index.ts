@@ -64,7 +64,8 @@ export type ElementType =
   | 'divider'
   | 'video'
   | 'code'
-  | 'icon';
+  | 'icon'
+  | 'menu';
 
 export interface ElementStyles {
   desktop?: CSSProperties;

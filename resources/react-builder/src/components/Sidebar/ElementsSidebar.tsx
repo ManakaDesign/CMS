@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiSearch } from 'react-icons/fi';
+import { FiSearch, FiMenu } from 'react-icons/fi';
 import {
   FaSquare,
   FaColumns,
@@ -27,6 +27,7 @@ const elementDefinitions: ElementDefinition[] = [
   // Layout
   { type: 'section', label: 'Section', icon: <FaSquare />, category: 'Layout' },
   { type: 'row', label: 'Row', icon: <FaColumns />, category: 'Layout' },
+  { type: 'menu', label: 'Menu', icon: <FiMenu />, category: 'Layout' },
   // Column removed - Rows now support 1-6 columns directly
 
   // Content

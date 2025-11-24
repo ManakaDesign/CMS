@@ -11,6 +11,7 @@ import { Divider } from './Divider';
 import { Video } from './Video';
 import { Code } from './Code';
 import { Icon } from './Icon';
+import { Menu } from './Menu';
 
 interface ElementComponentProps {
   element: Element;
@@ -36,6 +37,7 @@ const elementComponents: Record<ElementType, React.FC<ElementComponentProps>> = 
   video: Video,
   code: Code,
   icon: Icon,
+  menu: Menu,
 };
 
 export const getElementComponent = (type: ElementType): React.FC<ElementComponentProps> => {
