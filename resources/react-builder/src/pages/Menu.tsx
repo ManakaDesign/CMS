@@ -211,28 +211,42 @@ export const Menu: React.FC = () => {
                         <p className="text-sm text-light-muted mt-1">{selectedMenu.description}</p>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 ml-4">
-                      <label className="flex items-center gap-2 text-sm text-light-text cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={selectedMenu.is_global}
-                          onChange={async (e) => {
-                            try {
-                              const response = await api.put(`/menus/${selectedMenu.id}`, {
-                                is_global: e.target.checked,
-                              });
-                              setSelectedMenu(response.data);
-                              setMenus(menus.map((m) => (m.id === response.data.id ? response.data : m)));
-                            } catch (error) {
-                              console.error('Failed to update menu:', error);
-                            }
-                          }}
-                          className="w-4 h-4 rounded border-dark-border bg-dark-panel text-brand-primary focus:ring-brand-primary focus:ring-offset-dark-surface"
-                        />
-                        <span className="font-medium">Global anzeigen</span>
-                      </label>
-                      <div className="text-xs text-light-muted max-w-xs">
-                        Wenn aktiv, wird das Menü automatisch auf allen Seiten angezeigt
+                    <div className="flex items-center gap-4 ml-4">
+                      <div className="flex flex-col gap-1">
+                        <label className="flex items-center gap-3 cursor-pointer group">
+                          <span className="text-sm font-medium text-light-text">Global anzeigen</span>
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={selectedMenu.is_global}
+                            onClick={async () => {
+                              try {
+                                const newValue = !selectedMenu.is_global;
+                                const response = await api.put(`/menus/${selectedMenu.id}`, {
+                                  is_global: newValue,
+                                });
+                                setSelectedMenu(response.data);
+                                setMenus(menus.map((m) => (m.id === response.data.id ? response.data : m)));
+                              } catch (error) {
+                                console.error('Failed to update menu:', error);
+                              }
+                            }}
+                            className={`
+                              relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-dark-surface
+                              ${selectedMenu.is_global ? 'bg-brand-primary' : 'bg-dark-border'}
+                            `}
+                          >
+                            <span
+                              className={`
+                                inline-block h-4 w-4 transform rounded-full bg-white transition-transform
+                                ${selectedMenu.is_global ? 'translate-x-6' : 'translate-x-1'}
+                              `}
+                            />
+                          </button>
+                        </label>
+                        <p className="text-xs text-light-muted max-w-xs">
+                          Automatisch auf allen Seiten anzeigen
+                        </p>
                       </div>
                     </div>
                   </div>

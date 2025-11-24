@@ -388,13 +388,36 @@ const ColorInput: React.FC<{
   value: string;
   onChange: (value: string) => void;
 }> = ({ label, value, onChange }) => {
+  // Normalize color value for color input (only accepts #rrggbb format)
+  const normalizeColorForInput = (color: string): string => {
+    if (!color) return '#000000';
+
+    // If it's already a valid 6-digit hex color, return it
+    if (/^#[0-9A-Fa-f]{6}$/.test(color)) return color;
+
+    // If it's a 3-digit hex, expand it
+    if (/^#[0-9A-Fa-f]{3}$/.test(color)) {
+      const [, r, g, b] = color.match(/#(.)(.)(.)/)!;
+      return `#${r}${r}${g}${g}${b}${b}`;
+    }
+
+    // If it's rgba or other format, extract RGB or use default
+    if (color.startsWith('rgba') || color.startsWith('rgb')) {
+      // For now, just return a default - proper parsing would be complex
+      return '#000000';
+    }
+
+    // Default fallback
+    return '#000000';
+  };
+
   return (
     <div>
       <label className="block text-sm font-medium text-light-text mb-2">{label}</label>
       <div className="flex items-center gap-3">
         <input
           type="color"
-          value={value}
+          value={normalizeColorForInput(value)}
           onChange={(e) => onChange(e.target.value)}
           className="w-12 h-12 rounded-lg border-2 border-dark-border cursor-pointer bg-dark-surface"
         />
@@ -402,6 +425,7 @@ const ColorInput: React.FC<{
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          placeholder="#000000"
           className="flex-1 px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text font-mono text-sm focus:outline-none focus:border-brand-primary"
         />
       </div>
