@@ -22,7 +22,9 @@ interface MenuItemComponentProps {
 
 const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, depth, settings }) => {
   const [showSubmenu, setShowSubmenu] = useState(false);
-  const hasChildren = item.children && item.children.length > 0;
+  // Support both children and children_recursive (backend uses children_recursive)
+  const childItems = item.children_recursive || item.children || [];
+  const hasChildren = childItems.length > 0;
 
   return (
     <li
@@ -68,7 +70,7 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, depth, sett
           boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
           zIndex: 1000,
         }}>
-          {item.children?.map((child) => (
+          {childItems.map((child) => (
             <MenuItemComponent key={child.id} item={child} depth={depth + 1} settings={settings} />
           ))}
         </ul>
@@ -147,6 +149,14 @@ export const Menu: React.FC<MenuProps> = (props) => {
 
     const settings = menu.design_settings;
     const rootItems = menu.items?.filter((item) => !item.parent_id) || [];
+
+    // Debug: Log menu data to see structure
+    console.log('Menu data:', menu);
+    console.log('Root items:', rootItems);
+    if (rootItems.length > 0) {
+      console.log('First root item:', rootItems[0]);
+      console.log('First root item children:', rootItems[0].children);
+    }
 
     // Logo renderer helper
     const renderLogo = () => {
