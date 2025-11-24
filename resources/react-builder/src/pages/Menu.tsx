@@ -15,6 +15,7 @@ import {
 import { MenuNav, MenuDesignSettings } from '../types';
 import { MenuDesignTab } from '../components/Menu/MenuDesignTab';
 import { MenuPreview } from '../components/Menu/MenuPreview';
+import { MenuStructureTab } from '../components/Menu/MenuStructureTab';
 import api from '../services/api';
 
 export const Menu: React.FC = () => {
@@ -316,21 +317,5 @@ export const Menu: React.FC = () => {
         </div>
       )}
     </MainLayout>
-  );
-};
-
-// Placeholder components - will be implemented next
-const MenuStructureTab: React.FC<{ menu: MenuNav; onUpdate: () => void }> = ({ menu }) => {
-  return (
-    <div className="bg-dark-panel border border-dark-border rounded-lg p-8 text-center">
-      <FiMenu className="mx-auto text-light-muted mb-4" size={48} />
-      <h3 className="text-lg font-semibold text-light-text mb-2">Menü-Struktur</h3>
-      <p className="text-light-muted mb-4">
-        Hier können Sie die Struktur Ihres Menüs mit Drag & Drop bearbeiten
-      </p>
-      <p className="text-sm text-light-muted">
-        Wird in Kürze implementiert...
-      </p>
-    </div>
   );
 };
