@@ -66,11 +66,20 @@ export const Menu: React.FC<MenuProps> = (props) => {
   }
 
   const renderMenuItem = (item: MenuItemNav, depth: number = 0): React.ReactNode => {
+    const [showSubmenu, setShowSubmenu] = React.useState(false);
     const hasChildren = item.children && item.children.length > 0;
     const settings = menu?.design_settings;
 
     return (
-      <li key={item.id} style={{ display: depth === 0 ? 'inline-block' : 'block' }}>
+      <li
+        key={item.id}
+        style={{
+          display: depth === 0 ? 'inline-block' : 'block',
+          position: 'relative',
+        }}
+        onMouseEnter={() => setShowSubmenu(true)}
+        onMouseLeave={() => setShowSubmenu(false)}
+      >
         <a
           href={item.computed_url || '#'}
           onClick={(e) => e.preventDefault()}
@@ -89,14 +98,22 @@ export const Menu: React.FC<MenuProps> = (props) => {
             e.currentTarget.style.color = settings?.colors.link_color || '#333';
           }}
         >
-          {item.label}
+          {item.label} {hasChildren && <span>▾</span>}
         </a>
-        {hasChildren && (
+        {hasChildren && showSubmenu && (
           <ul style={{
             listStyle: 'none',
-            padding: 0,
+            padding: '8px 0',
             margin: 0,
-            display: 'none', // Simplified - no dropdown in builder
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            backgroundColor: settings?.colors.background || '#fff',
+            border: '1px solid #e5e7eb',
+            borderRadius: '4px',
+            minWidth: '200px',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+            zIndex: 1000,
           }}>
             {item.children?.map((child) => renderMenuItem(child, depth + 1))}
           </ul>
@@ -125,6 +142,98 @@ export const Menu: React.FC<MenuProps> = (props) => {
     const settings = menu.design_settings;
     const rootItems = menu.items?.filter((item) => !item.parent_id) || [];
 
+    // Logo renderer helper
+    const renderLogo = () => {
+      if (menu.logo_url) {
+        return (
+          <img
+            src={menu.logo_url}
+            alt="Logo"
+            style={{
+              maxWidth: settings.logo.width || '150px',
+              maxHeight: settings.logo.height || '60px',
+              objectFit: 'contain',
+            }}
+          />
+        );
+      }
+      return (
+        <div style={{
+          fontSize: '20px',
+          fontWeight: 'bold',
+          color: settings.colors.link_color,
+        }}>
+          Logo
+        </div>
+      );
+    };
+
+    // Check if mobile view should be shown
+    const isMobileView = activeBreakpoint === 'mobile' || activeBreakpoint === 'tablet';
+    const [showMobileMenu, setShowMobileMenu] = React.useState(false);
+
+    // Render mobile burger menu
+    if (isMobileView && settings.mobile_view === 'burger_sidebar') {
+      return (
+        <div style={{ backgroundColor: settings.colors.background, minHeight: '60px' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0 16px',
+            minHeight: '60px',
+          }}>
+            {renderLogo()}
+            <button
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '8px',
+              }}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={settings.colors.link_color} strokeWidth="2">
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+              </svg>
+            </button>
+          </div>
+          {showMobileMenu && (
+            <div style={{
+              backgroundColor: settings.colors.background,
+              borderTop: '1px solid #e5e7eb',
+              padding: '16px',
+            }}>
+              <ul style={{
+                listStyle: 'none',
+                margin: 0,
+                padding: 0,
+              }}>
+                {rootItems.map((item) => (
+                  <li key={item.id} style={{ marginBottom: '8px' }}>
+                    <a
+                      href={item.computed_url || '#'}
+                      onClick={(e) => e.preventDefault()}
+                      style={{
+                        display: 'block',
+                        padding: '12px',
+                        color: settings.colors.link_color,
+                        textDecoration: 'none',
+                      }}
+                    >
+                      {item.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      );
+    }
+
     // Render based on layout type
     const renderLayout = () => {
       switch (settings.layout_type) {
@@ -136,13 +245,7 @@ export const Menu: React.FC<MenuProps> = (props) => {
               justifyContent: 'space-between',
               padding: '0 24px',
             }}>
-              <div style={{
-                fontSize: '20px',
-                fontWeight: 'bold',
-                color: settings.colors.link_color,
-              }}>
-                Logo
-              </div>
+              {renderLogo()}
               <nav>
                 <ul style={{
                   listStyle: 'none',
@@ -166,13 +269,7 @@ export const Menu: React.FC<MenuProps> = (props) => {
               padding: '16px 24px',
               gap: '16px',
             }}>
-              <div style={{
-                fontSize: '20px',
-                fontWeight: 'bold',
-                color: settings.colors.link_color,
-              }}>
-                Logo
-              </div>
+              {renderLogo()}
               <nav>
                 <ul style={{
                   listStyle: 'none',
@@ -202,13 +299,7 @@ export const Menu: React.FC<MenuProps> = (props) => {
                   {leftItems.map((item) => renderMenuItem(item))}
                 </ul>
               </nav>
-              <div style={{
-                fontSize: '20px',
-                fontWeight: 'bold',
-                color: settings.colors.link_color,
-              }}>
-                Logo
-              </div>
+              {renderLogo()}
               <nav>
                 <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', gap: '4px' }}>
                   {rightItems.map((item) => renderMenuItem(item))}
@@ -223,13 +314,8 @@ export const Menu: React.FC<MenuProps> = (props) => {
               padding: '16px',
               minHeight: '200px',
             }}>
-              <div style={{
-                fontSize: '20px',
-                fontWeight: 'bold',
-                color: settings.colors.link_color,
-                marginBottom: '16px',
-              }}>
-                Logo
+              <div style={{ marginBottom: '16px' }}>
+                {renderLogo()}
               </div>
               <nav>
                 <ul style={{

@@ -259,7 +259,7 @@ export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) 
       {/* Logo Section */}
       <Section title="Logo">
         <div className="space-y-4">
-          {settings.logo?.media_id ? (
+          {settings.logo?.media_id && menu.logo_url ? (
             <div className="border-2 border-dark-border rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-medium text-light-text">Logo ausgewählt</span>
@@ -273,7 +273,7 @@ export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) 
               </div>
               <div className="bg-dark-surface rounded p-4 flex items-center justify-center min-h-[120px]">
                 <img
-                  src={`/storage/media/${settings.logo.media_id}`}
+                  src={menu.logo_url}
                   alt="Logo"
                   style={{
                     maxWidth: settings.logo.width || 'auto',

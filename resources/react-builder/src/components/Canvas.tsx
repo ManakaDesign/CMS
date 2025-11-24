@@ -103,13 +103,25 @@ export const Canvas: React.FC = () => {
           padding: '0 24px',
           minHeight: '60px',
         }}>
-          <div style={{
-            fontSize: '20px',
-            fontWeight: 'bold',
-            color: settings.colors.link_color,
-          }}>
-            Logo
-          </div>
+          {globalMenu.logo_url ? (
+            <img
+              src={globalMenu.logo_url}
+              alt="Logo"
+              style={{
+                maxWidth: settings.logo.width || '150px',
+                maxHeight: settings.logo.height || '60px',
+                objectFit: 'contain',
+              }}
+            />
+          ) : (
+            <div style={{
+              fontSize: '20px',
+              fontWeight: 'bold',
+              color: settings.colors.link_color,
+            }}>
+              Logo
+            </div>
+          )}
           <nav>
             <ul style={{
               listStyle: 'none',

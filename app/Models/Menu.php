@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Menu extends Model
 {
@@ -31,6 +32,8 @@ class Menu extends Model
         'order' => 0,
     ];
 
+    protected $appends = ['logo_url'];
+
     /**
      * Get all menu items for this menu
      */
@@ -47,6 +50,37 @@ class Menu extends Model
         return $this->hasMany(MenuItem::class)
             ->whereNull('parent_id')
             ->orderBy('order');
+    }
+
+    /**
+     * Get the logo media
+     */
+    public function logoMedia(): BelongsTo
+    {
+        // Use a custom foreign key based on JSON path
+        $mediaId = $this->design_settings['logo']['media_id'] ?? null;
+        return $this->belongsTo(\App\Models\Media::class, 'id', 'id')
+            ->where('id', $mediaId);
+    }
+
+    /**
+     * Get logo URL accessor
+     */
+    public function getLogoUrlAttribute(): ?string
+    {
+        $mediaId = $this->design_settings['logo']['media_id'] ?? null;
+
+        if (!$mediaId) {
+            return null;
+        }
+
+        $media = \App\Models\Media::find($mediaId);
+
+        if (!$media) {
+            return null;
+        }
+
+        return $media->url;
     }
 
     /**
