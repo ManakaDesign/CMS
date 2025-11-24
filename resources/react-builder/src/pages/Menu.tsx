@@ -29,7 +29,7 @@ export const Menu: React.FC = () => {
   const loadMenus = async () => {
     try {
       setIsLoading(true);
-      const response = await api.get('/api/menus');
+      const response = await api.get('/menus');
       setMenus(response.data);
       if (response.data.length > 0 && !selectedMenu) {
         setSelectedMenu(response.data[0]);
@@ -45,7 +45,7 @@ export const Menu: React.FC = () => {
     if (!newMenuName.trim()) return;
 
     try {
-      const response = await api.post('/api/menus', {
+      const response = await api.post('/menus', {
         name: newMenuName,
         is_active: true,
       });
@@ -62,7 +62,7 @@ export const Menu: React.FC = () => {
     if (!confirm('Möchten Sie dieses Menü wirklich löschen?')) return;
 
     try {
-      await api.delete(`/api/menus/${menuId}`);
+      await api.delete(`/menus/${menuId}`);
       setMenus(menus.filter((m) => m.id !== menuId));
       if (selectedMenu?.id === menuId) {
         setSelectedMenu(menus[0] || null);
@@ -74,7 +74,7 @@ export const Menu: React.FC = () => {
 
   const handleDuplicateMenu = async (menuId: number) => {
     try {
-      const response = await api.post(`/api/menus/${menuId}/duplicate`);
+      const response = await api.post(`/menus/${menuId}/duplicate`);
       setMenus([...menus, response.data]);
     } catch (error) {
       console.error('Failed to duplicate menu:', error);
@@ -85,7 +85,7 @@ export const Menu: React.FC = () => {
     if (!selectedMenu) return;
 
     try {
-      const response = await api.put(`/api/menus/${selectedMenu.id}`, {
+      const response = await api.put(`/menus/${selectedMenu.id}`, {
         design_settings: {
           ...selectedMenu.design_settings,
           ...designSettings,

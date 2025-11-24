@@ -41,8 +41,8 @@ export const MenuStructureTab: React.FC<MenuStructureTabProps> = ({ menu, onUpda
     try {
       setIsLoading(true);
       const [itemsRes, pagesRes] = await Promise.all([
-        api.get(`/api/menu-items?menu_id=${menu.id}`),
-        api.get('/api/pages'),
+        api.get(`/menu-items?menu_id=${menu.id}`),
+        api.get('/pages'),
       ]);
       setItems(itemsRes.data);
       setPages(pagesRes.data);
@@ -71,7 +71,7 @@ export const MenuStructureTab: React.FC<MenuStructureTabProps> = ({ menu, onUpda
     if (!confirm(`"${item.label}" wirklich löschen?`)) return;
 
     try {
-      await api.delete(`/api/menu-items/${item.id}`);
+      await api.delete(`/menu-items/${item.id}`);
       await loadData();
       onUpdate();
     } catch (error) {
@@ -81,7 +81,7 @@ export const MenuStructureTab: React.FC<MenuStructureTabProps> = ({ menu, onUpda
 
   const handleToggleVisibility = async (item: MenuItemNav) => {
     try {
-      await api.put(`/api/menu-items/${item.id}`, {
+      await api.put(`/menu-items/${item.id}`, {
         is_visible: !item.is_visible,
       });
       await loadData();
@@ -114,7 +114,7 @@ export const MenuStructureTab: React.FC<MenuStructureTabProps> = ({ menu, onUpda
 
     try {
       // Move item under target (or to root if target is null)
-      await api.put(`/api/menu-items/${draggedItem.id}`, {
+      await api.put(`/menu-items/${draggedItem.id}`, {
         parent_id: targetItem?.id || null,
       });
       await loadData();
@@ -368,7 +368,7 @@ const AddPagesModal: React.FC<{
 
     try {
       setIsSubmitting(true);
-      await api.post('/api/menu-items/bulk-from-pages', {
+      await api.post('/menu-items/bulk-from-pages', {
         menu_id: menu.id,
         page_ids: selectedPageIds,
       });
@@ -479,7 +479,7 @@ const AddLinkModal: React.FC<{
 
     try {
       setIsSubmitting(true);
-      await api.post('/api/menu-items', {
+      await api.post('/menu-items', {
         menu_id: menu.id,
         label: label.trim(),
         url: url.trim(),
@@ -575,7 +575,7 @@ const EditItemModal: React.FC<{
 
     try {
       setIsSubmitting(true);
-      await api.put(`/api/menu-items/${item.id}`, {
+      await api.put(`/menu-items/${item.id}`, {
         label: label.trim(),
         url: url.trim() || null,
         target,
