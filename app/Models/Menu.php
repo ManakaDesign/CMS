@@ -13,18 +13,21 @@ class Menu extends Model
         'description',
         'design_settings',
         'is_active',
+        'is_global',
         'order',
     ];
 
     protected $casts = [
         'design_settings' => 'array',
         'is_active' => 'boolean',
+        'is_global' => 'boolean',
         'order' => 'integer',
     ];
 
     protected $attributes = [
         'design_settings' => '{}',
         'is_active' => true,
+        'is_global' => false,
         'order' => 0,
     ];
 

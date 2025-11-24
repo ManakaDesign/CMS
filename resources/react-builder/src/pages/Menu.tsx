@@ -204,10 +204,38 @@ export const Menu: React.FC = () => {
               {/* Header with Tabs */}
               <div className="bg-dark-surface border-b border-dark-border">
                 <div className="px-6 py-4 border-b border-dark-border">
-                  <h1 className="text-xl font-bold text-light-text">{selectedMenu.name}</h1>
-                  {selectedMenu.description && (
-                    <p className="text-sm text-light-muted mt-1">{selectedMenu.description}</p>
-                  )}
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h1 className="text-xl font-bold text-light-text">{selectedMenu.name}</h1>
+                      {selectedMenu.description && (
+                        <p className="text-sm text-light-muted mt-1">{selectedMenu.description}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 ml-4">
+                      <label className="flex items-center gap-2 text-sm text-light-text cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedMenu.is_global}
+                          onChange={async (e) => {
+                            try {
+                              const response = await api.put(`/menus/${selectedMenu.id}`, {
+                                is_global: e.target.checked,
+                              });
+                              setSelectedMenu(response.data);
+                              setMenus(menus.map((m) => (m.id === response.data.id ? response.data : m)));
+                            } catch (error) {
+                              console.error('Failed to update menu:', error);
+                            }
+                          }}
+                          className="w-4 h-4 rounded border-dark-border bg-dark-panel text-brand-primary focus:ring-brand-primary focus:ring-offset-dark-surface"
+                        />
+                        <span className="font-medium">Global anzeigen</span>
+                      </label>
+                      <div className="text-xs text-light-muted max-w-xs">
+                        Wenn aktiv, wird das Menü automatisch auf allen Seiten angezeigt
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div className="flex gap-2 px-6">
                   <button

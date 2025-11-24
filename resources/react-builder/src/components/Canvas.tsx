@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useBuilderStore } from '../store/builderStore';
-import type { Element } from '../types';
+import type { Element, MenuNav } from '../types';
 import { getElementComponent } from './elements/ElementRegistry';
 import { DropZone } from './DropZone';
+import api from '../services/api';
 
 export const Canvas: React.FC = () => {
   const {
@@ -14,6 +15,27 @@ export const Canvas: React.FC = () => {
     isPreviewMode,
     customCSS,
   } = useBuilderStore();
+
+  const [globalMenu, setGlobalMenu] = useState<MenuNav | null>(null);
+
+  // Load global menu on mount
+  useEffect(() => {
+    const loadGlobalMenu = async () => {
+      try {
+        const response = await api.get('/menus');
+        const menus = Array.isArray(response.data) ? response.data : (response.data.data || []);
+        const globalMenuData = menus.find((m: MenuNav) => m.is_global && m.is_active);
+        if (globalMenuData) {
+          // Load full menu with items
+          const menuResponse = await api.get(`/menus/${globalMenuData.id}`);
+          setGlobalMenu(menuResponse.data);
+        }
+      } catch (error) {
+        console.error('Failed to load global menu:', error);
+      }
+    };
+    loadGlobalMenu();
+  }, []);
 
   const renderElement = (element: Element): React.ReactNode => {
     const Component = getElementComponent(element.type);
@@ -44,6 +66,83 @@ export const Canvas: React.FC = () => {
     .filter((el) => !el.parent_id)
     .sort((a, b) => a.order - b.order);
 
+  const renderGlobalMenu = () => {
+    if (!globalMenu) return null;
+
+    const settings = globalMenu.design_settings;
+    const rootItems = globalMenu.items?.filter((item) => !item.parent_id) || [];
+
+    return (
+      <div
+        style={{
+          backgroundColor: settings.colors.background,
+          borderBottom: '1px solid #e5e7eb',
+          position: 'relative',
+        }}
+      >
+        {!isPreviewMode && (
+          <div style={{
+            position: 'absolute',
+            top: 4,
+            right: 4,
+            backgroundColor: '#3b82f6',
+            color: 'white',
+            padding: '2px 8px',
+            borderRadius: '4px',
+            fontSize: '11px',
+            fontWeight: 500,
+            zIndex: 10,
+          }}>
+            Global Menu
+          </div>
+        )}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 24px',
+          minHeight: '60px',
+        }}>
+          <div style={{
+            fontSize: '20px',
+            fontWeight: 'bold',
+            color: settings.colors.link_color,
+          }}>
+            Logo
+          </div>
+          <nav>
+            <ul style={{
+              listStyle: 'none',
+              margin: 0,
+              padding: 0,
+              display: 'flex',
+              gap: '4px',
+            }}>
+              {rootItems.map((item) => (
+                <li key={item.id} style={{ display: 'inline-block' }}>
+                  <a
+                    href={item.computed_url || '#'}
+                    onClick={(e) => e.preventDefault()}
+                    style={{
+                      display: 'block',
+                      padding: '12px 16px',
+                      color: settings.colors.link_color,
+                      textDecoration: 'none',
+                      transition: 'all 0.2s ease',
+                      fontSize: '16px',
+                    }}
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       {/* Custom CSS */}
@@ -60,6 +159,9 @@ export const Canvas: React.FC = () => {
           }
         }}
       >
+      {/* Global Menu - Always displayed at top if set */}
+      {renderGlobalMenu()}
+
       {rootElements.length > 0 ? (
         <>
           {/* Drop zone before first element */}
@@ -67,7 +169,7 @@ export const Canvas: React.FC = () => {
             id="canvas-drop-before-0"
             parentId={null}
             position="before"
-            accepts={['section']}
+            accepts={['section', 'menu']}
             index={0}
           />
 
@@ -80,7 +182,7 @@ export const Canvas: React.FC = () => {
                 id={`canvas-drop-after-${element.id}`}
                 parentId={null}
                 position="after"
-                accepts={['section']}
+                accepts={['section', 'menu']}
                 index={index + 1}
               />
             </React.Fragment>

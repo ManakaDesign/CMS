@@ -583,6 +583,7 @@ function runMigrationsManually(): void
                 `description` TEXT NULL,
                 `design_settings` JSON NULL,
                 `is_active` BOOLEAN NOT NULL DEFAULT 1,
+                `is_global` BOOLEAN NOT NULL DEFAULT 0,
                 `order` INT NOT NULL DEFAULT 0,
                 `created_at` TIMESTAMP NULL,
                 `updated_at` TIMESTAMP NULL

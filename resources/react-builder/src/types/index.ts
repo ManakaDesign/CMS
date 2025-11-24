@@ -445,6 +445,7 @@ export interface MenuNav {
   description?: string;
   design_settings: MenuDesignSettings;
   is_active: boolean;
+  is_global: boolean;
   order: number;
   created_at: string;
   updated_at: string;
