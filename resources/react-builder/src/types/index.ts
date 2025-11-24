@@ -374,3 +374,124 @@ export interface ModalProps {
   children: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
 }
+
+// ============================================
+// Menu System Types
+// ============================================
+
+export type MenuLayoutType =
+  | 'horizontal_standard'
+  | 'centered'
+  | 'split'
+  | 'vertical_sidebar'
+  | 'fullscreen_overlay';
+
+export type SubmenuStyle =
+  | 'dropdown_flyout'
+  | 'mega_menu'
+  | 'fullscreen_overlay'
+  | 'sidebar_flyout';
+
+export type MobileView =
+  | 'burger_sidebar'
+  | 'burger_fullscreen'
+  | 'bottom_navigation'
+  | 'desktop_keep';
+
+export interface MenuColors {
+  background: string;
+  link_color: string;
+  link_hover: string;
+  active_text: string;
+  active_background: string;
+}
+
+export interface MenuLogo {
+  media_id?: number;
+  width: string;
+  height: string;
+}
+
+export interface MenuFeatures {
+  sticky_header: boolean;
+  transparent_on_top: boolean;
+  search_bar: boolean;
+  cta_button: boolean;
+  social_icons: boolean;
+}
+
+export interface SubmenuConfig {
+  animation: 'fade' | 'slide' | 'none';
+  delay: number;
+  width: string;
+  position: 'left' | 'center' | 'right';
+}
+
+export interface MenuDesignSettings {
+  layout_type: MenuLayoutType;
+  submenu_style: SubmenuStyle;
+  mobile_view: MobileView;
+  colors: MenuColors;
+  logo: MenuLogo;
+  features: MenuFeatures;
+  submenu_config: SubmenuConfig;
+}
+
+export interface MenuNav {
+  id: number;
+  name: string;
+  location?: string;
+  description?: string;
+  design_settings: MenuDesignSettings;
+  is_active: boolean;
+  order: number;
+  created_at: string;
+  updated_at: string;
+
+  // Relationships
+  items?: MenuItemNav[];
+  root_items?: MenuItemNav[];
+}
+
+export interface MegaMenuColumn {
+  title: string;
+  icon?: string;
+  items: number[]; // menu_item ids
+}
+
+export interface MegaMenuConfig {
+  columns: MegaMenuColumn[];
+}
+
+export interface MenuItemNav {
+  id: number;
+  menu_id: number;
+  parent_id?: number;
+  label: string;
+  url?: string;
+  page_id?: number;
+  type: 'link' | 'page' | 'custom' | 'group';
+  target: '_self' | '_blank';
+  icon_type?: 'react-icon' | 'svg' | 'none';
+  icon_name?: string;
+  icon_media_id?: number;
+  custom_styles?: Record<string, any>;
+  mega_menu_config?: MegaMenuConfig;
+  order: number;
+  is_visible: boolean;
+  css_class?: string;
+  created_at: string;
+  updated_at: string;
+
+  // Computed
+  computed_url?: string;
+  depth?: number;
+
+  // Relationships
+  menu?: MenuNav;
+  parent?: MenuItemNav;
+  children?: MenuItemNav[];
+  children_recursive?: MenuItemNav[];
+  page?: Page;
+  icon_media?: Media;
+}
