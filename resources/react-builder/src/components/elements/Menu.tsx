@@ -22,8 +22,8 @@ interface MenuItemComponentProps {
 
 const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, depth, settings }) => {
   const [showSubmenu, setShowSubmenu] = useState(false);
-  // Support both children and children_recursive (backend uses children_recursive)
-  const childItems = item.children_recursive || item.children || [];
+  // Backend relation is childrenRecursive (camelCase), not children_recursive (snake_case)
+  const childItems = (item as any).childrenRecursive || item.children_recursive || item.children || [];
   const hasChildren = childItems.length > 0;
 
   return (
@@ -70,7 +70,7 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, depth, sett
           boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
           zIndex: 1000,
         }}>
-          {childItems.map((child) => (
+          {childItems.map((child: MenuItemNav) => (
             <MenuItemComponent key={child.id} item={child} depth={depth + 1} settings={settings} />
           ))}
         </ul>
@@ -155,6 +155,7 @@ export const Menu: React.FC<MenuProps> = (props) => {
     console.log('Root items:', rootItems);
     if (rootItems.length > 0) {
       console.log('First root item:', rootItems[0]);
+      console.log('First root item childrenRecursive:', (rootItems[0] as any).childrenRecursive);
       console.log('First root item children:', rootItems[0].children);
     }
 
