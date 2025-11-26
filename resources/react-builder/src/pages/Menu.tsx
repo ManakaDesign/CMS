@@ -22,10 +22,13 @@ export const Menu: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newMenuName, setNewMenuName] = useState('');
 
+  // Load menus on mount
   useEffect(() => {
     loadMenus();
+  }, []);
 
-    // Listen for menu item updates
+  // Listen for menu item updates
+  useEffect(() => {
     const handleMenuItemsUpdate = async (event: Event) => {
       const { menuId } = (event as CustomEvent).detail;
       if (selectedMenu && menuId === selectedMenu.id) {
@@ -33,7 +36,7 @@ export const Menu: React.FC = () => {
         try {
           const response = await api.get(`/menus/${menuId}`);
           setSelectedMenu(response.data);
-          setMenus(menus.map((m) => (m.id === response.data.id ? response.data : m)));
+          setMenus((prevMenus) => prevMenus.map((m) => (m.id === response.data.id ? response.data : m)));
         } catch (error) {
           console.error('Failed to reload menu:', error);
         }
@@ -42,7 +45,7 @@ export const Menu: React.FC = () => {
 
     window.addEventListener('menuItemsUpdated', handleMenuItemsUpdate);
     return () => window.removeEventListener('menuItemsUpdated', handleMenuItemsUpdate);
-  }, [selectedMenu, menus]);
+  }, [selectedMenu?.id]); // Only depend on selectedMenu.id, not entire object
 
   const loadMenus = async () => {
     try {
