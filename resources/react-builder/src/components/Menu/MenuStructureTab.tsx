@@ -71,24 +71,44 @@ export const MenuStructureTab: React.FC<MenuStructureTabProps> = ({ menu, onUpda
   const handleDeleteItem = async (item: MenuItemNav) => {
     if (!confirm(`"${item.label}" wirklich löschen?`)) return;
 
+    // Optimistic update
+    const previousItems = [...items];
+    setItems(items.filter((i) => i.id !== item.id));
+
     try {
       await api.delete(`/menu-items/${item.id}`);
       await loadData();
       onUpdate();
+
+      // Emit event
+      window.dispatchEvent(new CustomEvent('menuItemsUpdated', {
+        detail: { menuId: menu.id }
+      }));
     } catch (error) {
       console.error('Failed to delete menu item:', error);
+      setItems(previousItems);
     }
   };
 
   const handleToggleVisibility = async (item: MenuItemNav) => {
+    // Optimistic update
+    const previousItems = [...items];
+    setItems(items.map((i) => (i.id === item.id ? { ...i, is_visible: !i.is_visible } : i)));
+
     try {
       await api.put(`/menu-items/${item.id}`, {
         is_visible: !item.is_visible,
       });
       await loadData();
       onUpdate();
+
+      // Emit event
+      window.dispatchEvent(new CustomEvent('menuItemsUpdated', {
+        detail: { menuId: menu.id }
+      }));
     } catch (error) {
       console.error('Failed to toggle visibility:', error);
+      setItems(previousItems);
     }
   };
 
@@ -112,16 +132,38 @@ export const MenuStructureTab: React.FC<MenuStructureTabProps> = ({ menu, onUpda
     setDragOverId(null);
 
     if (!draggedItem) return;
+    if (draggedItem.id === targetItem?.id) {
+      setDraggedItem(null);
+      return; // Can't drop on itself
+    }
+
+    // Optimistic UI update
+    const previousItems = [...items];
+    const optimisticItems = items.map((item) =>
+      item.id === draggedItem.id
+        ? { ...item, parent_id: targetItem?.id || undefined }
+        : item
+    );
+    setItems(optimisticItems);
 
     try {
       // Move item under target (or to root if target is null)
       await api.put(`/menu-items/${draggedItem.id}`, {
         parent_id: targetItem?.id || null,
       });
+
+      // Reload to get fresh data
       await loadData();
       onUpdate();
+
+      // Emit event for live preview updates
+      window.dispatchEvent(new CustomEvent('menuItemsUpdated', {
+        detail: { menuId: menu.id }
+      }));
     } catch (error) {
       console.error('Failed to move item:', error);
+      // Revert optimistic update on error
+      setItems(previousItems);
     }
 
     setDraggedItem(null);

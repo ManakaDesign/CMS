@@ -22,7 +22,6 @@ interface MenuItemComponentProps {
 
 const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, depth, settings }) => {
   const [showSubmenu, setShowSubmenu] = useState(false);
-  // Backend relation is childrenRecursive (camelCase), not children_recursive (snake_case)
   const childItems = (item as any).childrenRecursive || item.children_recursive || item.children || [];
   const hasChildren = childItems.length > 0;
 
@@ -41,19 +40,19 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, depth, sett
         style={{
           display: 'block',
           padding: depth === 0 ? '12px 16px' : '8px 12px',
-          color: settings?.colors.link_color || '#333',
+          color: settings?.colors?.link_color || '#333',
           textDecoration: 'none',
           transition: 'all 0.2s ease',
           fontSize: depth === 0 ? '16px' : '14px',
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.color = settings?.colors.link_hover || '#007bff';
+          e.currentTarget.style.color = settings?.colors?.link_hover || '#007bff';
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.color = settings?.colors.link_color || '#333';
+          e.currentTarget.style.color = settings?.colors?.link_color || '#333';
         }}
       >
-        {item.label} {hasChildren && <span>▾</span>}
+        {item.label} {hasChildren && <span className="ml-1">▾</span>}
       </a>
       {hasChildren && showSubmenu && (
         <ul style={{
@@ -63,7 +62,7 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, depth, sett
           position: 'absolute',
           top: '100%',
           left: 0,
-          backgroundColor: settings?.colors.background || '#fff',
+          backgroundColor: settings?.colors?.background || '#fff',
           border: '1px solid #e5e7eb',
           borderRadius: '4px',
           minWidth: '200px',
@@ -84,6 +83,7 @@ export const Menu: React.FC<MenuProps> = (props) => {
   const { activeBreakpoint, toggleElementSelection } = useBuilderStore();
   const [menu, setMenu] = useState<MenuNav | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   // Load active menu from backend
   useEffect(() => {
@@ -92,10 +92,8 @@ export const Menu: React.FC<MenuProps> = (props) => {
         setIsLoading(true);
         const response = await api.get('/menus');
         const menus = Array.isArray(response.data) ? response.data : (response.data.data || []);
-        // Get first active menu or first menu
         const activeMenu = menus.find((m: MenuNav) => m.is_active) || menus[0];
         if (activeMenu) {
-          // Load menu with items
           const menuResponse = await api.get(`/menus/${activeMenu.id}`);
           setMenu(menuResponse.data);
         }
@@ -105,8 +103,42 @@ export const Menu: React.FC<MenuProps> = (props) => {
         setIsLoading(false);
       }
     };
+
     loadMenu();
-  }, []);
+
+    // Listen for menu updates
+    const handleMenuUpdate = async (event: Event) => {
+      const updatedMenu = (event as CustomEvent).detail;
+      if (menu && updatedMenu.id === menu.id) {
+        try {
+          const menuResponse = await api.get(`/menus/${updatedMenu.id}`);
+          setMenu(menuResponse.data);
+        } catch (error) {
+          console.error('Failed to reload menu:', error);
+        }
+      }
+    };
+
+    // Listen for menu items updates
+    const handleMenuItemsUpdate = async (event: Event) => {
+      const { menuId } = (event as CustomEvent).detail;
+      if (menu && menuId === menu.id) {
+        try {
+          const menuResponse = await api.get(`/menus/${menuId}`);
+          setMenu(menuResponse.data);
+        } catch (error) {
+          console.error('Failed to reload menu items:', error);
+        }
+      }
+    };
+
+    window.addEventListener('menuUpdated', handleMenuUpdate);
+    window.addEventListener('menuItemsUpdated', handleMenuItemsUpdate);
+    return () => {
+      window.removeEventListener('menuUpdated', handleMenuUpdate);
+      window.removeEventListener('menuItemsUpdated', handleMenuItemsUpdate);
+    };
+  }, [menu]);
 
   const handleMenuClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -150,13 +182,13 @@ export const Menu: React.FC<MenuProps> = (props) => {
     const settings = menu.design_settings;
     const rootItems = menu.items?.filter((item) => !item.parent_id) || [];
 
-    // Debug: Log menu data to see structure
-    console.log('Menu data:', menu);
-    console.log('Root items:', rootItems);
-    if (rootItems.length > 0) {
-      console.log('First root item:', rootItems[0]);
-      console.log('First root item childrenRecursive:', (rootItems[0] as any).childrenRecursive);
-      console.log('First root item children:', rootItems[0].children);
+    // Show placeholder if no items
+    if (rootItems.length === 0) {
+      return (
+        <div style={{ padding: '16px', color: '#999', textAlign: 'center' }}>
+          No menu items. Add pages in Menu Structure tab.
+        </div>
+      );
     }
 
     // Logo renderer helper
@@ -167,8 +199,8 @@ export const Menu: React.FC<MenuProps> = (props) => {
             src={menu.logo_url}
             alt="Logo"
             style={{
-              maxWidth: settings.logo.width || '150px',
-              maxHeight: settings.logo.height || '60px',
+              maxWidth: settings?.logo?.width || '150px',
+              maxHeight: settings?.logo?.height || '60px',
               objectFit: 'contain',
             }}
           />
@@ -178,7 +210,7 @@ export const Menu: React.FC<MenuProps> = (props) => {
         <div style={{
           fontSize: '20px',
           fontWeight: 'bold',
-          color: settings.colors.link_color,
+          color: settings?.colors?.link_color || '#fff',
         }}>
           Logo
         </div>
@@ -187,12 +219,11 @@ export const Menu: React.FC<MenuProps> = (props) => {
 
     // Check if mobile view should be shown
     const isMobileView = activeBreakpoint === 'mobile' || activeBreakpoint === 'tablet';
-    const [showMobileMenu, setShowMobileMenu] = React.useState(false);
 
     // Render mobile burger menu
-    if (isMobileView && settings.mobile_view === 'burger_sidebar') {
+    if (isMobileView && settings?.mobile_view === 'burger_sidebar') {
       return (
-        <div style={{ backgroundColor: settings.colors.background, minHeight: '60px' }}>
+        <div style={{ backgroundColor: settings?.colors?.background || '#1a1a1a', minHeight: '60px' }}>
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -210,7 +241,7 @@ export const Menu: React.FC<MenuProps> = (props) => {
                 padding: '8px',
               }}
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={settings.colors.link_color} strokeWidth="2">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={settings?.colors?.link_color || '#fff'} strokeWidth="2">
                 <line x1="3" y1="6" x2="21" y2="6"/>
                 <line x1="3" y1="12" x2="21" y2="12"/>
                 <line x1="3" y1="18" x2="21" y2="18"/>
@@ -219,7 +250,7 @@ export const Menu: React.FC<MenuProps> = (props) => {
           </div>
           {showMobileMenu && (
             <div style={{
-              backgroundColor: settings.colors.background,
+              backgroundColor: settings?.colors?.background || '#1a1a1a',
               borderTop: '1px solid #e5e7eb',
               padding: '16px',
             }}>
@@ -236,7 +267,7 @@ export const Menu: React.FC<MenuProps> = (props) => {
                       style={{
                         display: 'block',
                         padding: '12px',
-                        color: settings.colors.link_color,
+                        color: settings?.colors?.link_color || '#fff',
                         textDecoration: 'none',
                       }}
                     >
@@ -253,7 +284,7 @@ export const Menu: React.FC<MenuProps> = (props) => {
 
     // Render based on layout type
     const renderLayout = () => {
-      switch (settings.layout_type) {
+      switch (settings?.layout_type) {
         case 'horizontal_standard':
           return (
             <div style={{
@@ -261,6 +292,7 @@ export const Menu: React.FC<MenuProps> = (props) => {
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '0 24px',
+              minHeight: '60px',
             }}>
               {renderLogo()}
               <nav>
@@ -336,10 +368,12 @@ export const Menu: React.FC<MenuProps> = (props) => {
         case 'vertical_sidebar':
           return (
             <div style={{
+              display: 'flex',
+              flexDirection: 'column',
               padding: '16px',
               minHeight: '200px',
             }}>
-              <div style={{ marginBottom: '16px' }}>
+              <div style={{ marginBottom: '24px' }}>
                 {renderLogo()}
               </div>
               <nav>
@@ -347,35 +381,9 @@ export const Menu: React.FC<MenuProps> = (props) => {
                   listStyle: 'none',
                   margin: 0,
                   padding: 0,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '4px',
                 }}>
                   {rootItems.map((item) => (
-                    <li key={item.id}>
-                      <a
-                        href={item.computed_url || '#'}
-                        onClick={(e) => e.preventDefault()}
-                        style={{
-                          display: 'block',
-                          padding: '12px 16px',
-                          color: settings.colors.link_color,
-                          textDecoration: 'none',
-                          borderRadius: '4px',
-                          transition: 'all 0.2s ease',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = settings.colors.active_background;
-                          e.currentTarget.style.color = settings.colors.active_text;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                          e.currentTarget.style.color = settings.colors.link_color;
-                        }}
-                      >
-                        {item.label}
-                      </a>
-                    </li>
+                    <MenuItemComponent key={item.id} item={item} depth={0} settings={settings} />
                   ))}
                 </ul>
               </nav>
@@ -403,8 +411,8 @@ export const Menu: React.FC<MenuProps> = (props) => {
 
     return (
       <div style={{
-        backgroundColor: settings.colors.background,
-        minHeight: '60px',
+        backgroundColor: settings?.colors?.background || '#1a1a1a',
+        borderBottom: '1px solid #e5e7eb',
       }}>
         {renderLayout()}
       </div>
@@ -412,12 +420,8 @@ export const Menu: React.FC<MenuProps> = (props) => {
   };
 
   return (
-    <BaseElement
-      element={element}
-      onClick={() => onClick?.()}
-      {...baseProps}
-    >
-      <div onClick={handleMenuClick}>
+    <BaseElement {...baseProps} element={element}>
+      <div onClick={handleMenuClick} style={{ ...breakpointStyles }}>
         {menuContent()}
       </div>
     </BaseElement>

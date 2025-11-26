@@ -24,7 +24,25 @@ export const Menu: React.FC = () => {
 
   useEffect(() => {
     loadMenus();
-  }, []);
+
+    // Listen for menu item updates
+    const handleMenuItemsUpdate = async (event: Event) => {
+      const { menuId } = (event as CustomEvent).detail;
+      if (selectedMenu && menuId === selectedMenu.id) {
+        // Reload the selected menu to get updated items
+        try {
+          const response = await api.get(`/menus/${menuId}`);
+          setSelectedMenu(response.data);
+          setMenus(menus.map((m) => (m.id === response.data.id ? response.data : m)));
+        } catch (error) {
+          console.error('Failed to reload menu:', error);
+        }
+      }
+    };
+
+    window.addEventListener('menuItemsUpdated', handleMenuItemsUpdate);
+    return () => window.removeEventListener('menuItemsUpdated', handleMenuItemsUpdate);
+  }, [selectedMenu, menus]);
 
   const loadMenus = async () => {
     try {
@@ -93,6 +111,9 @@ export const Menu: React.FC = () => {
       });
       setSelectedMenu(response.data);
       setMenus(menus.map((m) => (m.id === response.data.id ? response.data : m)));
+
+      // Emit custom event for live preview updates
+      window.dispatchEvent(new CustomEvent('menuUpdated', { detail: response.data }));
     } catch (error) {
       console.error('Failed to update menu design:', error);
     }
@@ -227,6 +248,9 @@ export const Menu: React.FC = () => {
                                 });
                                 setSelectedMenu(response.data);
                                 setMenus(menus.map((m) => (m.id === response.data.id ? response.data : m)));
+
+                                // Emit event for Canvas to reload global menu
+                                window.dispatchEvent(new CustomEvent('menuUpdated', { detail: response.data }));
                               } catch (error) {
                                 console.error('Failed to update menu:', error);
                               }

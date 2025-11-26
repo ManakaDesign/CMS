@@ -29,13 +29,59 @@ export const Canvas: React.FC = () => {
           // Load full menu with items
           const menuResponse = await api.get(`/menus/${globalMenuData.id}`);
           setGlobalMenu(menuResponse.data);
+        } else {
+          setGlobalMenu(null);
         }
       } catch (error) {
         console.error('Failed to load global menu:', error);
       }
     };
+
     loadGlobalMenu();
-  }, []);
+
+    // Listen for menu updates
+    const handleMenuUpdate = async (event: Event) => {
+      const updatedMenu = (event as CustomEvent).detail;
+
+      // If this is the current global menu, update it
+      if (globalMenu && updatedMenu.id === globalMenu.id) {
+        // Reload full menu data with items
+        try {
+          const menuResponse = await api.get(`/menus/${updatedMenu.id}`);
+          setGlobalMenu(menuResponse.data);
+        } catch (error) {
+          console.error('Failed to reload menu:', error);
+        }
+      }
+
+      // If is_global changed, reload all menus to find new global
+      if ('is_global' in updatedMenu) {
+        loadGlobalMenu();
+      }
+    };
+
+    // Listen for menu items updates
+    const handleMenuItemsUpdate = async (event: Event) => {
+      const { menuId } = (event as CustomEvent).detail;
+
+      // If this is the current global menu, reload it
+      if (globalMenu && menuId === globalMenu.id) {
+        try {
+          const menuResponse = await api.get(`/menus/${menuId}`);
+          setGlobalMenu(menuResponse.data);
+        } catch (error) {
+          console.error('Failed to reload menu items:', error);
+        }
+      }
+    };
+
+    window.addEventListener('menuUpdated', handleMenuUpdate);
+    window.addEventListener('menuItemsUpdated', handleMenuItemsUpdate);
+    return () => {
+      window.removeEventListener('menuUpdated', handleMenuUpdate);
+      window.removeEventListener('menuItemsUpdated', handleMenuItemsUpdate);
+    };
+  }, [globalMenu]);
 
   const renderElement = (element: Element): React.ReactNode => {
     const Component = getElementComponent(element.type);
