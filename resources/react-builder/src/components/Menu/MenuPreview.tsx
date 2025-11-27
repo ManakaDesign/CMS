@@ -10,6 +10,7 @@ type BreakpointType = 'desktop' | 'tablet' | 'mobile';
 export const MenuPreview: React.FC<MenuPreviewProps> = ({ menu: initialMenu }) => {
   const [activeBreakpoint, setActiveBreakpoint] = useState<BreakpointType>('desktop');
   const [menu, setMenu] = useState<MenuNav>(initialMenu);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   // Listen for menu updates
   useEffect(() => {
@@ -384,6 +385,33 @@ export const MenuPreview: React.FC<MenuPreviewProps> = ({ menu: initialMenu }) =
         </button>
       </div>
 
+      {/* Transparent on Top Toggle */}
+      {settings.features?.transparent_on_top && (
+        <div className="flex items-center gap-2 justify-center pb-2 border-b border-dark-border">
+          <span className="text-xs text-light-muted">Scroll-Status Vorschau:</span>
+          <button
+            onClick={() => setIsScrolled(false)}
+            className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+              !isScrolled
+                ? 'bg-brand-primary text-white'
+                : 'bg-dark-surface text-light-muted hover:bg-dark-surface/80'
+            }`}
+          >
+            Oben (Transparent)
+          </button>
+          <button
+            onClick={() => setIsScrolled(true)}
+            className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+              isScrolled
+                ? 'bg-brand-primary text-white'
+                : 'bg-dark-surface text-light-muted hover:bg-dark-surface/80'
+            }`}
+          >
+            Gescrollt (Solid)
+          </button>
+        </div>
+      )}
+
       {/* Main Preview */}
       <div className="bg-dark-panel border border-dark-border rounded-lg overflow-hidden">
         {/* Browser Header */}
@@ -400,9 +428,14 @@ export const MenuPreview: React.FC<MenuPreviewProps> = ({ menu: initialMenu }) =
 
         {/* Menu Preview */}
         <div
-          className="min-h-[120px]"
           style={{
-            backgroundColor: settings.colors?.background || '#1a1a1a',
+            backgroundColor: settings.features?.transparent_on_top && !isScrolled
+              ? 'rgba(0, 0, 0, 0.3)'
+              : settings.colors?.background || '#1a1a1a',
+            position: settings.features?.sticky_header ? 'sticky' : 'relative',
+            top: settings.features?.sticky_header ? '0' : 'auto',
+            zIndex: settings.features?.sticky_header ? 50 : 'auto',
+            transition: 'background-color 0.3s ease',
           }}
         >
           {renderLayoutPreview()}

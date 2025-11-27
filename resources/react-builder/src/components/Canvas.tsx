@@ -84,6 +84,18 @@ export const Canvas: React.FC = () => {
 
   const [globalMenu, setGlobalMenu] = useState<MenuNav | null>(null);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // Scroll detection for transparent on top feature
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      setIsScrolled(scrollTop > 50);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Load global menu on mount
   useEffect(() => {
@@ -386,9 +398,14 @@ export const Canvas: React.FC = () => {
     return (
       <div
         style={{
-          backgroundColor: settings?.colors?.background || '#1a1a1a',
+          backgroundColor: settings?.features?.transparent_on_top && !isScrolled
+            ? 'rgba(0, 0, 0, 0.3)'
+            : settings?.colors?.background || '#1a1a1a',
           borderBottom: '1px solid #e5e7eb',
-          position: 'relative',
+          position: settings?.features?.sticky_header ? 'sticky' : 'relative',
+          top: settings?.features?.sticky_header ? '0' : 'auto',
+          zIndex: settings?.features?.sticky_header ? 50 : 'auto',
+          transition: 'background-color 0.3s ease',
         }}
       >
         {!isPreviewMode && (

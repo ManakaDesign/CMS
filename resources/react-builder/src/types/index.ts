@@ -428,6 +428,40 @@ export interface SubmenuConfig {
   position: 'left' | 'center' | 'right';
 }
 
+export interface CTAButtonConfig {
+  text: string;
+  action_type: 'page' | 'url' | 'none';
+  page_id?: number;
+  url?: string;
+  position: 'right_of_nav' | 'after_logo' | 'far_right';
+  styling: {
+    bg_color: string;
+    text_color: string;
+    border_radius: string;
+    padding: string;
+    hover_bg_color: string;
+    hover_text_color: string;
+    border_width: string;
+    border_color: string;
+  };
+}
+
+export interface SocialIconConfig {
+  platform: 'facebook' | 'instagram' | 'twitter' | 'linkedin' | 'youtube' | 'github' | 'tiktok';
+  url: string;
+}
+
+export interface SocialIconsConfig {
+  icons: SocialIconConfig[];
+  position: 'right_of_nav' | 'after_cta' | 'separate_row';
+  styling: {
+    size: string;
+    color: string;
+    hover_color: string;
+    spacing: string;
+  };
+}
+
 export interface MenuDesignSettings {
   layout_type: MenuLayoutType;
   submenu_style: SubmenuStyle;
@@ -436,6 +470,8 @@ export interface MenuDesignSettings {
   logo: MenuLogo;
   features: MenuFeatures;
   submenu_config: SubmenuConfig;
+  cta_button_config?: CTAButtonConfig;
+  social_icons_config?: SocialIconsConfig;
 }
 
 export interface MenuNav {

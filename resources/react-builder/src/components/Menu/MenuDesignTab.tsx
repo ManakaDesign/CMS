@@ -6,9 +6,13 @@ import type {
   SubmenuStyle,
   MobileView,
   Media,
+  CTAButtonConfig,
+  SocialIconsConfig,
+  Page,
 } from '../../types';
-import { FiCheck, FiImage, FiTrash2 } from 'react-icons/fi';
+import { FiCheck, FiImage, FiTrash2, FiChevronRight } from 'react-icons/fi';
 import MediaPicker from '../admin/media/MediaPicker';
+import api from '../../services/api';
 
 interface MenuDesignTabProps {
   menu: MenuNav;
@@ -18,6 +22,22 @@ interface MenuDesignTabProps {
 export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) => {
   const settings = menu.design_settings;
   const [showMediaPicker, setShowMediaPicker] = useState(false);
+  const [showCTAModal, setShowCTAModal] = useState(false);
+  const [showSocialModal, setShowSocialModal] = useState(false);
+  const [pages, setPages] = useState<Page[]>([]);
+
+  // Load pages for CTA button page selector
+  React.useEffect(() => {
+    const loadPages = async () => {
+      try {
+        const response = await api.get('/pages');
+        setPages(Array.isArray(response.data) ? response.data : response.data.data || []);
+      } catch (error) {
+        console.error('Failed to load pages:', error);
+      }
+    };
+    loadPages();
+  }, []);
 
   const handleLayoutTypeChange = (layoutType: MenuLayoutType) => {
     onUpdate({ layout_type: layoutType });
@@ -86,6 +106,18 @@ export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) 
         ...settings.logo,
         [key]: value,
       },
+    });
+  };
+
+  const handleCTAConfigUpdate = (config: CTAButtonConfig) => {
+    onUpdate({
+      cta_button_config: config,
+    });
+  };
+
+  const handleSocialConfigUpdate = (config: SocialIconsConfig) => {
+    onUpdate({
+      social_icons_config: config,
     });
   };
 
@@ -377,17 +409,21 @@ export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) 
             checked={settings.features.search_bar}
             onChange={() => handleFeatureToggle('search_bar')}
           />
-          <CheckboxCard
+          <CheckboxCardWithConfig
             title="CTA Button"
             description="Hervorgehobener Call-to-Action Button"
             checked={settings.features.cta_button}
             onChange={() => handleFeatureToggle('cta_button')}
+            onConfigureClick={() => setShowCTAModal(true)}
+            hasConfig={true}
           />
-          <CheckboxCard
+          <CheckboxCardWithConfig
             title="Social Icons"
             description="Social Media Links/Icons anzeigen"
             checked={settings.features.social_icons}
             onChange={() => handleFeatureToggle('social_icons')}
+            onConfigureClick={() => setShowSocialModal(true)}
+            hasConfig={true}
           />
         </div>
       </Section>
@@ -399,6 +435,48 @@ export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) 
           onClose={() => setShowMediaPicker(false)}
           accept="image"
           title="Logo auswählen"
+        />
+      )}
+
+      {/* CTA Button Configuration Modal */}
+      {showCTAModal && (
+        <CTAButtonConfigModal
+          config={settings.cta_button_config || {
+            text: 'Get Started',
+            action_type: 'none',
+            position: 'right_of_nav',
+            styling: {
+              bg_color: '#3b82f6',
+              text_color: '#ffffff',
+              border_radius: '6px',
+              padding: '10px 24px',
+              hover_bg_color: '#2563eb',
+              hover_text_color: '#ffffff',
+              border_width: '0px',
+              border_color: '#3b82f6',
+            },
+          }}
+          pages={pages}
+          onSave={handleCTAConfigUpdate}
+          onClose={() => setShowCTAModal(false)}
+        />
+      )}
+
+      {/* Social Icons Configuration Modal */}
+      {showSocialModal && (
+        <SocialIconsConfigModal
+          config={settings.social_icons_config || {
+            icons: [],
+            position: 'right_of_nav',
+            styling: {
+              size: '20px',
+              color: '#64748b',
+              hover_color: '#3b82f6',
+              spacing: '16px',
+            },
+          }}
+          onSave={handleSocialConfigUpdate}
+          onClose={() => setShowSocialModal(false)}
         />
       )}
     </div>
@@ -493,6 +571,56 @@ const CheckboxCard: React.FC<{
   );
 };
 
+const CheckboxCardWithConfig: React.FC<{
+  title: string;
+  description: string;
+  checked: boolean;
+  onChange: () => void;
+  onConfigureClick: () => void;
+  hasConfig: boolean;
+}> = ({ title, description, checked, onChange, onConfigureClick, hasConfig }) => {
+  return (
+    <div
+      className={`
+        p-4 rounded-lg border-2 transition-all
+        ${
+          checked
+            ? 'border-brand-primary bg-brand-primary/10'
+            : 'border-dark-border bg-dark-surface hover:border-dark-border/60'
+        }
+      `}
+    >
+      <div className="flex items-start gap-3">
+        <div
+          onClick={onChange}
+          className={`
+          w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all cursor-pointer
+          ${checked ? 'border-brand-primary bg-brand-primary' : 'border-dark-border'}
+        `}
+        >
+          {checked && <FiCheck className="text-white" size={14} />}
+        </div>
+        <div className="flex-1" onClick={onChange}>
+          <div className="text-sm font-semibold text-light-text mb-1">{title}</div>
+          <div className="text-xs text-light-muted leading-relaxed">{description}</div>
+        </div>
+        {hasConfig && checked && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onConfigureClick();
+            }}
+            className="p-2 rounded hover:bg-brand-primary/20 transition-colors flex-shrink-0"
+            title="Konfigurieren"
+          >
+            <FiChevronRight className="text-brand-primary" size={18} />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const ColorInput: React.FC<{
   label: string;
   value: string;
@@ -538,6 +666,439 @@ const ColorInput: React.FC<{
           placeholder="#000000"
           className="flex-1 px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text font-mono text-sm focus:outline-none focus:border-brand-primary"
         />
+      </div>
+    </div>
+  );
+};
+
+// CTA Button Configuration Modal
+const CTAButtonConfigModal: React.FC<{
+  config: CTAButtonConfig;
+  pages: Page[];
+  onSave: (config: CTAButtonConfig) => void;
+  onClose: () => void;
+}> = ({ config, pages, onSave, onClose }) => {
+  const [localConfig, setLocalConfig] = useState<CTAButtonConfig>(config);
+
+  const updateConfig = (updates: Partial<CTAButtonConfig>) => {
+    setLocalConfig((prev) => ({ ...prev, ...updates }));
+  };
+
+  const updateStyling = (key: keyof CTAButtonConfig['styling'], value: string) => {
+    setLocalConfig((prev) => ({
+      ...prev,
+      styling: { ...prev.styling, [key]: value },
+    }));
+  };
+
+  const handleSave = () => {
+    onSave(localConfig);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-dark-panel border border-dark-border rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-dark-border flex items-center justify-between sticky top-0 bg-dark-panel z-10">
+          <h3 className="text-lg font-bold text-light-text">CTA Button konfigurieren</h3>
+          <button
+            onClick={onClose}
+            className="text-light-muted hover:text-light-text transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          {/* Button Text */}
+          <div>
+            <label className="block text-sm font-medium text-light-text mb-2">
+              Button Text
+            </label>
+            <input
+              type="text"
+              value={localConfig.text}
+              onChange={(e) => updateConfig({ text: e.target.value })}
+              placeholder="z.B. Get Started"
+              className="w-full px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text focus:outline-none focus:border-brand-primary"
+            />
+          </div>
+
+          {/* Action Type */}
+          <div>
+            <label className="block text-sm font-medium text-light-text mb-2">
+              Aktion
+            </label>
+            <select
+              value={localConfig.action_type}
+              onChange={(e) => updateConfig({ action_type: e.target.value as 'page' | 'url' | 'none' })}
+              className="w-full px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text focus:outline-none focus:border-brand-primary"
+            >
+              <option value="none">Keine Aktion</option>
+              <option value="page">Seite</option>
+              <option value="url">URL</option>
+            </select>
+          </div>
+
+          {/* Page Selector */}
+          {localConfig.action_type === 'page' && (
+            <div>
+              <label className="block text-sm font-medium text-light-text mb-2">
+                Seite auswählen
+              </label>
+              <select
+                value={localConfig.page_id || ''}
+                onChange={(e) => updateConfig({ page_id: e.target.value ? parseInt(e.target.value) : undefined })}
+                className="w-full px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text focus:outline-none focus:border-brand-primary"
+              >
+                <option value="">-- Seite wählen --</option>
+                {pages.filter((p) => p.status === 'published').map((page) => (
+                  <option key={page.id} value={page.id}>
+                    {page.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* URL Input */}
+          {localConfig.action_type === 'url' && (
+            <div>
+              <label className="block text-sm font-medium text-light-text mb-2">
+                URL
+              </label>
+              <input
+                type="url"
+                value={localConfig.url || ''}
+                onChange={(e) => updateConfig({ url: e.target.value })}
+                placeholder="https://example.com"
+                className="w-full px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text focus:outline-none focus:border-brand-primary"
+              />
+            </div>
+          )}
+
+          {/* Position */}
+          <div>
+            <label className="block text-sm font-medium text-light-text mb-2">
+              Position
+            </label>
+            <select
+              value={localConfig.position}
+              onChange={(e) => updateConfig({ position: e.target.value as any })}
+              className="w-full px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text focus:outline-none focus:border-brand-primary"
+            >
+              <option value="right_of_nav">Rechts neben Navigation</option>
+              <option value="after_logo">Nach dem Logo</option>
+              <option value="far_right">Ganz rechts</option>
+            </select>
+          </div>
+
+          {/* Styling */}
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold text-light-text border-b border-dark-border pb-2">
+              Styling
+            </h4>
+
+            <div className="grid grid-cols-2 gap-4">
+              <ColorInput
+                label="Hintergrundfarbe"
+                value={localConfig.styling.bg_color}
+                onChange={(value) => updateStyling('bg_color', value)}
+              />
+              <ColorInput
+                label="Textfarbe"
+                value={localConfig.styling.text_color}
+                onChange={(value) => updateStyling('text_color', value)}
+              />
+              <ColorInput
+                label="Hover Hintergrund"
+                value={localConfig.styling.hover_bg_color}
+                onChange={(value) => updateStyling('hover_bg_color', value)}
+              />
+              <ColorInput
+                label="Hover Textfarbe"
+                value={localConfig.styling.hover_text_color}
+                onChange={(value) => updateStyling('hover_text_color', value)}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-light-text mb-2">
+                  Border Radius
+                </label>
+                <input
+                  type="text"
+                  value={localConfig.styling.border_radius}
+                  onChange={(e) => updateStyling('border_radius', e.target.value)}
+                  placeholder="6px"
+                  className="w-full px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text focus:outline-none focus:border-brand-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-light-text mb-2">
+                  Padding
+                </label>
+                <input
+                  type="text"
+                  value={localConfig.styling.padding}
+                  onChange={(e) => updateStyling('padding', e.target.value)}
+                  placeholder="10px 24px"
+                  className="w-full px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text focus:outline-none focus:border-brand-primary"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-light-text mb-2">
+                  Border Width
+                </label>
+                <input
+                  type="text"
+                  value={localConfig.styling.border_width}
+                  onChange={(e) => updateStyling('border_width', e.target.value)}
+                  placeholder="0px"
+                  className="w-full px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text focus:outline-none focus:border-brand-primary"
+                />
+              </div>
+              <ColorInput
+                label="Border Color"
+                value={localConfig.styling.border_color}
+                onChange={(value) => updateStyling('border_color', value)}
+              />
+            </div>
+          </div>
+
+          {/* Preview */}
+          <div>
+            <h4 className="text-sm font-semibold text-light-text mb-3">Vorschau</h4>
+            <div className="bg-dark-surface p-4 rounded-lg flex items-center justify-center">
+              <button
+                style={{
+                  backgroundColor: localConfig.styling.bg_color,
+                  color: localConfig.styling.text_color,
+                  borderRadius: localConfig.styling.border_radius,
+                  padding: localConfig.styling.padding,
+                  border: `${localConfig.styling.border_width} solid ${localConfig.styling.border_color}`,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = localConfig.styling.hover_bg_color;
+                  e.currentTarget.style.color = localConfig.styling.hover_text_color;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = localConfig.styling.bg_color;
+                  e.currentTarget.style.color = localConfig.styling.text_color;
+                }}
+              >
+                {localConfig.text}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6 border-t border-dark-border flex items-center justify-end gap-3 sticky bottom-0 bg-dark-panel">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-dark-surface text-light-text rounded-lg hover:bg-dark-surface/80 transition-colors"
+          >
+            Abbrechen
+          </button>
+          <button
+            onClick={handleSave}
+            className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 transition-colors"
+          >
+            Speichern
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Social Icons Configuration Modal
+const SocialIconsConfigModal: React.FC<{
+  config: SocialIconsConfig;
+  onSave: (config: SocialIconsConfig) => void;
+  onClose: () => void;
+}> = ({ config, onSave, onClose }) => {
+  const [localConfig, setLocalConfig] = useState<SocialIconsConfig>(config);
+
+  const platforms: Array<{ id: 'facebook' | 'instagram' | 'twitter' | 'linkedin' | 'youtube' | 'github' | 'tiktok'; label: string }> = [
+    { id: 'facebook', label: 'Facebook' },
+    { id: 'instagram', label: 'Instagram' },
+    { id: 'twitter', label: 'Twitter/X' },
+    { id: 'linkedin', label: 'LinkedIn' },
+    { id: 'youtube', label: 'YouTube' },
+    { id: 'github', label: 'GitHub' },
+    { id: 'tiktok', label: 'TikTok' },
+  ];
+
+  const togglePlatform = (platform: 'facebook' | 'instagram' | 'twitter' | 'linkedin' | 'youtube' | 'github' | 'tiktok') => {
+    setLocalConfig((prev) => {
+      const exists = prev.icons.some((icon) => icon.platform === platform);
+      if (exists) {
+        return {
+          ...prev,
+          icons: prev.icons.filter((icon) => icon.platform !== platform),
+        };
+      } else {
+        return {
+          ...prev,
+          icons: [...prev.icons, { platform, url: '' }],
+        };
+      }
+    });
+  };
+
+  const updatePlatformUrl = (platform: 'facebook' | 'instagram' | 'twitter' | 'linkedin' | 'youtube' | 'github' | 'tiktok', url: string) => {
+    setLocalConfig((prev) => ({
+      ...prev,
+      icons: prev.icons.map((icon) =>
+        icon.platform === platform ? { ...icon, url } : icon
+      ),
+    }));
+  };
+
+  const updateStyling = (key: keyof SocialIconsConfig['styling'], value: string) => {
+    setLocalConfig((prev) => ({
+      ...prev,
+      styling: { ...prev.styling, [key]: value },
+    }));
+  };
+
+  const handleSave = () => {
+    onSave(localConfig);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-dark-panel border border-dark-border rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-dark-border flex items-center justify-between sticky top-0 bg-dark-panel z-10">
+          <h3 className="text-lg font-bold text-light-text">Social Icons konfigurieren</h3>
+          <button
+            onClick={onClose}
+            className="text-light-muted hover:text-light-text transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          {/* Platform Selection */}
+          <div>
+            <h4 className="text-sm font-semibold text-light-text mb-3">Plattformen auswählen</h4>
+            <div className="space-y-3">
+              {platforms.map((platform) => {
+                const isSelected = localConfig.icons.some((icon) => icon.platform === platform.id);
+                const iconData = localConfig.icons.find((icon) => icon.platform === platform.id);
+
+                return (
+                  <div key={platform.id} className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <label className="flex items-center gap-2 cursor-pointer flex-1">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => togglePlatform(platform.id)}
+                          className="w-4 h-4 rounded border-dark-border"
+                        />
+                        <span className="text-sm text-light-text">{platform.label}</span>
+                      </label>
+                    </div>
+                    {isSelected && (
+                      <input
+                        type="url"
+                        value={iconData?.url || ''}
+                        onChange={(e) => updatePlatformUrl(platform.id, e.target.value)}
+                        placeholder={`${platform.label} URL`}
+                        className="w-full px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text text-sm focus:outline-none focus:border-brand-primary ml-6"
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Position */}
+          <div>
+            <label className="block text-sm font-medium text-light-text mb-2">
+              Position
+            </label>
+            <select
+              value={localConfig.position}
+              onChange={(e) => setLocalConfig((prev) => ({ ...prev, position: e.target.value as any }))}
+              className="w-full px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text focus:outline-none focus:border-brand-primary"
+            >
+              <option value="right_of_nav">Rechts neben Navigation</option>
+              <option value="after_cta">Nach CTA Button</option>
+              <option value="separate_row">Separate Zeile</option>
+            </select>
+          </div>
+
+          {/* Styling */}
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold text-light-text border-b border-dark-border pb-2">
+              Styling
+            </h4>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-light-text mb-2">
+                  Icon Größe
+                </label>
+                <input
+                  type="text"
+                  value={localConfig.styling.size}
+                  onChange={(e) => updateStyling('size', e.target.value)}
+                  placeholder="20px"
+                  className="w-full px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text focus:outline-none focus:border-brand-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-light-text mb-2">
+                  Abstand
+                </label>
+                <input
+                  type="text"
+                  value={localConfig.styling.spacing}
+                  onChange={(e) => updateStyling('spacing', e.target.value)}
+                  placeholder="16px"
+                  className="w-full px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text focus:outline-none focus:border-brand-primary"
+                />
+              </div>
+              <ColorInput
+                label="Farbe"
+                value={localConfig.styling.color}
+                onChange={(value) => updateStyling('color', value)}
+              />
+              <ColorInput
+                label="Hover Farbe"
+                value={localConfig.styling.hover_color}
+                onChange={(value) => updateStyling('hover_color', value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6 border-t border-dark-border flex items-center justify-end gap-3 sticky bottom-0 bg-dark-panel">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-dark-surface text-light-text rounded-lg hover:bg-dark-surface/80 transition-colors"
+          >
+            Abbrechen
+          </button>
+          <button
+            onClick={handleSave}
+            className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 transition-colors"
+          >
+            Speichern
+          </button>
+        </div>
       </div>
     </div>
   );
