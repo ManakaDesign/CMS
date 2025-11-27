@@ -171,36 +171,110 @@ export const MenuPreview: React.FC<MenuPreviewProps> = ({ menu: initialMenu }) =
         </div>
 
         {/* Submenu preview on hover */}
-        {hasChildren && settings.submenu_style === 'dropdown_flyout' && (
-          <div
-            className="absolute left-0 top-full mt-1 hidden group-hover:block z-10"
-            style={{
-              backgroundColor: settings.colors?.background || '#fff',
-              border: '1px solid #e5e7eb',
-              borderRadius: '4px',
-              minWidth: '200px',
-              boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-            }}
-          >
-            <div className="py-2">
-              {childItems.slice(0, 5).map((child: MenuItemNav) => (
-                <div
-                  key={child.id}
-                  className="px-4 py-2 text-sm cursor-pointer transition-colors hover:bg-opacity-50"
-                  style={{
-                    color: settings.colors?.link_color,
-                  }}
-                >
-                  {child.label}
+        {hasChildren && (
+          <>
+            {settings.submenu_style === 'dropdown_flyout' && (
+              <div
+                className="absolute left-0 top-full mt-1 hidden group-hover:block z-10"
+                style={{
+                  backgroundColor: settings.colors?.background || '#fff',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '4px',
+                  minWidth: '200px',
+                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                }}
+              >
+                <div className="py-2">
+                  {childItems.slice(0, 5).map((child: MenuItemNav) => (
+                    <div
+                      key={child.id}
+                      className="px-4 py-2 text-sm cursor-pointer transition-colors hover:bg-opacity-50"
+                      style={{
+                        color: settings.colors?.link_color,
+                      }}
+                    >
+                      {child.label}
+                    </div>
+                  ))}
+                  {childItems.length > 5 && (
+                    <div className="px-4 py-2 text-xs text-gray-400">
+                      +{childItems.length - 5} weitere
+                    </div>
+                  )}
                 </div>
-              ))}
-              {childItems.length > 5 && (
-                <div className="px-4 py-2 text-xs text-gray-400">
-                  +{childItems.length - 5} weitere
+              </div>
+            )}
+
+            {settings.submenu_style === 'mega_menu' && (
+              <div
+                className="absolute left-0 top-full mt-1 hidden group-hover:block z-10"
+                style={{
+                  backgroundColor: settings.colors?.background || '#fff',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '4px',
+                  minWidth: '600px',
+                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                }}
+              >
+                <div className="p-4 grid grid-cols-3 gap-6">
+                  {[0, 1, 2].map((col) => (
+                    <div key={col}>
+                      <div
+                        className="text-sm font-semibold mb-2 pb-2 border-b"
+                        style={{
+                          color: settings.colors?.active_text,
+                          borderColor: settings.colors?.active_background || '#e5e7eb',
+                        }}
+                      >
+                        Kategorie {col + 1}
+                      </div>
+                      {childItems.slice(col * 3, (col + 1) * 3).map((child: MenuItemNav) => (
+                        <div
+                          key={child.id}
+                          className="py-1.5 text-sm cursor-pointer transition-colors"
+                          style={{
+                            color: settings.colors?.link_color,
+                          }}
+                        >
+                          {child.label}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
                 </div>
-              )}
-            </div>
-          </div>
+              </div>
+            )}
+
+            {settings.submenu_style === 'sidebar_flyout' && (
+              <div
+                className="absolute left-full top-0 ml-1 hidden group-hover:block z-10"
+                style={{
+                  backgroundColor: settings.colors?.background || '#fff',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '4px',
+                  minWidth: '180px',
+                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                }}
+              >
+                <div className="py-2">
+                  <div className="px-4 py-2 text-sm font-semibold border-b" style={{ color: settings.colors?.active_text, borderColor: '#e5e7eb' }}>
+                    {item.label}
+                  </div>
+                  {childItems.map((child: MenuItemNav) => (
+                    <div
+                      key={child.id}
+                      className="px-4 py-2 text-sm cursor-pointer transition-colors"
+                      style={{
+                        color: settings.colors?.link_color,
+                      }}
+                    >
+                      {child.label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     );
@@ -475,6 +549,30 @@ export const MenuPreview: React.FC<MenuPreviewProps> = ({ menu: initialMenu }) =
                   ))}
                 </div>
               ))}
+            </div>
+          </div>
+        );
+
+      case 'fullscreen_overlay':
+        return (
+          <div className="mt-4">
+            <div className="text-xs font-semibold text-light-muted mb-2 uppercase tracking-wide">
+              Submenü Vorschau: Fullscreen Overlay
+            </div>
+            <div className="bg-black/90 border border-dark-border rounded-lg p-6 flex flex-col items-center justify-center gap-4 min-h-[200px]">
+              <div className="text-sm font-bold mb-2" style={{ color: settings.colors?.active_text }}>
+                {itemWithChildren?.label}
+              </div>
+              {childItems.map((item: MenuItemNav) => (
+                <div
+                  key={item.id}
+                  className="text-lg font-semibold transition-colors cursor-pointer"
+                  style={{ color: settings.colors?.link_color }}
+                >
+                  {item.label}
+                </div>
+              ))}
+              <div className="text-xs text-gray-400 mt-4">(Fullscreen Overlay mit großen, zentrierten Links)</div>
             </div>
           </div>
         );
