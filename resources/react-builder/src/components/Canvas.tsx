@@ -47,14 +47,199 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, depth, sett
       >
         {item.label} {hasChildren && <span>▾</span>}
       </a>
-      {hasChildren && showSubmenu && (
+      {hasChildren && showSubmenu && depth === 0 && (
+        <>
+          {/* Dropdown Flyout Style */}
+          {settings?.submenu_style === 'dropdown_flyout' && (
+            <ul style={{
+              listStyle: 'none',
+              padding: '8px 0',
+              margin: 0,
+              position: 'absolute',
+              top: '100%',
+              marginTop: '4px',
+              backgroundColor: settings?.colors?.background || '#fff',
+              border: '1px solid #e5e7eb',
+              borderRadius: '4px',
+              minWidth: settings?.submenu_config?.width || '200px',
+              width: settings?.submenu_config?.width === 'full' ? '100%' : settings?.submenu_config?.width || 'auto',
+              left: settings?.submenu_config?.position === 'left' ? '0' :
+                    settings?.submenu_config?.position === 'center' ? '50%' : 'auto',
+              right: settings?.submenu_config?.position === 'right' ? '0' : 'auto',
+              transform: settings?.submenu_config?.position === 'center' ? 'translateX(-50%)' : 'none',
+              boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+              zIndex: 1000,
+              transition: settings?.submenu_config?.animation === 'none' ? 'none' :
+                settings?.submenu_config?.animation === 'fade' ? `opacity ${settings?.submenu_config?.delay || 200}ms ease-in-out` :
+                settings?.submenu_config?.animation === 'slide' ? `transform ${settings?.submenu_config?.delay || 200}ms ease-in-out, opacity ${settings?.submenu_config?.delay || 200}ms ease-in-out` :
+                `opacity ${settings?.submenu_config?.delay || 200}ms ease-in-out`,
+            }}>
+              {childItems.map((child: MenuItemNav) => (
+                <MenuItemComponent key={child.id} item={child} depth={depth + 1} settings={settings} />
+              ))}
+            </ul>
+          )}
+
+          {/* Mega Menu Style */}
+          {settings?.submenu_style === 'mega_menu' && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              marginTop: '4px',
+              backgroundColor: settings?.colors?.background || '#fff',
+              border: '1px solid #e5e7eb',
+              borderRadius: '4px',
+              minWidth: settings?.submenu_config?.width || '600px',
+              width: settings?.submenu_config?.width === 'full' ? '100%' : settings?.submenu_config?.width || 'auto',
+              left: settings?.submenu_config?.position === 'left' ? '0' :
+                    settings?.submenu_config?.position === 'center' ? '50%' : 'auto',
+              right: settings?.submenu_config?.position === 'right' ? '0' : 'auto',
+              transform: settings?.submenu_config?.position === 'center' ? 'translateX(-50%)' : 'none',
+              padding: '24px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              zIndex: 1000,
+              transition: settings?.submenu_config?.animation === 'none' ? 'none' :
+                settings?.submenu_config?.animation === 'fade' ? `opacity ${settings?.submenu_config?.delay || 200}ms ease-in-out` :
+                settings?.submenu_config?.animation === 'slide' ? `transform ${settings?.submenu_config?.delay || 200}ms ease-in-out, opacity ${settings?.submenu_config?.delay || 200}ms ease-in-out` :
+                `opacity ${settings?.submenu_config?.delay || 200}ms ease-in-out`,
+            }}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '24px',
+              }}>
+                {childItems.map((child: MenuItemNav) => (
+                  <div key={child.id}>
+                    <a
+                      href={child.computed_url || '#'}
+                      onClick={(e) => e.preventDefault()}
+                      style={{
+                        display: 'block',
+                        padding: '8px 0',
+                        color: settings?.colors?.link_color || '#333',
+                        fontWeight: '600',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      {child.label}
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Sidebar Flyout Style */}
+          {settings?.submenu_style === 'sidebar_flyout' && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: settings?.colors?.background || '#fff',
+              border: '1px solid #e5e7eb',
+              width: settings?.submenu_config?.width ?
+                (settings.submenu_config.width === 'full' ? '400px' :
+                 settings.submenu_config.width.replace(/px$/, '') + 'px') : '300px',
+              padding: '24px',
+              boxShadow: '-4px 0 12px rgba(0,0,0,0.15)',
+              zIndex: 1000,
+              overflowY: 'auto',
+              transition: settings?.submenu_config?.animation === 'none' ? 'none' :
+                settings?.submenu_config?.animation === 'fade' ? `opacity ${settings?.submenu_config?.delay || 200}ms ease-in-out` :
+                settings?.submenu_config?.animation === 'slide' ? `transform ${settings?.submenu_config?.delay || 200}ms ease-in-out` :
+                `opacity ${settings?.submenu_config?.delay || 200}ms ease-in-out`,
+            }}>
+              <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+                {childItems.map((child: MenuItemNav) => (
+                  <li key={child.id} style={{ marginBottom: '12px' }}>
+                    <a
+                      href={child.computed_url || '#'}
+                      onClick={(e) => e.preventDefault()}
+                      style={{
+                        display: 'block',
+                        padding: '8px 0',
+                        color: settings?.colors?.link_color || '#333',
+                        textDecoration: 'none',
+                        fontSize: '16px',
+                      }}
+                    >
+                      {child.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Fullscreen Overlay Style */}
+          {settings?.submenu_style === 'fullscreen_overlay' && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.95)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '16px',
+              zIndex: 1000,
+              transition: settings?.submenu_config?.animation === 'none' ? 'none' :
+                settings?.submenu_config?.animation === 'fade' ? `opacity ${settings?.submenu_config?.delay || 200}ms ease-in-out` :
+                `opacity ${settings?.submenu_config?.delay || 200}ms ease-in-out`,
+            }}>
+              {childItems.map((child: MenuItemNav) => (
+                <a
+                  key={child.id}
+                  href={child.computed_url || '#'}
+                  onClick={(e) => e.preventDefault()}
+                  style={{
+                    fontSize: '32px',
+                    fontWeight: '600',
+                    color: settings?.colors?.link_color || '#fff',
+                    textDecoration: 'none',
+                  }}
+                >
+                  {child.label}
+                </a>
+              ))}
+            </div>
+          )}
+
+          {/* Default fallback to dropdown_flyout if no style set */}
+          {!settings?.submenu_style && (
+            <ul style={{
+              listStyle: 'none',
+              padding: '8px 0',
+              margin: 0,
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              backgroundColor: settings?.colors?.background || '#fff',
+              border: '1px solid #e5e7eb',
+              borderRadius: '4px',
+              minWidth: '200px',
+              boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+              zIndex: 1000,
+            }}>
+              {childItems.map((child: MenuItemNav) => (
+                <MenuItemComponent key={child.id} item={child} depth={depth + 1} settings={settings} />
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+      {hasChildren && showSubmenu && depth > 0 && (
         <ul style={{
           listStyle: 'none',
           padding: '8px 0',
           margin: 0,
           position: 'absolute',
-          top: '100%',
-          left: 0,
+          top: '0',
+          left: '100%',
           backgroundColor: settings?.colors?.background || '#fff',
           border: '1px solid #e5e7eb',
           borderRadius: '4px',

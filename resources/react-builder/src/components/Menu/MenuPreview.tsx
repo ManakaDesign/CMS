@@ -175,13 +175,21 @@ export const MenuPreview: React.FC<MenuPreviewProps> = ({ menu: initialMenu }) =
           <>
             {settings.submenu_style === 'dropdown_flyout' && (
               <div
-                className="absolute left-0 top-full mt-1 hidden group-hover:block z-10"
+                className="absolute top-full mt-1 hidden group-hover:block z-10"
                 style={{
                   backgroundColor: settings.colors?.background || '#fff',
                   border: '1px solid #e5e7eb',
                   borderRadius: '4px',
-                  minWidth: '200px',
+                  minWidth: settings.submenu_config?.width || '200px',
+                  width: settings.submenu_config?.width === 'full' ? '100%' : settings.submenu_config?.width || 'auto',
                   boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                  left: settings.submenu_config?.position === 'left' ? '0' : settings.submenu_config?.position === 'center' ? '50%' : 'auto',
+                  right: settings.submenu_config?.position === 'right' ? '0' : 'auto',
+                  transform: settings.submenu_config?.position === 'center' ? 'translateX(-50%)' : 'none',
+                  transition: settings.submenu_config?.animation === 'none' ? 'none' :
+                    settings.submenu_config?.animation === 'fade' ? `opacity ${settings.submenu_config?.delay || 200}ms ease-in-out` :
+                    settings.submenu_config?.animation === 'slide' ? `transform ${settings.submenu_config?.delay || 200}ms ease-in-out, opacity ${settings.submenu_config?.delay || 200}ms ease-in-out` :
+                    `opacity ${settings.submenu_config?.delay || 200}ms ease-in-out`,
                 }}
               >
                 <div className="py-2">
@@ -207,13 +215,21 @@ export const MenuPreview: React.FC<MenuPreviewProps> = ({ menu: initialMenu }) =
 
             {settings.submenu_style === 'mega_menu' && (
               <div
-                className="absolute left-0 top-full mt-1 hidden group-hover:block z-10"
+                className={`absolute top-full mt-1 hidden group-hover:block z-10 ${
+                  settings.submenu_config?.animation === 'fade' ? 'animate-fade-in' :
+                  settings.submenu_config?.animation === 'slide' ? 'animate-slide-down' : ''
+                }`}
                 style={{
                   backgroundColor: settings.colors?.background || '#fff',
                   border: '1px solid #e5e7eb',
                   borderRadius: '4px',
-                  minWidth: '600px',
+                  minWidth: settings.submenu_config?.width || '600px',
+                  width: settings.submenu_config?.width === 'full' ? '100%' : settings.submenu_config?.width || 'auto',
                   boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                  left: settings.submenu_config?.position === 'left' ? '0' : settings.submenu_config?.position === 'center' ? '50%' : 'auto',
+                  right: settings.submenu_config?.position === 'right' ? '0' : 'auto',
+                  transform: settings.submenu_config?.position === 'center' ? 'translateX(-50%)' : 'none',
+                  transitionDelay: `${settings.submenu_config?.delay || 0}ms`,
                 }}
               >
                 <div className="p-4 grid grid-cols-3 gap-6">
@@ -247,13 +263,18 @@ export const MenuPreview: React.FC<MenuPreviewProps> = ({ menu: initialMenu }) =
 
             {settings.submenu_style === 'sidebar_flyout' && (
               <div
-                className="absolute left-full top-0 ml-1 hidden group-hover:block z-10"
+                className={`absolute left-full top-0 ml-1 hidden group-hover:block z-10 ${
+                  settings.submenu_config?.animation === 'fade' ? 'animate-fade-in' :
+                  settings.submenu_config?.animation === 'slide' ? 'animate-slide-right' : ''
+                }`}
                 style={{
                   backgroundColor: settings.colors?.background || '#fff',
                   border: '1px solid #e5e7eb',
                   borderRadius: '4px',
-                  minWidth: '180px',
+                  minWidth: settings.submenu_config?.width || '180px',
+                  width: settings.submenu_config?.width === 'full' ? '300px' : settings.submenu_config?.width || 'auto',
                   boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                  transitionDelay: `${settings.submenu_config?.delay || 0}ms`,
                 }}
               >
                 <div className="py-2">
