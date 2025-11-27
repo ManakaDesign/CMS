@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { MenuNav, MenuItemNav } from '../../types';
+import { FaFacebook, FaInstagram, FaTwitter, FaLinkedin, FaYoutube, FaGithub, FaTiktok } from 'react-icons/fa';
 
 interface MenuPreviewProps {
   menu: MenuNav;
@@ -63,6 +64,81 @@ export const MenuPreview: React.FC<MenuPreviewProps> = ({ menu: initialMenu }) =
         }}
       >
         Logo
+      </div>
+    );
+  };
+
+  // CTA Button renderer
+  const renderCTAButton = () => {
+    if (!settings.features?.cta_button || !settings.cta_button_config) return null;
+
+    const config = settings.cta_button_config;
+    const [isHovered, setIsHovered] = React.useState(false);
+
+    return (
+      <button
+        style={{
+          backgroundColor: isHovered ? config.styling.hover_bg_color : config.styling.bg_color,
+          color: isHovered ? config.styling.hover_text_color : config.styling.text_color,
+          borderRadius: config.styling.border_radius,
+          padding: config.styling.padding,
+          border: `${config.styling.border_width} solid ${config.styling.border_color}`,
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+          fontSize: '14px',
+          fontWeight: '500',
+          whiteSpace: 'nowrap',
+        }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {config.text}
+      </button>
+    );
+  };
+
+  // Social Icons renderer
+  const renderSocialIcons = () => {
+    if (!settings.features?.social_icons || !settings.social_icons_config) return null;
+
+    const config = settings.social_icons_config;
+    const iconMap = {
+      facebook: FaFacebook,
+      instagram: FaInstagram,
+      twitter: FaTwitter,
+      linkedin: FaLinkedin,
+      youtube: FaYoutube,
+      github: FaGithub,
+      tiktok: FaTiktok,
+    };
+
+    return (
+      <div style={{ display: 'flex', gap: config.styling.spacing, alignItems: 'center' }}>
+        {config.icons.map((iconConfig) => {
+          const Icon = iconMap[iconConfig.platform];
+          const [isHovered, setIsHovered] = React.useState(false);
+
+          return (
+            <a
+              key={iconConfig.platform}
+              href={iconConfig.url || '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: isHovered ? config.styling.hover_color : config.styling.color,
+                fontSize: config.styling.size,
+                transition: 'color 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+              onClick={(e) => e.preventDefault()}
+            >
+              <Icon />
+            </a>
+          );
+        })}
       </div>
     );
   };
@@ -146,11 +222,16 @@ export const MenuPreview: React.FC<MenuPreviewProps> = ({ menu: initialMenu }) =
       return (
         <div className="min-h-[60px]">
           <div className="flex items-center justify-between px-4 py-3">
-            {renderLogo('small')}
-            <div className="flex flex-col gap-0.5">
-              <div className="w-6 h-0.5 rounded" style={{ backgroundColor: settings.colors?.link_color }}></div>
-              <div className="w-6 h-0.5 rounded" style={{ backgroundColor: settings.colors?.link_color }}></div>
-              <div className="w-6 h-0.5 rounded" style={{ backgroundColor: settings.colors?.link_color }}></div>
+            <div className="flex items-center gap-2">
+              {renderLogo('small')}
+            </div>
+            <div className="flex items-center gap-3">
+              {settings.features?.social_icons && renderSocialIcons()}
+              <div className="flex flex-col gap-0.5">
+                <div className="w-6 h-0.5 rounded" style={{ backgroundColor: settings.colors?.link_color }}></div>
+                <div className="w-6 h-0.5 rounded" style={{ backgroundColor: settings.colors?.link_color }}></div>
+                <div className="w-6 h-0.5 rounded" style={{ backgroundColor: settings.colors?.link_color }}></div>
+              </div>
             </div>
           </div>
           <div className="px-4 py-2 text-xs text-gray-400 italic border-t border-gray-700">
@@ -185,20 +266,38 @@ export const MenuPreview: React.FC<MenuPreviewProps> = ({ menu: initialMenu }) =
       case 'horizontal_standard':
         return (
           <div className="flex items-center justify-between px-6 py-4 min-h-[80px]">
-            {renderLogo()}
-            <div className="flex gap-2">
-              {rootItems.map((item, i) => renderMenuItem(item, i === 0))}
+            <div className="flex items-center gap-4">
+              {renderLogo()}
+              {settings.cta_button_config?.position === 'after_logo' && renderCTAButton()}
             </div>
+            <div className="flex items-center gap-4">
+              <div className="flex gap-2">
+                {rootItems.map((item, i) => renderMenuItem(item, i === 0))}
+              </div>
+              {settings.cta_button_config?.position === 'right_of_nav' && renderCTAButton()}
+              {settings.social_icons_config?.position === 'right_of_nav' && renderSocialIcons()}
+              {settings.social_icons_config?.position === 'after_cta' && renderSocialIcons()}
+            </div>
+            {settings.cta_button_config?.position === 'far_right' && renderCTAButton()}
           </div>
         );
 
       case 'centered':
         return (
-          <div className="flex flex-col items-center py-4 space-y-4 min-h-[120px]">
-            {renderLogo('large')}
-            <div className="flex gap-2">
-              {rootItems.map((item, i) => renderMenuItem(item, i === 0, true))}
+          <div className="flex flex-col items-center py-4 space-y-4">
+            <div className="flex items-center gap-4">
+              {renderLogo('large')}
+              {settings.cta_button_config?.position === 'after_logo' && renderCTAButton()}
             </div>
+            <div className="flex items-center gap-4">
+              <div className="flex gap-2">
+                {rootItems.map((item, i) => renderMenuItem(item, i === 0, true))}
+              </div>
+              {settings.cta_button_config?.position === 'right_of_nav' && renderCTAButton()}
+              {settings.social_icons_config?.position === 'right_of_nav' && renderSocialIcons()}
+              {settings.social_icons_config?.position === 'after_cta' && renderSocialIcons()}
+            </div>
+            {settings.cta_button_config?.position === 'far_right' && <div className="flex items-center gap-4">{renderCTAButton()}</div>}
           </div>
         );
 
@@ -207,12 +306,23 @@ export const MenuPreview: React.FC<MenuPreviewProps> = ({ menu: initialMenu }) =
         const rightItems = rootItems.slice(Math.ceil(rootItems.length / 2));
         return (
           <div className="flex items-center justify-between px-6 py-4 min-h-[80px]">
-            <div className="flex gap-2">
-              {leftItems.map((item, i) => renderMenuItem(item, i === 0, true))}
+            <div className="flex items-center gap-4">
+              <div className="flex gap-2">
+                {leftItems.map((item, i) => renderMenuItem(item, i === 0, true))}
+              </div>
             </div>
-            {renderLogo()}
-            <div className="flex gap-2">
-              {rightItems.map((item) => renderMenuItem(item, false, true))}
+            <div className="flex items-center gap-4">
+              {renderLogo()}
+              {settings.cta_button_config?.position === 'after_logo' && renderCTAButton()}
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex gap-2">
+                {rightItems.map((item) => renderMenuItem(item, false, true))}
+              </div>
+              {settings.cta_button_config?.position === 'right_of_nav' && renderCTAButton()}
+              {settings.social_icons_config?.position === 'right_of_nav' && renderSocialIcons()}
+              {settings.social_icons_config?.position === 'after_cta' && renderSocialIcons()}
+              {settings.cta_button_config?.position === 'far_right' && renderCTAButton()}
             </div>
           </div>
         );
@@ -220,12 +330,19 @@ export const MenuPreview: React.FC<MenuPreviewProps> = ({ menu: initialMenu }) =
       case 'vertical_sidebar':
         return (
           <div className="flex flex-col items-start py-4 px-4 space-y-3 min-h-[200px]">
-            <div className="mb-2">{renderLogo()}</div>
+            <div className="mb-2 flex items-center gap-3">
+              {renderLogo()}
+              {settings.cta_button_config?.position === 'after_logo' && renderCTAButton()}
+            </div>
             {rootItems.map((item, i) => (
               <div key={item.id} className="w-full">
                 {renderMenuItem(item, i === 0, false, true)}
               </div>
             ))}
+            {(settings.cta_button_config?.position === 'right_of_nav' || settings.cta_button_config?.position === 'far_right') && (
+              <div className="mt-3">{renderCTAButton()}</div>
+            )}
+            {settings.social_icons_config && <div className="mt-3">{renderSocialIcons()}</div>}
           </div>
         );
 
