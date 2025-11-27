@@ -261,6 +261,47 @@ export const MenuPreview: React.FC<MenuPreviewProps> = ({ menu: initialMenu }) =
       );
     }
 
+    if (isMobileView && settings.mobile_view === 'burger_fullscreen') {
+      return (
+        <div className="min-h-[60px]">
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-2">
+              {renderLogo('small')}
+            </div>
+            <div className="flex items-center gap-3">
+              {settings.features?.social_icons && renderSocialIcons()}
+              <div className="flex flex-col gap-0.5">
+                <div className="w-6 h-0.5 rounded" style={{ backgroundColor: settings.colors?.link_color }}></div>
+                <div className="w-6 h-0.5 rounded" style={{ backgroundColor: settings.colors?.link_color }}></div>
+                <div className="w-6 h-0.5 rounded" style={{ backgroundColor: settings.colors?.link_color }}></div>
+              </div>
+            </div>
+          </div>
+          <div className="px-4 py-2 text-xs text-gray-400 italic border-t border-gray-700">
+            Burger-Menü: Klick öffnet Vollbild-Overlay mit großen, zentrierten Links
+          </div>
+          {/* Fullscreen preview mockup */}
+          <div className="mt-2 bg-black/80 p-6 rounded flex flex-col items-center justify-center gap-4 min-h-[150px]">
+            {rootItems.slice(0, 4).map((item) => (
+              <div
+                key={item.id}
+                className="text-lg font-semibold"
+                style={{ color: settings.colors?.link_color }}
+              >
+                {item.label}
+              </div>
+            ))}
+            <div className="text-xs text-gray-400 mt-2">(Fullscreen Overlay Vorschau)</div>
+          </div>
+        </div>
+      );
+    }
+
+    // Desktop keep - show desktop layout even on mobile
+    if (isMobileView && settings.mobile_view === 'desktop_keep') {
+      // Fall through to desktop views below
+    }
+
     // Desktop views
     switch (settings.layout_type) {
       case 'horizontal_standard':

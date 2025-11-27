@@ -367,6 +367,126 @@ export const Canvas: React.FC = () => {
         );
       }
 
+      // Mobile bottom navigation
+      if (isMobileView && settings?.mobile_view === 'bottom_navigation') {
+        return (
+          <div style={{ backgroundColor: settings?.colors?.background || '#1a1a1a' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '12px 16px',
+              borderBottom: '1px solid #374151',
+            }}>
+              {renderLogo()}
+            </div>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-around',
+              padding: '12px 16px',
+              borderTop: '1px solid #374151',
+              marginTop: '32px',
+            }}>
+              {rootItems.slice(0, 4).map((item) => (
+                <div key={item.id} style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}>
+                  <div style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    backgroundColor: settings?.colors?.link_color || '#fff',
+                    opacity: 0.5,
+                  }}></div>
+                  <div style={{
+                    fontSize: '12px',
+                    color: settings?.colors?.link_color || '#fff',
+                  }}>
+                    {item.label.substring(0, 8)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+
+      // Mobile fullscreen burger
+      if (isMobileView && settings?.mobile_view === 'burger_fullscreen') {
+        return (
+          <div style={{ backgroundColor: settings?.colors?.background || '#1a1a1a', minHeight: '60px' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0 16px',
+              minHeight: '60px',
+            }}>
+              {renderLogo()}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                {settings?.features?.social_icons && renderSocialIcons()}
+                <button
+                  onClick={() => setShowMobileMenu(!showMobileMenu)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '8px',
+                  }}
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={settings?.colors?.link_color || '#fff'} strokeWidth="2">
+                    <line x1="3" y1="6" x2="21" y2="6"/>
+                    <line x1="3" y1="12" x2="21" y2="12"/>
+                    <line x1="3" y1="18" x2="21" y2="18"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            {showMobileMenu && (
+              <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.95)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '16px',
+                zIndex: 1000,
+              }}>
+                {rootItems.map((item) => (
+                  <a
+                    key={item.id}
+                    href={item.computed_url || '#'}
+                    onClick={(e) => e.preventDefault()}
+                    style={{
+                      fontSize: '24px',
+                      fontWeight: '600',
+                      color: settings?.colors?.link_color || '#fff',
+                      textDecoration: 'none',
+                    }}
+                  >
+                    {item.label}
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      // Desktop keep - show desktop layout even on mobile (fall through to desktop layouts)
+      if (isMobileView && settings?.mobile_view === 'desktop_keep') {
+        // Fall through to desktop layouts below
+      }
+
       // Desktop layouts
       switch (settings?.layout_type) {
         case 'centered':
