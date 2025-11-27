@@ -4,6 +4,7 @@ import type { Element, MenuNav, MenuItemNav } from '../types';
 import { getElementComponent } from './elements/ElementRegistry';
 import { DropZone } from './DropZone';
 import api from '../services/api';
+import { FaFacebook, FaInstagram, FaTwitter, FaLinkedin, FaYoutube, FaGithub, FaTiktok } from 'react-icons/fa';
 
 // MenuItem Component for submenu support
 interface MenuItemComponentProps {
@@ -225,6 +226,81 @@ export const Canvas: React.FC = () => {
       );
     };
 
+    // CTA Button renderer
+    const renderCTAButton = () => {
+      if (!settings?.features?.cta_button || !settings?.cta_button_config) return null;
+
+      const config = settings.cta_button_config;
+      const [isHovered, setIsHovered] = React.useState(false);
+
+      return (
+        <button
+          style={{
+            backgroundColor: isHovered ? config.styling.hover_bg_color : config.styling.bg_color,
+            color: isHovered ? config.styling.hover_text_color : config.styling.text_color,
+            borderRadius: config.styling.border_radius,
+            padding: config.styling.padding,
+            border: `${config.styling.border_width} solid ${config.styling.border_color}`,
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            fontSize: '14px',
+            fontWeight: '500',
+            whiteSpace: 'nowrap',
+          }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          {config.text}
+        </button>
+      );
+    };
+
+    // Social Icons renderer
+    const renderSocialIcons = () => {
+      if (!settings?.features?.social_icons || !settings?.social_icons_config) return null;
+
+      const config = settings.social_icons_config;
+      const iconMap = {
+        facebook: FaFacebook,
+        instagram: FaInstagram,
+        twitter: FaTwitter,
+        linkedin: FaLinkedin,
+        youtube: FaYoutube,
+        github: FaGithub,
+        tiktok: FaTiktok,
+      };
+
+      return (
+        <div style={{ display: 'flex', gap: config.styling.spacing, alignItems: 'center' }}>
+          {config.icons.map((iconConfig) => {
+            const Icon = iconMap[iconConfig.platform];
+            const [isHovered, setIsHovered] = React.useState(false);
+
+            return (
+              <a
+                key={iconConfig.platform}
+                href={iconConfig.url || '#'}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: isHovered ? config.styling.hover_color : config.styling.color,
+                  fontSize: config.styling.size,
+                  transition: 'color 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+                onClick={(e) => e.preventDefault()}
+              >
+                <Icon />
+              </a>
+            );
+          })}
+        </div>
+      );
+    };
+
     // Check if mobile view should be shown
     const isMobileView = activeBreakpoint === 'mobile' || activeBreakpoint === 'tablet';
 
@@ -242,21 +318,24 @@ export const Canvas: React.FC = () => {
               minHeight: '60px',
             }}>
               {renderLogo()}
-              <button
-                onClick={() => setShowMobileMenu(!showMobileMenu)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '8px',
-                }}
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={settings?.colors?.link_color || '#fff'} strokeWidth="2">
-                  <line x1="3" y1="6" x2="21" y2="6"/>
-                  <line x1="3" y1="12" x2="21" y2="12"/>
-                  <line x1="3" y1="18" x2="21" y2="18"/>
-                </svg>
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                {settings?.features?.social_icons && renderSocialIcons()}
+                <button
+                  onClick={() => setShowMobileMenu(!showMobileMenu)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '8px',
+                  }}
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={settings?.colors?.link_color || '#fff'} strokeWidth="2">
+                    <line x1="3" y1="6" x2="21" y2="6"/>
+                    <line x1="3" y1="12" x2="21" y2="12"/>
+                    <line x1="3" y1="18" x2="21" y2="18"/>
+                  </svg>
+                </button>
+              </div>
             </div>
             {showMobileMenu && (
               <div style={{
@@ -299,20 +378,29 @@ export const Canvas: React.FC = () => {
               padding: '16px 24px',
               gap: '16px',
             }}>
-              {renderLogo()}
-              <nav>
-                <ul style={{
-                  listStyle: 'none',
-                  margin: 0,
-                  padding: 0,
-                  display: 'flex',
-                  gap: '4px',
-                }}>
-                  {rootItems.map((item) => (
-                    <MenuItemComponent key={item.id} item={item} depth={0} settings={settings} />
-                  ))}
-                </ul>
-              </nav>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                {renderLogo()}
+                {settings?.cta_button_config?.position === 'after_logo' && renderCTAButton()}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <nav>
+                  <ul style={{
+                    listStyle: 'none',
+                    margin: 0,
+                    padding: 0,
+                    display: 'flex',
+                    gap: '4px',
+                  }}>
+                    {rootItems.map((item) => (
+                      <MenuItemComponent key={item.id} item={item} depth={0} settings={settings} />
+                    ))}
+                  </ul>
+                </nav>
+                {settings?.cta_button_config?.position === 'right_of_nav' && renderCTAButton()}
+                {settings?.social_icons_config?.position === 'right_of_nav' && renderSocialIcons()}
+                {settings?.social_icons_config?.position === 'after_cta' && renderSocialIcons()}
+              </div>
+              {settings?.cta_button_config?.position === 'far_right' && <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>{renderCTAButton()}</div>}
             </div>
           );
 
@@ -334,14 +422,23 @@ export const Canvas: React.FC = () => {
                   ))}
                 </ul>
               </nav>
-              {renderLogo()}
-              <nav>
-                <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', gap: '4px' }}>
-                  {rightItems.map((item) => (
-                    <MenuItemComponent key={item.id} item={item} depth={0} settings={settings} />
-                  ))}
-                </ul>
-              </nav>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                {renderLogo()}
+                {settings?.cta_button_config?.position === 'after_logo' && renderCTAButton()}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <nav>
+                  <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', gap: '4px' }}>
+                    {rightItems.map((item) => (
+                      <MenuItemComponent key={item.id} item={item} depth={0} settings={settings} />
+                    ))}
+                  </ul>
+                </nav>
+                {settings?.cta_button_config?.position === 'right_of_nav' && renderCTAButton()}
+                {settings?.social_icons_config?.position === 'right_of_nav' && renderSocialIcons()}
+                {settings?.social_icons_config?.position === 'after_cta' && renderSocialIcons()}
+                {settings?.cta_button_config?.position === 'far_right' && renderCTAButton()}
+              </div>
             </div>
           );
 
@@ -376,20 +473,29 @@ export const Canvas: React.FC = () => {
               padding: '0 24px',
               minHeight: '60px',
             }}>
-              {renderLogo()}
-              <nav>
-                <ul style={{
-                  listStyle: 'none',
-                  margin: 0,
-                  padding: 0,
-                  display: 'flex',
-                  gap: '4px',
-                }}>
-                  {rootItems.map((item) => (
-                    <MenuItemComponent key={item.id} item={item} depth={0} settings={settings} />
-                  ))}
-                </ul>
-              </nav>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                {renderLogo()}
+                {settings?.cta_button_config?.position === 'after_logo' && renderCTAButton()}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <nav>
+                  <ul style={{
+                    listStyle: 'none',
+                    margin: 0,
+                    padding: 0,
+                    display: 'flex',
+                    gap: '4px',
+                  }}>
+                    {rootItems.map((item) => (
+                      <MenuItemComponent key={item.id} item={item} depth={0} settings={settings} />
+                    ))}
+                  </ul>
+                </nav>
+                {settings?.cta_button_config?.position === 'right_of_nav' && renderCTAButton()}
+                {settings?.social_icons_config?.position === 'right_of_nav' && renderSocialIcons()}
+                {settings?.social_icons_config?.position === 'after_cta' && renderSocialIcons()}
+              </div>
+              {settings?.cta_button_config?.position === 'far_right' && renderCTAButton()}
             </div>
           );
       }
