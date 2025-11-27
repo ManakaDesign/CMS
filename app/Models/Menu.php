@@ -127,6 +127,33 @@ class Menu extends Model
                 'width' => 'auto',
                 'position' => 'left',
             ],
+            'cta_button_config' => [
+                'text' => 'Get Started',
+                'action_type' => 'url',
+                'page_id' => null,
+                'url' => '#',
+                'position' => 'right_of_nav',
+                'styling' => [
+                    'bg_color' => '#3b82f6',
+                    'text_color' => '#ffffff',
+                    'border_radius' => '6px',
+                    'padding' => '10px 20px',
+                    'hover_bg_color' => '#2563eb',
+                    'hover_text_color' => '#ffffff',
+                    'border_width' => '0px',
+                    'border_color' => 'transparent',
+                ],
+            ],
+            'social_icons_config' => [
+                'icons' => [],
+                'position' => 'right_of_nav',
+                'styling' => [
+                    'size' => '20px',
+                    'color' => '#e2e8f0',
+                    'hover_color' => '#3b82f6',
+                    'spacing' => '12px',
+                ],
+            ],
         ];
     }
 }
