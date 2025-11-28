@@ -73,13 +73,13 @@ export const MenuPreview: React.FC<MenuPreviewProps> = ({ menu: initialMenu }) =
     if (!settings.features?.cta_button || !settings.cta_button_config) return null;
 
     const config = settings.cta_button_config;
-    const [isHovered, setIsHovered] = React.useState(false);
 
     return (
       <button
+        className="cta-button-hover"
         style={{
-          backgroundColor: isHovered ? config.styling.hover_bg_color : config.styling.bg_color,
-          color: isHovered ? config.styling.hover_text_color : config.styling.text_color,
+          backgroundColor: config.styling.bg_color,
+          color: config.styling.text_color,
           borderRadius: config.styling.border_radius,
           padding: config.styling.padding,
           border: `${config.styling.border_width} solid ${config.styling.border_color}`,
@@ -88,9 +88,17 @@ export const MenuPreview: React.FC<MenuPreviewProps> = ({ menu: initialMenu }) =
           fontSize: '14px',
           fontWeight: '500',
           whiteSpace: 'nowrap',
+          ['--hover-bg' as any]: config.styling.hover_bg_color,
+          ['--hover-text' as any]: config.styling.hover_text_color,
         }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = config.styling.hover_bg_color;
+          e.currentTarget.style.color = config.styling.hover_text_color;
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = config.styling.bg_color;
+          e.currentTarget.style.color = config.styling.text_color;
+        }}
       >
         {config.text}
       </button>
@@ -116,7 +124,6 @@ export const MenuPreview: React.FC<MenuPreviewProps> = ({ menu: initialMenu }) =
       <div style={{ display: 'flex', gap: config.styling.spacing, alignItems: 'center' }}>
         {config.icons.map((iconConfig) => {
           const Icon = iconMap[iconConfig.platform];
-          const [isHovered, setIsHovered] = React.useState(false);
 
           return (
             <a
@@ -125,14 +132,18 @@ export const MenuPreview: React.FC<MenuPreviewProps> = ({ menu: initialMenu }) =
               target="_blank"
               rel="noopener noreferrer"
               style={{
-                color: isHovered ? config.styling.hover_color : config.styling.color,
+                color: config.styling.color,
                 fontSize: config.styling.size,
                 transition: 'color 0.2s ease',
                 display: 'flex',
                 alignItems: 'center',
               }}
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = config.styling.hover_color;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = config.styling.color;
+              }}
               onClick={(e) => e.preventDefault()}
             >
               <Icon />

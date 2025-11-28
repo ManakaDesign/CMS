@@ -416,13 +416,12 @@ export const Canvas: React.FC = () => {
       if (!settings?.features?.cta_button || !settings?.cta_button_config) return null;
 
       const config = settings.cta_button_config;
-      const [isHovered, setIsHovered] = React.useState(false);
 
       return (
         <button
           style={{
-            backgroundColor: isHovered ? config.styling.hover_bg_color : config.styling.bg_color,
-            color: isHovered ? config.styling.hover_text_color : config.styling.text_color,
+            backgroundColor: config.styling.bg_color,
+            color: config.styling.text_color,
             borderRadius: config.styling.border_radius,
             padding: config.styling.padding,
             border: `${config.styling.border_width} solid ${config.styling.border_color}`,
@@ -432,8 +431,14 @@ export const Canvas: React.FC = () => {
             fontWeight: '500',
             whiteSpace: 'nowrap',
           }}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = config.styling.hover_bg_color;
+            e.currentTarget.style.color = config.styling.hover_text_color;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = config.styling.bg_color;
+            e.currentTarget.style.color = config.styling.text_color;
+          }}
         >
           {config.text}
         </button>
@@ -459,7 +464,6 @@ export const Canvas: React.FC = () => {
         <div style={{ display: 'flex', gap: config.styling.spacing, alignItems: 'center' }}>
           {config.icons.map((iconConfig) => {
             const Icon = iconMap[iconConfig.platform];
-            const [isHovered, setIsHovered] = React.useState(false);
 
             return (
               <a
@@ -468,14 +472,18 @@ export const Canvas: React.FC = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
-                  color: isHovered ? config.styling.hover_color : config.styling.color,
+                  color: config.styling.color,
                   fontSize: config.styling.size,
                   transition: 'color 0.2s ease',
                   display: 'flex',
                   alignItems: 'center',
                 }}
-                onMouseEnter={() => setIsHovered(true)}
-                onMouseLeave={() => setIsHovered(false)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = config.styling.hover_color;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = config.styling.color;
+                }}
                 onClick={(e) => e.preventDefault()}
               >
                 <Icon />
