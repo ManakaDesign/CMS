@@ -11,6 +11,8 @@ import {
   FiLink,
   FiFile,
   FiGrid,
+  FiArrowRight,
+  FiArrowLeft,
 } from 'react-icons/fi';
 import type { MenuNav, MenuItemNav, Page } from '../../types';
 import api from '../../services/api';
@@ -27,6 +29,7 @@ export const MenuStructureTab: React.FC<MenuStructureTabProps> = ({ menu, onUpda
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
   const [draggedItem, setDraggedItem] = useState<MenuItemNav | null>(null);
   const [dragOverId, setDragOverId] = useState<number | null>(null);
+  const [dropPosition, setDropPosition] = useState<'before' | 'after' | 'inside' | null>(null);
 
   // Modals
   const [showAddPagesModal, setShowAddPagesModal] = useState(false);
@@ -112,24 +115,93 @@ export const MenuStructureTab: React.FC<MenuStructureTabProps> = ({ menu, onUpda
     }
   };
 
+  const handleIndent = async (item: MenuItemNav) => {
+    // Find previous sibling at same level
+    const siblings = items
+      .filter((i) => i.parent_id === item.parent_id)
+      .sort((a, b) => a.order - b.order);
+    const currentIndex = siblings.findIndex((i) => i.id === item.id);
+
+    if (currentIndex <= 0) return; // Can't indent if first item or not found
+
+    const previousSibling = siblings[currentIndex - 1];
+
+    try {
+      // Make item a child of previous sibling
+      await api.put(`/menu-items/${item.id}`, {
+        parent_id: previousSibling.id,
+      });
+      await loadData();
+      onUpdate();
+
+      // Auto-expand the new parent
+      setExpandedIds(prev => new Set(prev).add(previousSibling.id));
+
+      window.dispatchEvent(new CustomEvent('menuItemsUpdated', {
+        detail: { menuId: menu.id }
+      }));
+    } catch (error) {
+      console.error('Failed to indent item:', error);
+    }
+  };
+
+  const handleOutdent = async (item: MenuItemNav) => {
+    // Can only outdent if item has a parent
+    if (!item.parent_id) return;
+
+    const parent = items.find((i) => i.id === item.parent_id);
+    if (!parent) return;
+
+    try {
+      // Move item to parent's level (same parent as current parent)
+      await api.put(`/menu-items/${item.id}`, {
+        parent_id: parent.parent_id || null,
+      });
+      await loadData();
+      onUpdate();
+
+      window.dispatchEvent(new CustomEvent('menuItemsUpdated', {
+        detail: { menuId: menu.id }
+      }));
+    } catch (error) {
+      console.error('Failed to outdent item:', error);
+    }
+  };
+
   const handleDragStart = (e: React.DragEvent, item: MenuItemNav) => {
     setDraggedItem(item);
     e.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleDragOver = (e: React.DragEvent, targetId: number) => {
+  const handleDragOver = (e: React.DragEvent, targetId: number, targetElement: HTMLElement) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     setDragOverId(targetId);
+
+    // Calculate drop position based on mouse Y position
+    const rect = targetElement.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    const height = rect.height;
+
+    if (y < height * 0.25) {
+      setDropPosition('before');
+    } else if (y > height * 0.75) {
+      setDropPosition('after');
+    } else {
+      setDropPosition('inside');
+    }
   };
 
   const handleDragLeave = () => {
     setDragOverId(null);
+    setDropPosition(null);
   };
 
   const handleDrop = async (e: React.DragEvent, targetItem: MenuItemNav | null) => {
     e.preventDefault();
+    const currentDropPosition = dropPosition;
     setDragOverId(null);
+    setDropPosition(null);
 
     if (!draggedItem) return;
     if (draggedItem.id === targetItem?.id) {
@@ -139,20 +211,28 @@ export const MenuStructureTab: React.FC<MenuStructureTabProps> = ({ menu, onUpda
 
     // Optimistic UI update
     const previousItems = [...items];
-    const optimisticItems = items.map((item) =>
-      item.id === draggedItem.id
-        ? { ...item, parent_id: targetItem?.id || undefined }
-        : item
-    );
-    setItems(optimisticItems);
 
     try {
-      // Move item under target (or to root if target is null)
+      // Determine new parent based on drop position
+      let newParentId: number | null = null;
+
+      if (currentDropPosition === 'inside' && targetItem) {
+        // Drop inside = make child of target
+        newParentId = targetItem.id;
+      } else if (currentDropPosition === 'before' || currentDropPosition === 'after') {
+        // Drop before/after = same parent as target
+        newParentId = targetItem?.parent_id || null;
+      } else {
+        // Default: drop as child or root
+        newParentId = targetItem?.id || null;
+      }
+
+      // Move item to new parent
       await api.put(`/menu-items/${draggedItem.id}`, {
-        parent_id: targetItem?.id || null,
+        parent_id: newParentId,
       });
 
-      // Reload to get fresh data
+      // Reload to get fresh data with correct order
       await loadData();
       onUpdate();
 
@@ -183,15 +263,23 @@ export const MenuStructureTab: React.FC<MenuStructureTabProps> = ({ menu, onUpda
 
     return (
       <div key={item.id} className={isDragging ? 'opacity-50' : ''}>
+        {/* Drop indicator BEFORE */}
+        {isDraggedOver && dropPosition === 'before' && (
+          <div
+            className="h-0.5 bg-brand-primary rounded mb-1"
+            style={{ marginLeft: `${depth * 24}px` }}
+          />
+        )}
+
         <div
           draggable
           onDragStart={(e) => handleDragStart(e, item)}
-          onDragOver={(e) => handleDragOver(e, item.id)}
+          onDragOver={(e) => handleDragOver(e, item.id, e.currentTarget as HTMLElement)}
           onDragLeave={handleDragLeave}
           onDrop={(e) => handleDrop(e, item)}
           className={`
             group flex items-center gap-2 px-3 py-2 rounded-lg cursor-move transition-all
-            ${isDraggedOver ? 'bg-brand-primary/20 border-2 border-brand-primary' : 'border-2 border-transparent'}
+            ${isDraggedOver && dropPosition === 'inside' ? 'bg-brand-primary/20 border-2 border-brand-primary' : 'border-2 border-transparent'}
             hover:bg-dark-surface
           `}
           style={{ marginLeft: `${depth * 24}px` }}
@@ -237,6 +325,30 @@ export const MenuStructureTab: React.FC<MenuStructureTabProps> = ({ menu, onUpda
 
           {/* Actions */}
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {/* Outdent Button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleOutdent(item);
+              }}
+              disabled={!item.parent_id}
+              className="p-1 hover:bg-dark-panel rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              title="Hierarchie-Ebene hoch (Outdent)"
+            >
+              <FiArrowLeft className="text-light-muted" size={14} />
+            </button>
+            {/* Indent Button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleIndent(item);
+              }}
+              className="p-1 hover:bg-dark-panel rounded transition-colors"
+              title="Hierarchie-Ebene runter (Indent)"
+            >
+              <FiArrowRight className="text-light-muted" size={14} />
+            </button>
+            <div className="w-px h-4 bg-dark-border"></div>
             <button
               onClick={() => handleToggleVisibility(item)}
               className="p-1 hover:bg-dark-panel rounded transition-colors"
@@ -264,6 +376,14 @@ export const MenuStructureTab: React.FC<MenuStructureTabProps> = ({ menu, onUpda
             </button>
           </div>
         </div>
+
+        {/* Drop indicator AFTER */}
+        {isDraggedOver && dropPosition === 'after' && (
+          <div
+            className="h-0.5 bg-brand-primary rounded mt-1"
+            style={{ marginLeft: `${depth * 24}px` }}
+          />
+        )}
 
         {/* Render children */}
         {hasChildren && isExpanded && (
@@ -406,6 +526,16 @@ const AddPagesModal: React.FC<{
     );
   };
 
+  const toggleAllPages = () => {
+    if (selectedPageIds.length === availablePages.length) {
+      // Deselect all
+      setSelectedPageIds([]);
+    } else {
+      // Select all
+      setSelectedPageIds(availablePages.map(p => p.id));
+    }
+  };
+
   const handleSubmit = async () => {
     if (selectedPageIds.length === 0) return;
 
@@ -440,6 +570,46 @@ const AddPagesModal: React.FC<{
             </div>
           ) : (
             <div className="space-y-2">
+              {/* Select All Checkbox */}
+              <div
+                onClick={toggleAllPages}
+                className="p-4 rounded-lg border-2 border-brand-primary/30 bg-brand-primary/5 cursor-pointer transition-all hover:bg-brand-primary/10"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`
+                      w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0
+                      ${
+                        selectedPageIds.length === availablePages.length
+                          ? 'border-brand-primary bg-brand-primary'
+                          : selectedPageIds.length > 0
+                          ? 'border-brand-primary bg-brand-primary/50'
+                          : 'border-dark-border'
+                      }
+                    `}
+                  >
+                    {selectedPageIds.length === availablePages.length && (
+                      <div className="w-2.5 h-2.5 bg-white rounded-sm"></div>
+                    )}
+                    {selectedPageIds.length > 0 && selectedPageIds.length < availablePages.length && (
+                      <div className="w-2.5 h-0.5 bg-white"></div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm font-semibold text-light-text">
+                      {selectedPageIds.length === availablePages.length
+                        ? 'Alle abwählen'
+                        : `Alle ${availablePages.length} Seiten auswählen`}
+                    </div>
+                    {selectedPageIds.length > 0 && selectedPageIds.length < availablePages.length && (
+                      <div className="text-xs text-light-muted mt-0.5">
+                        {selectedPageIds.length} von {availablePages.length} ausgewählt
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               {availablePages.map((page) => (
                 <div
                   key={page.id}
