@@ -851,7 +851,7 @@ export const Canvas: React.FC = () => {
             : settings?.colors?.background || '#1a1a1a',
           borderBottom: '1px solid #e5e7eb',
           position: (settings?.features?.transparent_on_top || settings?.features?.sticky_header) ? 'sticky' : 'relative',
-          top: (settings?.features?.transparent_on_top || settings?.features?.sticky_header) ? '0' : 'auto',
+          top: '0',
           zIndex: (settings?.features?.transparent_on_top || settings?.features?.sticky_header) ? 50 : 'auto',
           transition: 'background-color 0.3s ease',
         }}
@@ -885,7 +885,7 @@ export const Canvas: React.FC = () => {
       )}
 
       <div
-        className="builder-canvas bg-white min-h-full w-full"
+        className="builder-canvas bg-white min-h-full w-full relative"
         onClick={(e) => {
           // Click on canvas background deselects all
           if (e.target === e.currentTarget) {
@@ -897,7 +897,13 @@ export const Canvas: React.FC = () => {
       {renderGlobalMenu()}
 
       {rootElements.length > 0 ? (
-        <>
+        <div
+          style={{
+            marginTop: (globalMenu?.design_settings?.features?.transparent_on_top || globalMenu?.design_settings?.features?.sticky_header)
+              ? '-80px'
+              : '0',
+          }}
+        >
           {/* Drop zone before first element */}
           <DropZone
             id="canvas-drop-before-0"
@@ -921,7 +927,7 @@ export const Canvas: React.FC = () => {
               />
             </React.Fragment>
           ))}
-        </>
+        </div>
       ) : (
         <div className="flex items-center justify-center h-full min-h-[400px] text-gray-400">
           <div className="text-center">
