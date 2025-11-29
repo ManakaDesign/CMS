@@ -675,6 +675,14 @@ const ColorInput: React.FC<{
   onChange: (value: string) => void;
 }> = ({ label, value, onChange }) => {
   const [showPicker, setShowPicker] = useState(false);
+  const [localValue, setLocalValue] = useState(value);
+
+  // Update local value when prop changes (but only if picker is closed)
+  React.useEffect(() => {
+    if (!showPicker) {
+      setLocalValue(value);
+    }
+  }, [value, showPicker]);
 
   // Normalize to valid hex
   const normalizeColor = (color: string): string => {
@@ -687,6 +695,23 @@ const ColorInput: React.FC<{
     return '#000000';
   };
 
+  const handlePickerChange = (newColor: string) => {
+    setLocalValue(newColor);
+  };
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalValue(e.target.value);
+  };
+
+  const handleClosePicker = () => {
+    setShowPicker(false);
+    onChange(localValue);
+  };
+
+  const handleTextBlur = () => {
+    onChange(localValue);
+  };
+
   return (
     <div>
       <label className="block text-sm font-medium text-light-text mb-2">{label}</label>
@@ -696,23 +721,24 @@ const ColorInput: React.FC<{
             type="button"
             onClick={() => setShowPicker(!showPicker)}
             className="w-12 h-12 rounded-lg border-2 border-dark-border cursor-pointer"
-            style={{ backgroundColor: normalizeColor(value) }}
+            style={{ backgroundColor: normalizeColor(localValue) }}
           />
           {showPicker && (
             <div className="absolute top-14 left-0 z-50">
               <div
                 className="fixed inset-0"
-                onClick={() => setShowPicker(false)}
+                onClick={handleClosePicker}
               />
               <div className="relative bg-dark-surface border border-dark-border rounded-lg p-3 shadow-xl">
                 <HexColorPicker
-                  color={normalizeColor(value)}
-                  onChange={onChange}
+                  color={normalizeColor(localValue)}
+                  onChange={handlePickerChange}
                 />
                 <input
                   type="text"
-                  value={value}
-                  onChange={(e) => onChange(e.target.value)}
+                  value={localValue}
+                  onChange={handleTextChange}
+                  onBlur={handleTextBlur}
                   className="w-full mt-2 px-2 py-1 bg-dark-bg border border-dark-border rounded text-xs text-light-text font-mono"
                   placeholder="#000000"
                 />
@@ -722,8 +748,9 @@ const ColorInput: React.FC<{
         </div>
         <input
           type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
+          value={localValue}
+          onChange={handleTextChange}
+          onBlur={handleTextBlur}
           placeholder="#000000"
           className="flex-1 px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text font-mono text-sm focus:outline-none focus:border-brand-primary"
         />
@@ -758,7 +785,7 @@ const CTAButtonConfigModal: React.FC<{
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
       <div className="bg-dark-panel border border-dark-border rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b border-dark-border flex items-center justify-between sticky top-0 bg-dark-panel z-10">
           <h3 className="text-lg font-bold text-light-text">CTA Button konfigurieren</h3>
@@ -1036,7 +1063,7 @@ const SocialIconsConfigModal: React.FC<{
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
       <div className="bg-dark-panel border border-dark-border rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b border-dark-border flex items-center justify-between sticky top-0 bg-dark-panel z-10">
           <h3 className="text-lg font-bold text-light-text">Social Icons konfigurieren</h3>

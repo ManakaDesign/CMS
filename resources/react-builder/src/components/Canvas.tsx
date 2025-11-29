@@ -850,9 +850,11 @@ export const Canvas: React.FC = () => {
             ? hexToRgba(settings?.colors?.background || '#1a1a1a', 0.3)
             : settings?.colors?.background || '#1a1a1a',
           borderBottom: '1px solid #e5e7eb',
-          position: settings?.features?.sticky_header ? 'sticky' : 'relative',
-          top: settings?.features?.sticky_header ? '0' : 'auto',
-          zIndex: settings?.features?.sticky_header ? 50 : 'auto',
+          position: (settings?.features?.transparent_on_top || settings?.features?.sticky_header) ? 'fixed' : 'relative',
+          top: (settings?.features?.transparent_on_top || settings?.features?.sticky_header) ? '0' : 'auto',
+          left: (settings?.features?.transparent_on_top || settings?.features?.sticky_header) ? '0' : 'auto',
+          right: (settings?.features?.transparent_on_top || settings?.features?.sticky_header) ? '0' : 'auto',
+          zIndex: (settings?.features?.transparent_on_top || settings?.features?.sticky_header) ? 50 : 'auto',
           transition: 'background-color 0.3s ease',
         }}
       >

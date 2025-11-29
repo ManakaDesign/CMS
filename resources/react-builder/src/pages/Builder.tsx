@@ -46,6 +46,7 @@ export const Builder: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [leftPanel, setLeftPanel] = useState<'elements' | 'layers' | 'css' | 'settings'>('elements');
+  const [savedHistoryIndex, setSavedHistoryIndex] = useState(0);
 
   // Load page on mount
   useEffect(() => {
@@ -100,6 +101,9 @@ export const Builder: React.FC = () => {
           globalColors: store.globalColors,
         },
       });
+
+      // Mark current history index as saved
+      setSavedHistoryIndex(store.historyIndex);
       console.log('Seite erfolgreich gespeichert');
     } catch (error: any) {
       setSaveError(error.message || 'Fehler beim Speichern');
@@ -110,7 +114,10 @@ export const Builder: React.FC = () => {
   };
 
   const handleBackToDashboard = () => {
-    if (canUndo() && !confirm('Du hast ungespeicherte Änderungen. Möchtest du wirklich zurück?')) {
+    const store = useBuilderStore.getState();
+    const hasUnsavedChanges = store.historyIndex !== savedHistoryIndex;
+
+    if (hasUnsavedChanges && !confirm('Du hast ungespeicherte Änderungen. Möchtest du wirklich zurück?')) {
       return;
     }
     navigate('/dashboard');

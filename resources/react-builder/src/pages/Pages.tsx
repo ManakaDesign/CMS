@@ -361,7 +361,6 @@ interface CreatePageDialogProps {
 }
 
 const CreatePageDialog: React.FC<CreatePageDialogProps> = ({ onClose }) => {
-  const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
   const [loading, setLoading] = useState(false);
@@ -387,14 +386,15 @@ const CreatePageDialog: React.FC<CreatePageDialogProps> = ({ onClose }) => {
     setLoading(true);
 
     try {
-      const response = await pagesApi.create({
+      await pagesApi.create({
         title,
         slug,
         status: 'draft',
       });
 
-      // Redirect to builder with new page
-      navigate(`/builder/${response.page.id}`);
+      // Close modal and reload pages
+      onClose();
+      window.location.reload();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Fehler beim Erstellen der Seite');
       setLoading(false);
@@ -456,9 +456,9 @@ const CreatePageDialog: React.FC<CreatePageDialogProps> = ({ onClose }) => {
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
+              className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 transition-colors disabled:opacity-50"
             >
-              {loading ? 'Erstelle...' : 'Erstellen & Öffnen'}
+              {loading ? 'Erstelle...' : 'Erstellen'}
             </button>
           </div>
         </form>
