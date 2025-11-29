@@ -13,6 +13,35 @@ export const MenuPreview: React.FC<MenuPreviewProps> = ({ menu: initialMenu }) =
   const [menu, setMenu] = useState<MenuNav>(initialMenu);
   const [isScrolled, setIsScrolled] = useState(false);
 
+  // Convert hex to rgba with transparency
+  const hexToRgba = (hex: string, alpha: number = 0.8): string => {
+    if (!hex) return `rgba(26, 26, 26, ${alpha})`;
+
+    // Handle rgba already
+    if (hex.startsWith('rgba')) return hex;
+    if (hex.startsWith('rgb')) {
+      const match = hex.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+      if (match) {
+        return `rgba(${match[1]}, ${match[2]}, ${match[3]}, ${alpha})`;
+      }
+    }
+
+    // Remove # if present
+    hex = hex.replace('#', '');
+
+    // Convert 3-digit hex to 6-digit
+    if (hex.length === 3) {
+      hex = hex.split('').map(char => char + char).join('');
+    }
+
+    // Parse RGB values
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
   // Listen for menu updates
   useEffect(() => {
     const handleMenuUpdate = (event: Event) => {
@@ -718,7 +747,7 @@ export const MenuPreview: React.FC<MenuPreviewProps> = ({ menu: initialMenu }) =
         <div
           style={{
             backgroundColor: settings.features?.transparent_on_top && !isScrolled
-              ? 'rgba(0, 0, 0, 0.3)'
+              ? hexToRgba(settings.colors?.background || '#1a1a1a', 0.3)
               : settings.colors?.background || '#1a1a1a',
             position: settings.features?.sticky_header ? 'sticky' : 'relative',
             top: settings.features?.sticky_header ? '0' : 'auto',

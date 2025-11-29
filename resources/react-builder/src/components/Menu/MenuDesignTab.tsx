@@ -11,6 +11,7 @@ import type {
   Page,
 } from '../../types';
 import { FiCheck, FiImage, FiTrash2, FiChevronRight } from 'react-icons/fi';
+import { HexColorPicker } from 'react-colorful';
 import MediaPicker from '../admin/media/MediaPicker';
 import api from '../../services/api';
 
@@ -332,10 +333,9 @@ export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) 
                 <label className="block text-sm font-medium text-light-text mb-2">
                   Breite
                 </label>
-                <input
-                  type="text"
+                <DebouncedInput
                   value={settings.logo.width}
-                  onChange={(e) => handleLogoSizeChange('width', e.target.value)}
+                  onChange={(value) => handleLogoSizeChange('width', value)}
                   placeholder="auto, 200px"
                   className="w-full px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text focus:outline-none focus:border-brand-primary"
                 />
@@ -344,10 +344,9 @@ export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) 
                 <label className="block text-sm font-medium text-light-text mb-2">
                   Höhe
                 </label>
-                <input
-                  type="text"
+                <DebouncedInput
                   value={settings.logo.height}
-                  onChange={(e) => handleLogoSizeChange('height', e.target.value)}
+                  onChange={(value) => handleLogoSizeChange('height', value)}
                   placeholder="auto, 60px"
                   className="w-full px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text focus:outline-none focus:border-brand-primary"
                 />
@@ -484,6 +483,55 @@ export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) 
 };
 
 // Helper Components
+const DebouncedInput: React.FC<{
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  className?: string;
+}> = ({ value, onChange, placeholder, className }) => {
+  const [localValue, setLocalValue] = useState(value);
+  const timeoutRef = React.useRef<number | undefined>(undefined);
+
+  // Update local value when prop changes
+  React.useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setLocalValue(newValue);
+
+    // Clear existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    // Set new timeout
+    timeoutRef.current = setTimeout(() => {
+      onChange(newValue);
+    }, 300);
+  };
+
+  const handleBlur = () => {
+    // Clear timeout and immediately update
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    onChange(localValue);
+  };
+
+  return (
+    <input
+      type="text"
+      value={localValue}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      placeholder={placeholder}
+      className={className}
+    />
+  );
+};
+
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({
   title,
   children,
@@ -590,17 +638,17 @@ const CheckboxCardWithConfig: React.FC<{
         }
       `}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-center gap-3">
         <div
           onClick={onChange}
           className={`
-          w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all cursor-pointer
+          w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all cursor-pointer
           ${checked ? 'border-brand-primary bg-brand-primary' : 'border-dark-border'}
         `}
         >
           {checked && <FiCheck className="text-white" size={14} />}
         </div>
-        <div className="flex-1" onClick={onChange}>
+        <div className="flex-1 cursor-pointer" onClick={onChange}>
           <div className="text-sm font-semibold text-light-text mb-1">{title}</div>
           <div className="text-xs text-light-muted leading-relaxed">{description}</div>
         </div>
@@ -610,7 +658,7 @@ const CheckboxCardWithConfig: React.FC<{
               e.stopPropagation();
               onConfigureClick();
             }}
-            className="p-2 rounded hover:bg-brand-primary/20 transition-colors flex-shrink-0"
+            className="p-2 pl-3 ml-2 border-l border-dark-border hover:bg-brand-primary/20 transition-colors flex-shrink-0"
             title="Konfigurieren"
           >
             <FiChevronRight className="text-brand-primary" size={18} />
@@ -626,39 +674,52 @@ const ColorInput: React.FC<{
   value: string;
   onChange: (value: string) => void;
 }> = ({ label, value, onChange }) => {
-  // Normalize color value for color input (only accepts #rrggbb format)
-  const normalizeColorForInput = (color: string): string => {
+  const [showPicker, setShowPicker] = useState(false);
+
+  // Normalize to valid hex
+  const normalizeColor = (color: string): string => {
     if (!color) return '#000000';
-
-    // If it's already a valid 6-digit hex color, return it
     if (/^#[0-9A-Fa-f]{6}$/.test(color)) return color;
-
-    // If it's a 3-digit hex, expand it
     if (/^#[0-9A-Fa-f]{3}$/.test(color)) {
       const [, r, g, b] = color.match(/#(.)(.)(.)/)!;
       return `#${r}${r}${g}${g}${b}${b}`;
     }
-
-    // If it's rgba or other format, extract RGB or use default
-    if (color.startsWith('rgba') || color.startsWith('rgb')) {
-      // For now, just return a default - proper parsing would be complex
-      return '#000000';
-    }
-
-    // Default fallback
     return '#000000';
   };
 
   return (
     <div>
       <label className="block text-sm font-medium text-light-text mb-2">{label}</label>
-      <div className="flex items-center gap-3">
-        <input
-          type="color"
-          value={normalizeColorForInput(value)}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-12 h-12 rounded-lg border-2 border-dark-border cursor-pointer bg-dark-surface"
-        />
+      <div className="flex items-center gap-3 relative">
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowPicker(!showPicker)}
+            className="w-12 h-12 rounded-lg border-2 border-dark-border cursor-pointer"
+            style={{ backgroundColor: normalizeColor(value) }}
+          />
+          {showPicker && (
+            <div className="absolute top-14 left-0 z-50">
+              <div
+                className="fixed inset-0"
+                onClick={() => setShowPicker(false)}
+              />
+              <div className="relative bg-dark-surface border border-dark-border rounded-lg p-3 shadow-xl">
+                <HexColorPicker
+                  color={normalizeColor(value)}
+                  onChange={onChange}
+                />
+                <input
+                  type="text"
+                  value={value}
+                  onChange={(e) => onChange(e.target.value)}
+                  className="w-full mt-2 px-2 py-1 bg-dark-bg border border-dark-border rounded text-xs text-light-text font-mono"
+                  placeholder="#000000"
+                />
+              </div>
+            </div>
+          )}
+        </div>
         <input
           type="text"
           value={value}

@@ -6,6 +6,35 @@ import { DropZone } from './DropZone';
 import api from '../services/api';
 import { FaFacebook, FaInstagram, FaTwitter, FaLinkedin, FaYoutube, FaGithub, FaTiktok } from 'react-icons/fa';
 
+// Convert hex to rgba with transparency
+const hexToRgba = (hex: string, alpha: number = 0.8): string => {
+  if (!hex) return `rgba(26, 26, 26, ${alpha})`;
+
+  // Handle rgba already
+  if (hex.startsWith('rgba')) return hex;
+  if (hex.startsWith('rgb')) {
+    const match = hex.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+    if (match) {
+      return `rgba(${match[1]}, ${match[2]}, ${match[3]}, ${alpha})`;
+    }
+  }
+
+  // Remove # if present
+  hex = hex.replace('#', '');
+
+  // Convert 3-digit hex to 6-digit
+  if (hex.length === 3) {
+    hex = hex.split('').map(char => char + char).join('');
+  }
+
+  // Parse RGB values
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 // MenuItem Component for submenu support
 interface MenuItemComponentProps {
   item: MenuItemNav;
@@ -818,7 +847,7 @@ export const Canvas: React.FC = () => {
       <div
         style={{
           backgroundColor: settings?.features?.transparent_on_top && !isScrolled
-            ? 'rgba(0, 0, 0, 0.3)'
+            ? hexToRgba(settings?.colors?.background || '#1a1a1a', 0.3)
             : settings?.colors?.background || '#1a1a1a',
           borderBottom: '1px solid #e5e7eb',
           position: settings?.features?.sticky_header ? 'sticky' : 'relative',

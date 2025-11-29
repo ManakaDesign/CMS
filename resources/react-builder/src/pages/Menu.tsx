@@ -222,7 +222,7 @@ export const Menu: React.FC = () => {
         </div>
 
         {/* Center - Main Content Area */}
-        <div className="flex-1 flex flex-col overflow-hidden" style={{ flex: selectedMenu ? '0 0 50%' : '1' }}>
+        <div className="flex-1 flex flex-col overflow-hidden" style={{ flex: '1' }}>
           {selectedMenu ? (
             <>
               {/* Header with Tabs */}
@@ -332,7 +332,7 @@ export const Menu: React.FC = () => {
 
         {/* Right Sidebar - Live Preview (Always Visible) */}
         {selectedMenu && (
-          <div className="bg-dark-surface border-l border-dark-border flex flex-col" style={{ flex: '0 0 50%' }}>
+          <div className="bg-dark-surface border-l border-dark-border flex flex-col" style={{ flex: '2' }}>
             <div className="p-4 border-b border-dark-border">
               <h3 className="text-lg font-semibold text-light-text flex items-center gap-2">
                 <FiEye />
