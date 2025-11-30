@@ -15,7 +15,6 @@ import { HexColorPicker } from 'react-colorful';
 import MediaPicker from '../admin/media/MediaPicker';
 import api from '../../services/api';
 import { useBuilderStore } from '../../store/builderStore';
-import { GlobalColorSwatches } from '../Settings/GlobalColorSwatches';
 
 interface MenuDesignTabProps {
   menu: MenuNav;
