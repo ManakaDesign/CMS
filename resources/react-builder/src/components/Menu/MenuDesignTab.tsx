@@ -14,6 +14,8 @@ import { FiCheck, FiImage, FiTrash2, FiChevronRight } from 'react-icons/fi';
 import { HexColorPicker } from 'react-colorful';
 import MediaPicker from '../admin/media/MediaPicker';
 import api from '../../services/api';
+import { useBuilderStore } from '../../store/builderStore';
+import { GlobalColorSwatches } from '../Settings/GlobalColorSwatches';
 
 interface MenuDesignTabProps {
   menu: MenuNav;
@@ -700,6 +702,8 @@ const ColorInput: React.FC<{
     onChange(localValue);
   };
 
+  const { globalColors } = useBuilderStore();
+
   return (
     <div>
       <label className="block text-sm font-medium text-light-text mb-2">{label}</label>
@@ -730,6 +734,26 @@ const ColorInput: React.FC<{
                   className="w-full mt-2 px-2 py-1 bg-dark-bg border border-dark-border rounded text-xs text-light-text font-mono"
                   placeholder="#000000"
                 />
+                {globalColors.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-dark-border">
+                    <div className="text-xs text-light-muted mb-2">Globale Farben</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {globalColors.map((color) => (
+                        <button
+                          key={color.id}
+                          type="button"
+                          onClick={() => {
+                            setLocalValue(color.value);
+                            onChange(color.value);
+                          }}
+                          className="w-7 h-7 rounded border-2 border-dark-border hover:border-brand-primary transition-all hover:scale-110"
+                          style={{ backgroundColor: color.value }}
+                          title={`${color.name} (${color.value})`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
