@@ -75,19 +75,10 @@ export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) 
     key: keyof typeof settings.submenu_config,
     value: any
   ) => {
-    // Auto-append 'px' if only a number is provided for width property
-    let finalValue = value;
-    if (key === 'width' && typeof value === 'string') {
-      const trimmed = value.trim();
-      if (/^\d+$/.test(trimmed)) {
-        finalValue = `${trimmed}px`;
-      }
-    }
-
     onUpdate({
       submenu_config: {
         ...settings.submenu_config,
-        [key]: finalValue,
+        [key]: value,
       },
     });
   };
@@ -112,16 +103,10 @@ export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) 
   };
 
   const handleLogoSizeChange = (key: 'width' | 'height', value: string) => {
-    // Auto-append 'px' if only a number is provided
-    let finalValue = value.trim();
-    if (/^\d+$/.test(finalValue)) {
-      finalValue = `${finalValue}px`;
-    }
-
     onUpdate({
       logo: {
         ...settings.logo,
-        [key]: finalValue,
+        [key]: value,
       },
     });
   };
@@ -194,6 +179,106 @@ export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) 
         </div>
       </Section>
 
+      {/* Mega Menu Configuration (only if mega_menu is selected) */}
+      {settings.submenu_style === 'mega_menu' && (
+        <Section title="Mega Menu Kategorien">
+          <div className="space-y-4">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <label className="text-sm font-medium text-light-text">Kategorien</label>
+                <button
+                  onClick={() => {
+                    const newCategory = {
+                      id: `cat-${Date.now()}`,
+                      name: 'Neue Kategorie',
+                      menu_item_ids: [],
+                    };
+                    const categories = settings.submenu_config?.mega_menu?.categories || [];
+                    // Auto-set columns based on category count
+                    const newColumnCount = Math.min(categories.length + 1, 5);
+                    onUpdate({
+                      submenu_config: {
+                        ...settings.submenu_config,
+                        mega_menu: {
+                          columns: newColumnCount,
+                          categories: [...categories, newCategory],
+                        },
+                      },
+                    });
+                  }}
+                  className="px-3 py-1.5 text-xs bg-brand-primary text-white rounded hover:bg-brand-primary/90 transition-colors"
+                >
+                  + Kategorie hinzufügen
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {(settings.submenu_config?.mega_menu?.categories || []).map((category, index) => (
+                  <div key={category.id} className="bg-dark-surface border border-dark-border rounded-lg p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <input
+                        type="text"
+                        value={category.name}
+                        onChange={(e) => {
+                          const categories = [...(settings.submenu_config?.mega_menu?.categories || [])];
+                          categories[index] = { ...category, name: e.target.value };
+                          onUpdate({
+                            submenu_config: {
+                              ...settings.submenu_config,
+                              mega_menu: {
+                                ...settings.submenu_config?.mega_menu,
+                                columns: settings.submenu_config?.mega_menu?.columns || 3,
+                                categories,
+                              },
+                            },
+                          });
+                        }}
+                        className="flex-1 px-2 py-1 text-sm bg-dark-bg border border-dark-border rounded text-light-text focus:outline-none focus:border-brand-primary"
+                        placeholder="Kategoriename"
+                      />
+                      <button
+                        onClick={() => {
+                          const categories = (settings.submenu_config?.mega_menu?.categories || []).filter((_, i) => i !== index);
+                          // Auto-adjust columns based on remaining categories
+                          const newColumnCount = Math.min(Math.max(categories.length, 2), 5);
+                          onUpdate({
+                            submenu_config: {
+                              ...settings.submenu_config,
+                              mega_menu: {
+                                columns: newColumnCount,
+                                categories,
+                              },
+                            },
+                          });
+                        }}
+                        className="p-1.5 text-red-400 hover:bg-red-400/10 rounded transition-colors"
+                        title="Kategorie löschen"
+                      >
+                        <FiTrash2 size={14} />
+                      </button>
+                    </div>
+                    <div className="text-xs text-light-muted mb-2">
+                      {category.menu_item_ids.length} Menüpunkt(e) zugeordnet
+                    </div>
+                  </div>
+                ))}
+
+                {(!settings.submenu_config?.mega_menu?.categories || settings.submenu_config.mega_menu.categories.length === 0) && (
+                  <div className="text-sm text-light-muted text-center py-4 border border-dashed border-dark-border rounded-lg">
+                    Keine Kategorien vorhanden. Klicke auf "+ Kategorie hinzufügen" um zu starten.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="text-xs text-light-muted bg-dark-bg border border-dark-border rounded p-3">
+              <strong>Hinweis:</strong> Kategorien werden automatisch in <strong>{settings.submenu_config?.mega_menu?.columns || 3} Spalten</strong> angezeigt.
+              Die Spaltenanzahl passt sich automatisch an die Anzahl der Kategorien an.
+            </div>
+          </div>
+        </Section>
+      )}
+
       {/* Submenu Configuration */}
       <Section title="Submenü-Konfiguration">
         <div className="grid grid-cols-2 gap-4">
@@ -229,18 +314,12 @@ export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) 
               className="w-full px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text focus:outline-none focus:border-brand-primary"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-light-text mb-2">
-              Breite
-            </label>
-            <input
-              type="text"
-              value={settings.submenu_config.width}
-              onChange={(e) => handleSubmenuConfigChange('width', e.target.value)}
-              placeholder="auto, 200px, 100%"
-              className="w-full px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text focus:outline-none focus:border-brand-primary"
-            />
-          </div>
+          <DimensionInput
+            label="Breite"
+            value={settings.submenu_config.width}
+            onChange={(value) => handleSubmenuConfigChange('width', value)}
+            placeholder="auto, 200px, 100%"
+          />
           <div>
             <label className="block text-sm font-medium text-light-text mb-2">
               Position
@@ -914,15 +993,23 @@ const DimensionInput: React.FC<{
   onChange: (value: string) => void;
   placeholder?: string;
 }> = ({ label, value, onChange, placeholder = 'auto, 200px, 100%' }) => {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let inputValue = e.target.value.trim();
+  const [localValue, setLocalValue] = useState(value);
 
-    // Auto-append 'px' if only a number is provided
-    if (/^\d+$/.test(inputValue)) {
-      inputValue = `${inputValue}px`;
+  // Update local value when prop changes
+  React.useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  const handleBlur = () => {
+    let finalValue = localValue.trim();
+
+    // Auto-append 'px' if only a number is provided (no unit already present)
+    if (/^\d+$/.test(finalValue)) {
+      finalValue = `${finalValue}px`;
     }
 
-    onChange(inputValue);
+    setLocalValue(finalValue);
+    onChange(finalValue);
   };
 
   return (
@@ -930,8 +1017,9 @@ const DimensionInput: React.FC<{
       <label className="block text-sm font-medium text-light-text mb-2">{label}</label>
       <input
         type="text"
-        value={value}
-        onChange={handleChange}
+        value={localValue}
+        onChange={(e) => setLocalValue(e.target.value)}
+        onBlur={handleBlur}
         placeholder={placeholder}
         className="w-full px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text focus:outline-none focus:border-brand-primary"
       />
