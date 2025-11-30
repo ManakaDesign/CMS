@@ -522,23 +522,6 @@ export const MenuPreview: React.FC<MenuPreviewProps> = ({ menu: initialMenu }) =
           </div>
         );
 
-      case 'fullscreen_overlay':
-        return (
-          <div className="flex flex-col items-center justify-center py-8 space-y-4 min-h-[200px]">
-            {rootItems.map((item, i) => (
-              <div
-                key={item.id}
-                className="text-2xl font-bold transition-colors cursor-pointer"
-                style={{
-                  color: i === 0 ? settings.colors?.active_text : settings.colors?.link_color,
-                }}
-              >
-                {item.label}
-              </div>
-            ))}
-          </div>
-        );
-
       default:
         return null;
     }
@@ -610,30 +593,6 @@ export const MenuPreview: React.FC<MenuPreviewProps> = ({ menu: initialMenu }) =
                   ))}
                 </div>
               ))}
-            </div>
-          </div>
-        );
-
-      case 'fullscreen_overlay':
-        return (
-          <div className="mt-4">
-            <div className="text-xs font-semibold text-light-muted mb-2 uppercase tracking-wide">
-              Submenü Vorschau: Fullscreen Overlay
-            </div>
-            <div className="bg-black/90 border border-dark-border rounded-lg p-6 flex flex-col items-center justify-center gap-4 min-h-[200px]">
-              <div className="text-sm font-bold mb-2" style={{ color: settings.colors?.active_text }}>
-                {itemWithChildren?.label}
-              </div>
-              {childItems.map((item: MenuItemNav) => (
-                <div
-                  key={item.id}
-                  className="text-lg font-semibold transition-colors cursor-pointer"
-                  style={{ color: settings.colors?.link_color }}
-                >
-                  {item.label}
-                </div>
-              ))}
-              <div className="text-xs text-gray-400 mt-4">(Fullscreen Overlay mit großen, zentrierten Links)</div>
             </div>
           </div>
         );
@@ -861,7 +820,6 @@ const getLayoutLabel = (type: string): string => {
     centered: 'Centered',
     split: 'Split Navigation',
     vertical_sidebar: 'Vertical Sidebar',
-    fullscreen_overlay: 'Fullscreen Overlay',
   };
   return labels[type] || type;
 };
@@ -870,7 +828,6 @@ const getSubmenuLabel = (type: string): string => {
   const labels: Record<string, string> = {
     dropdown_flyout: 'Dropdown Flyout',
     mega_menu: 'Mega Menu',
-    fullscreen_overlay: 'Fullscreen Overlay',
     sidebar_flyout: 'Sidebar Flyout',
   };
   return labels[type] || type;

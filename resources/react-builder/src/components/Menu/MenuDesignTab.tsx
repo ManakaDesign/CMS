@@ -151,12 +151,6 @@ export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) 
             selected={settings.layout_type === 'vertical_sidebar'}
             onClick={() => handleLayoutTypeChange('vertical_sidebar')}
           />
-          <OptionCard
-            title="Fullscreen Overlay"
-            description="Großes Overlay-Menü über kompletter Seite"
-            selected={settings.layout_type === 'fullscreen_overlay'}
-            onClick={() => handleLayoutTypeChange('fullscreen_overlay')}
-          />
         </div>
       </Section>
 
@@ -174,12 +168,6 @@ export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) 
             description="Multi-Column Layout mit Kategorien und Icons"
             selected={settings.submenu_style === 'mega_menu'}
             onClick={() => handleSubmenuStyleChange('mega_menu')}
-          />
-          <OptionCard
-            title="Fullscreen Overlay"
-            description="Vollbild-Submenü mit großen, animierten Links"
-            selected={settings.submenu_style === 'fullscreen_overlay'}
-            onClick={() => handleSubmenuStyleChange('fullscreen_overlay')}
           />
           <OptionCard
             title="Sidebar Flyout"

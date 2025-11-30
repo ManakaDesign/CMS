@@ -384,13 +384,11 @@ export type MenuLayoutType =
   | 'horizontal_standard'
   | 'centered'
   | 'split'
-  | 'vertical_sidebar'
-  | 'fullscreen_overlay';
+  | 'vertical_sidebar';
 
 export type SubmenuStyle =
   | 'dropdown_flyout'
   | 'mega_menu'
-  | 'fullscreen_overlay'
   | 'sidebar_flyout';
 
 export type MobileView =
