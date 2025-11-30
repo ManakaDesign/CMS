@@ -147,7 +147,7 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, depth, sett
             }}>
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
+                gridTemplateColumns: `repeat(${settings?.submenu_config?.mega_menu?.columns || 3}, 1fr)`,
                 gap: '24px',
               }}>
                 {childItems.map((child: MenuItemNav) => (
@@ -157,10 +157,23 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, depth, sett
                       onClick={(e) => e.preventDefault()}
                       style={{
                         display: 'block',
-                        padding: '8px 0',
-                        color: settings?.colors?.link_color || '#333',
+                        padding: submenuStyling?.padding || '8px 0',
+                        color: submenuStyling?.text_color || settings?.colors?.link_color || '#333',
                         fontWeight: '600',
                         textDecoration: 'none',
+                        borderRadius: submenuStyling?.border_radius || '0',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (submenuStyling?.hover_background) {
+                          e.currentTarget.style.backgroundColor = submenuStyling.hover_background;
+                        }
+                        if (submenuStyling?.hover_text) {
+                          e.currentTarget.style.color = submenuStyling.hover_text;
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.color = submenuStyling?.text_color || settings?.colors?.link_color || '#333';
                       }}
                     >
                       {child.label}

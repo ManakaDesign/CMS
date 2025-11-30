@@ -76,10 +76,19 @@ export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) 
     key: keyof typeof settings.submenu_config,
     value: any
   ) => {
+    // Auto-append 'px' if only a number is provided for width property
+    let finalValue = value;
+    if (key === 'width' && typeof value === 'string') {
+      const trimmed = value.trim();
+      if (/^\d+$/.test(trimmed)) {
+        finalValue = `${trimmed}px`;
+      }
+    }
+
     onUpdate({
       submenu_config: {
         ...settings.submenu_config,
-        [key]: value,
+        [key]: finalValue,
       },
     });
   };
@@ -104,10 +113,16 @@ export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) 
   };
 
   const handleLogoSizeChange = (key: 'width' | 'height', value: string) => {
+    // Auto-append 'px' if only a number is provided
+    let finalValue = value.trim();
+    if (/^\d+$/.test(finalValue)) {
+      finalValue = `${finalValue}px`;
+    }
+
     onUpdate({
       logo: {
         ...settings.logo,
-        [key]: value,
+        [key]: finalValue,
       },
     });
   };
@@ -315,50 +330,166 @@ export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) 
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-light-text mb-2">Padding</label>
-                <input
-                  type="text"
-                  value={settings.submenu_config?.styling?.padding || '8px 12px'}
-                  onChange={(e) => {
-                    onUpdate({
-                      submenu_config: {
-                        ...settings.submenu_config,
-                        styling: {
-                          ...settings.submenu_config?.styling,
-                          padding: e.target.value,
-                        },
+              <DimensionInput
+                label="Padding"
+                value={settings.submenu_config?.styling?.padding || '8px 12px'}
+                onChange={(value) => {
+                  onUpdate({
+                    submenu_config: {
+                      ...settings.submenu_config,
+                      styling: {
+                        ...settings.submenu_config?.styling,
+                        padding: value,
                       },
-                    });
-                  }}
-                  placeholder="8px 12px"
-                  className="w-full px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text focus:outline-none focus:border-brand-primary"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-light-text mb-2">Border Radius</label>
-                <input
-                  type="text"
-                  value={settings.submenu_config?.styling?.border_radius || '4px'}
-                  onChange={(e) => {
-                    onUpdate({
-                      submenu_config: {
-                        ...settings.submenu_config,
-                        styling: {
-                          ...settings.submenu_config?.styling,
-                          border_radius: e.target.value,
-                        },
+                    },
+                  });
+                }}
+                placeholder="8px 12px"
+              />
+              <DimensionInput
+                label="Border Radius"
+                value={settings.submenu_config?.styling?.border_radius || '4px'}
+                onChange={(value) => {
+                  onUpdate({
+                    submenu_config: {
+                      ...settings.submenu_config,
+                      styling: {
+                        ...settings.submenu_config?.styling,
+                        border_radius: value,
                       },
-                    });
-                  }}
-                  placeholder="4px"
-                  className="w-full px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text focus:outline-none focus:border-brand-primary"
-                />
-              </div>
+                    },
+                  });
+                }}
+                placeholder="4px"
+              />
             </div>
           </div>
         </div>
       </Section>
+
+      {/* Mega Menu Configuration (only if mega_menu is selected) */}
+      {settings.submenu_style === 'mega_menu' && (
+        <Section title="Mega Menu Konfiguration">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-light-text mb-2">
+                Anzahl Spalten
+              </label>
+              <select
+                value={settings.submenu_config?.mega_menu?.columns || 3}
+                onChange={(e) => {
+                  onUpdate({
+                    submenu_config: {
+                      ...settings.submenu_config,
+                      mega_menu: {
+                        ...settings.submenu_config?.mega_menu,
+                        columns: parseInt(e.target.value),
+                      },
+                    },
+                  });
+                }}
+                className="w-full px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text focus:outline-none focus:border-brand-primary"
+              >
+                <option value="2">2 Spalten</option>
+                <option value="3">3 Spalten</option>
+                <option value="4">4 Spalten</option>
+                <option value="5">5 Spalten</option>
+              </select>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <label className="text-sm font-medium text-light-text">Kategorien</label>
+                <button
+                  onClick={() => {
+                    const newCategory = {
+                      id: `cat-${Date.now()}`,
+                      name: 'Neue Kategorie',
+                      menu_item_ids: [],
+                    };
+                    const categories = settings.submenu_config?.mega_menu?.categories || [];
+                    onUpdate({
+                      submenu_config: {
+                        ...settings.submenu_config,
+                        mega_menu: {
+                          ...settings.submenu_config?.mega_menu,
+                          columns: settings.submenu_config?.mega_menu?.columns || 3,
+                          categories: [...categories, newCategory],
+                        },
+                      },
+                    });
+                  }}
+                  className="px-3 py-1.5 text-xs bg-brand-primary text-white rounded hover:bg-brand-primary/90 transition-colors"
+                >
+                  + Kategorie hinzufügen
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {(settings.submenu_config?.mega_menu?.categories || []).map((category, index) => (
+                  <div key={category.id} className="bg-dark-surface border border-dark-border rounded-lg p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <input
+                        type="text"
+                        value={category.name}
+                        onChange={(e) => {
+                          const categories = [...(settings.submenu_config?.mega_menu?.categories || [])];
+                          categories[index] = { ...category, name: e.target.value };
+                          onUpdate({
+                            submenu_config: {
+                              ...settings.submenu_config,
+                              mega_menu: {
+                                ...settings.submenu_config?.mega_menu,
+                                columns: settings.submenu_config?.mega_menu?.columns || 3,
+                                categories,
+                              },
+                            },
+                          });
+                        }}
+                        className="flex-1 px-2 py-1 text-sm bg-dark-bg border border-dark-border rounded text-light-text focus:outline-none focus:border-brand-primary"
+                        placeholder="Kategoriename"
+                      />
+                      <button
+                        onClick={() => {
+                          const categories = (settings.submenu_config?.mega_menu?.categories || []).filter((_, i) => i !== index);
+                          onUpdate({
+                            submenu_config: {
+                              ...settings.submenu_config,
+                              mega_menu: {
+                                ...settings.submenu_config?.mega_menu,
+                                columns: settings.submenu_config?.mega_menu?.columns || 3,
+                                categories,
+                              },
+                            },
+                          });
+                        }}
+                        className="p-1.5 text-red-400 hover:bg-red-400/10 rounded transition-colors"
+                        title="Kategorie löschen"
+                      >
+                        <FiTrash2 size={14} />
+                      </button>
+                    </div>
+                    <div className="text-xs text-light-muted">
+                      {category.menu_item_ids.length} Menüpunkt(e) zugeordnet
+                    </div>
+                  </div>
+                ))}
+
+                {(!settings.submenu_config?.mega_menu?.categories || settings.submenu_config.mega_menu.categories.length === 0) && (
+                  <div className="text-sm text-light-muted text-center py-4 border border-dashed border-dark-border rounded-lg">
+                    Keine Kategorien vorhanden. Klicke auf "+ Kategorie hinzufügen" um zu starten.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="text-xs text-light-muted bg-dark-bg border border-dark-border rounded p-3">
+              <strong>Hinweis:</strong> Kategorien gruppieren deine Menüpunkte im Mega Menu.
+              Die Zuordnung erfolgt automatisch basierend auf der Hierarchie: Alle Unterseiten eines Menüpunkts werden in derselben Kategorie angezeigt.
+            </div>
+          </div>
+        </Section>
+      )}
 
       {/* Mobile View Section */}
       <Section title="Mobile-Ansicht">
@@ -773,6 +904,38 @@ const CheckboxCardWithConfig: React.FC<{
           </button>
         )}
       </div>
+    </div>
+  );
+};
+
+// Dimension Input Component (auto-appends 'px' for numbers)
+const DimensionInput: React.FC<{
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}> = ({ label, value, onChange, placeholder = 'auto, 200px, 100%' }) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let inputValue = e.target.value.trim();
+
+    // Auto-append 'px' if only a number is provided
+    if (/^\d+$/.test(inputValue)) {
+      inputValue = `${inputValue}px`;
+    }
+
+    onChange(inputValue);
+  };
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-light-text mb-2">{label}</label>
+      <input
+        type="text"
+        value={value}
+        onChange={handleChange}
+        placeholder={placeholder}
+        className="w-full px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text focus:outline-none focus:border-brand-primary"
+      />
     </div>
   );
 };
