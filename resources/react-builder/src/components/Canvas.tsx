@@ -47,6 +47,14 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, depth, sett
   const childItems = (item as any).childrenRecursive || item.children_recursive || item.children || [];
   const hasChildren = childItems.length > 0;
 
+  // Use submenu styling if available and this is a submenu item (depth > 0)
+  const submenuStyling = settings?.submenu_config?.styling;
+  const textColor = depth > 0 && submenuStyling?.text_color ? submenuStyling.text_color : settings?.colors?.link_color || '#333';
+  const hoverTextColor = depth > 0 && submenuStyling?.hover_text ? submenuStyling.hover_text : settings?.colors?.link_hover || '#007bff';
+  const hoverBgColor = depth > 0 && submenuStyling?.hover_background ? submenuStyling.hover_background : 'transparent';
+  const padding = depth > 0 && submenuStyling?.padding ? submenuStyling.padding : (depth === 0 ? '12px 16px' : '8px 12px');
+  const borderRadius = depth > 0 && submenuStyling?.border_radius ? submenuStyling.border_radius : '0';
+
   return (
     <li
       style={{
@@ -61,17 +69,20 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, depth, sett
         onClick={(e) => e.preventDefault()}
         style={{
           display: 'block',
-          padding: depth === 0 ? '12px 16px' : '8px 12px',
-          color: settings?.colors?.link_color || '#333',
+          padding: padding,
+          color: textColor,
           textDecoration: 'none',
           transition: 'all 0.2s ease',
           fontSize: depth === 0 ? '16px' : '14px',
+          borderRadius: borderRadius,
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.color = settings?.colors?.link_hover || '#007bff';
+          e.currentTarget.style.color = hoverTextColor;
+          e.currentTarget.style.backgroundColor = hoverBgColor;
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.color = settings?.colors?.link_color || '#333';
+          e.currentTarget.style.color = textColor;
+          e.currentTarget.style.backgroundColor = 'transparent';
         }}
       >
         {item.label} {hasChildren && <span>▾</span>}
@@ -88,9 +99,9 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, depth, sett
               top: '100%',
               paddingTop: '8px',
               marginTop: '-4px',
-              backgroundColor: settings?.colors?.background || '#fff',
+              backgroundColor: submenuStyling?.background || settings?.colors?.background || '#fff',
               border: '1px solid #e5e7eb',
-              borderRadius: '4px',
+              borderRadius: submenuStyling?.border_radius || '4px',
               minWidth: settings?.submenu_config?.width || '200px',
               width: settings?.submenu_config?.width === 'full' ? '100%' : settings?.submenu_config?.width || 'auto',
               left: settings?.submenu_config?.position === 'left' ? '0' :
@@ -117,9 +128,9 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, depth, sett
               top: '100%',
               paddingTop: '8px',
               marginTop: '-4px',
-              backgroundColor: settings?.colors?.background || '#fff',
+              backgroundColor: submenuStyling?.background || settings?.colors?.background || '#fff',
               border: '1px solid #e5e7eb',
-              borderRadius: '4px',
+              borderRadius: submenuStyling?.border_radius || '4px',
               minWidth: settings?.submenu_config?.width || '600px',
               width: settings?.submenu_config?.width === 'full' ? '100%' : settings?.submenu_config?.width || 'auto',
               left: settings?.submenu_config?.position === 'left' ? '0' :
@@ -922,7 +933,7 @@ export const Canvas: React.FC = () => {
         ref={menuRef}
         style={{
           backgroundColor: settings?.features?.transparent_on_top && !isScrolled
-            ? hexToRgba(settings?.colors?.background || '#1a1a1a', 0.3)
+            ? (settings?.colors?.transparent_background || hexToRgba(settings?.colors?.background || '#1a1a1a', 0.3))
             : settings?.colors?.background || '#1a1a1a',
           position: (settings?.features?.transparent_on_top || settings?.features?.sticky_header) ? 'sticky' : 'relative',
           top: '0',

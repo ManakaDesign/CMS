@@ -399,6 +399,7 @@ export type MobileView =
 
 export interface MenuColors {
   background: string;
+  transparent_background?: string; // Color for transparent state (when transparent_on_top is enabled)
   link_color: string;
   link_hover: string;
   active_text: string;
@@ -424,6 +425,22 @@ export interface SubmenuConfig {
   delay: number;
   width: string;
   position: 'left' | 'center' | 'right';
+  styling?: {
+    background?: string;
+    text_color?: string;
+    hover_background?: string;
+    hover_text?: string;
+    padding?: string;
+    border_radius?: string;
+  };
+  mega_menu?: {
+    columns: number;
+    categories?: Array<{
+      id: string;
+      name: string;
+      menu_item_ids: number[];
+    }>;
+  };
 }
 
 export interface CTAButtonConfig {

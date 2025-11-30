@@ -247,6 +247,117 @@ export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) 
             </select>
           </div>
         </div>
+
+        {/* Submenu Styling */}
+        <div className="mt-6">
+          <h4 className="text-sm font-semibold text-light-text mb-3">Submenü Styling (Optional)</h4>
+          <div className="space-y-4">
+            <ColorInput
+              label="Submenü Hintergrundfarbe"
+              value={settings.submenu_config?.styling?.background || settings.colors.background}
+              onChange={(value) => {
+                onUpdate({
+                  submenu_config: {
+                    ...settings.submenu_config,
+                    styling: {
+                      ...settings.submenu_config?.styling,
+                      background: value,
+                    },
+                  },
+                });
+              }}
+            />
+            <ColorInput
+              label="Submenü Textfarbe"
+              value={settings.submenu_config?.styling?.text_color || settings.colors.link_color}
+              onChange={(value) => {
+                onUpdate({
+                  submenu_config: {
+                    ...settings.submenu_config,
+                    styling: {
+                      ...settings.submenu_config?.styling,
+                      text_color: value,
+                    },
+                  },
+                });
+              }}
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <ColorInput
+                label="Hover Hintergrund"
+                value={settings.submenu_config?.styling?.hover_background || ''}
+                onChange={(value) => {
+                  onUpdate({
+                    submenu_config: {
+                      ...settings.submenu_config,
+                      styling: {
+                        ...settings.submenu_config?.styling,
+                        hover_background: value,
+                      },
+                    },
+                  });
+                }}
+              />
+              <ColorInput
+                label="Hover Text"
+                value={settings.submenu_config?.styling?.hover_text || settings.colors.link_hover}
+                onChange={(value) => {
+                  onUpdate({
+                    submenu_config: {
+                      ...settings.submenu_config,
+                      styling: {
+                        ...settings.submenu_config?.styling,
+                        hover_text: value,
+                      },
+                    },
+                  });
+                }}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-light-text mb-2">Padding</label>
+                <input
+                  type="text"
+                  value={settings.submenu_config?.styling?.padding || '8px 12px'}
+                  onChange={(e) => {
+                    onUpdate({
+                      submenu_config: {
+                        ...settings.submenu_config,
+                        styling: {
+                          ...settings.submenu_config?.styling,
+                          padding: e.target.value,
+                        },
+                      },
+                    });
+                  }}
+                  placeholder="8px 12px"
+                  className="w-full px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text focus:outline-none focus:border-brand-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-light-text mb-2">Border Radius</label>
+                <input
+                  type="text"
+                  value={settings.submenu_config?.styling?.border_radius || '4px'}
+                  onChange={(e) => {
+                    onUpdate({
+                      submenu_config: {
+                        ...settings.submenu_config,
+                        styling: {
+                          ...settings.submenu_config?.styling,
+                          border_radius: e.target.value,
+                        },
+                      },
+                    });
+                  }}
+                  placeholder="4px"
+                  className="w-full px-3 py-2 bg-dark-surface border border-dark-border rounded-lg text-light-text focus:outline-none focus:border-brand-primary"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       </Section>
 
       {/* Mobile View Section */}
@@ -354,6 +465,13 @@ export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) 
             value={settings.colors.background}
             onChange={(value) => handleColorChange('background', value)}
           />
+          {settings.features.transparent_on_top && (
+            <ColorInput
+              label="Transparente Hintergrundfarbe (bei Scroll-Top)"
+              value={settings.colors.transparent_background || '#1a1a1a80'}
+              onChange={(value) => handleColorChange('transparent_background', value)}
+            />
+          )}
           <ColorInput
             label="Link-Farbe (Normal)"
             value={settings.colors.link_color}
