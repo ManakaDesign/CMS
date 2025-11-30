@@ -306,18 +306,36 @@ export const Canvas: React.FC = () => {
 
   // Scroll detection for transparent on top feature
   useEffect(() => {
-    const handleScroll = (e: Event) => {
-      const target = e.target as HTMLElement;
-      const scrollTop = target.scrollTop || 0;
+    const handleScroll = () => {
+      // Find the scrollable parent (the builder container)
+      const canvasElement = canvasRef.current;
+      if (!canvasElement) return;
+
+      // Get the scroll position from the scrollable parent
+      let scrollTop = 0;
+      let element = canvasElement.parentElement;
+
+      while (element) {
+        if (element.scrollTop > 0 || element === document.documentElement || element === document.body) {
+          scrollTop = element.scrollTop || window.pageYOffset || document.documentElement.scrollTop;
+          break;
+        }
+        element = element.parentElement;
+      }
+
       setIsScrolled(scrollTop > 50);
     };
 
-    // Listen for scroll on the canvas container
-    const canvasElement = canvasRef.current;
-    if (canvasElement) {
-      canvasElement.addEventListener('scroll', handleScroll);
-      return () => canvasElement.removeEventListener('scroll', handleScroll);
-    }
+    // Listen on window and check periodically
+    window.addEventListener('scroll', handleScroll, true); // true = capture phase to catch all scrolls
+
+    // Also check on any scroll event in the document
+    document.addEventListener('scroll', handleScroll, true);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+      document.removeEventListener('scroll', handleScroll, true);
+    };
   }, []);
 
   // Measure menu height dynamically
@@ -917,7 +935,7 @@ export const Canvas: React.FC = () => {
 
       <div
         ref={canvasRef}
-        className="builder-canvas bg-white min-h-full w-full relative overflow-auto"
+        className="builder-canvas bg-white min-h-full w-full relative"
         onClick={(e) => {
           // Click on canvas background deselects all
           if (e.target === e.currentTarget) {
