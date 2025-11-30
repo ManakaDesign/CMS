@@ -86,7 +86,8 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, depth, sett
               margin: 0,
               position: 'absolute',
               top: '100%',
-              marginTop: '4px',
+              paddingTop: '8px',
+              marginTop: '-4px',
               backgroundColor: settings?.colors?.background || '#fff',
               border: '1px solid #e5e7eb',
               borderRadius: '4px',
@@ -114,7 +115,8 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, depth, sett
             <div style={{
               position: 'absolute',
               top: '100%',
-              marginTop: '4px',
+              paddingTop: '8px',
+              marginTop: '-4px',
               backgroundColor: settings?.colors?.background || '#fff',
               border: '1px solid #e5e7eb',
               borderRadius: '4px',
@@ -161,7 +163,7 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, depth, sett
           {/* Sidebar Flyout Style */}
           {settings?.submenu_style === 'sidebar_flyout' && (
             <div style={{
-              position: 'fixed',
+              position: 'absolute',
               top: 0,
               right: 0,
               bottom: 0,
@@ -201,43 +203,6 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, depth, sett
             </div>
           )}
 
-          {/* Fullscreen Overlay Style */}
-          {settings?.submenu_style === 'fullscreen_overlay' && (
-            <div style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.95)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '16px',
-              zIndex: 1000,
-              transition: settings?.submenu_config?.animation === 'none' ? 'none' :
-                settings?.submenu_config?.animation === 'fade' ? `opacity ${settings?.submenu_config?.delay || 200}ms ease-in-out` :
-                `opacity ${settings?.submenu_config?.delay || 200}ms ease-in-out`,
-            }}>
-              {childItems.map((child: MenuItemNav) => (
-                <a
-                  key={child.id}
-                  href={child.computed_url || '#'}
-                  onClick={(e) => e.preventDefault()}
-                  style={{
-                    fontSize: '32px',
-                    fontWeight: '600',
-                    color: settings?.colors?.link_color || '#fff',
-                    textDecoration: 'none',
-                  }}
-                >
-                  {child.label}
-                </a>
-              ))}
-            </div>
-          )}
-
           {/* Default fallback to dropdown_flyout if no style set */}
           {!settings?.submenu_style && (
             <ul style={{
@@ -246,6 +211,8 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, depth, sett
               margin: 0,
               position: 'absolute',
               top: '100%',
+              paddingTop: '8px',
+              marginTop: '-4px',
               left: 0,
               backgroundColor: settings?.colors?.background || '#fff',
               border: '1px solid #e5e7eb',
@@ -615,22 +582,47 @@ export const Canvas: React.FC = () => {
                 padding: '16px',
               }}>
                 <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-                  {rootItems.map((item) => (
-                    <li key={item.id} style={{ marginBottom: '8px' }}>
-                      <a
-                        href={item.computed_url || '#'}
-                        onClick={(e) => e.preventDefault()}
-                        style={{
-                          display: 'block',
-                          padding: '12px',
-                          color: settings?.colors?.link_color || '#fff',
-                          textDecoration: 'none',
-                        }}
-                      >
-                        {item.label}
-                      </a>
-                    </li>
-                  ))}
+                  {rootItems.map((item) => {
+                    const childItems = (item as any).childrenRecursive || item.children_recursive || item.children || [];
+                    return (
+                      <li key={item.id} style={{ marginBottom: '8px' }}>
+                        <a
+                          href={item.computed_url || '#'}
+                          onClick={(e) => e.preventDefault()}
+                          style={{
+                            display: 'block',
+                            padding: '12px',
+                            color: settings?.colors?.link_color || '#fff',
+                            textDecoration: 'none',
+                          }}
+                        >
+                          {item.label}
+                        </a>
+                        {childItems.length > 0 && (
+                          <ul style={{ listStyle: 'none', margin: 0, padding: '0 0 0 16px' }}>
+                            {childItems.map((child: MenuItemNav) => (
+                              <li key={child.id} style={{ marginTop: '4px' }}>
+                                <a
+                                  href={child.computed_url || '#'}
+                                  onClick={(e) => e.preventDefault()}
+                                  style={{
+                                    display: 'block',
+                                    padding: '8px',
+                                    color: settings?.colors?.link_color || '#fff',
+                                    textDecoration: 'none',
+                                    opacity: 0.7,
+                                    fontSize: '14px',
+                                  }}
+                                >
+                                  {child.label}
+                                </a>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             )}
@@ -641,55 +633,62 @@ export const Canvas: React.FC = () => {
       // Mobile bottom navigation
       if (isMobileView && settings?.mobile_view === 'bottom_navigation') {
         return (
-          <div style={{ backgroundColor: settings?.colors?.background || '#1a1a1a' }}>
+          <>
             <div style={{
+              backgroundColor: settings?.colors?.background || '#1a1a1a',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               padding: '12px 16px',
-              borderBottom: '1px solid #374151',
+              minHeight: '60px',
             }}>
               {renderLogo()}
             </div>
             <div style={{
+              position: 'fixed',
+              bottom: 0,
+              left: 0,
+              right: 0,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-around',
               padding: '12px 16px',
+              backgroundColor: settings?.colors?.background || '#1a1a1a',
               borderTop: '1px solid #374151',
-              marginTop: '32px',
+              zIndex: 50,
             }}>
-              {rootItems.slice(0, 4).map((item) => (
-                <div key={item.id} style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}>
+              {rootItems.slice(0, 5).map((item) => (
+                <a
+                  key={item.id}
+                  href={item.computed_url || '#'}
+                  onClick={(e) => e.preventDefault()}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '4px',
+                    textDecoration: 'none',
+                    flex: '1',
+                  }}
+                >
                   <div style={{
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
-                    backgroundColor: settings?.colors?.link_color || '#fff',
-                    opacity: 0.5,
-                  }}></div>
-                  <div style={{
-                    fontSize: '12px',
+                    fontSize: '11px',
                     color: settings?.colors?.link_color || '#fff',
+                    textAlign: 'center',
                   }}>
-                    {item.label.substring(0, 8)}
+                    {item.label}
                   </div>
-                </div>
+                </a>
               ))}
             </div>
-          </div>
+          </>
         );
       }
 
       // Mobile fullscreen burger
       if (isMobileView && settings?.mobile_view === 'burger_fullscreen') {
         return (
-          <div style={{ backgroundColor: settings?.colors?.background || '#1a1a1a', minHeight: '60px' }}>
+          <div style={{ backgroundColor: settings?.colors?.background || '#1a1a1a', minHeight: '60px', position: 'relative' }}>
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -719,7 +718,7 @@ export const Canvas: React.FC = () => {
             </div>
             {showMobileMenu && (
               <div style={{
-                position: 'fixed',
+                position: 'absolute',
                 top: 0,
                 left: 0,
                 right: 0,
@@ -731,22 +730,48 @@ export const Canvas: React.FC = () => {
                 justifyContent: 'center',
                 gap: '16px',
                 zIndex: 1000,
+                minHeight: '100vh',
               }}>
-                {rootItems.map((item) => (
-                  <a
-                    key={item.id}
-                    href={item.computed_url || '#'}
-                    onClick={(e) => e.preventDefault()}
-                    style={{
-                      fontSize: '24px',
-                      fontWeight: '600',
-                      color: settings?.colors?.link_color || '#fff',
-                      textDecoration: 'none',
-                    }}
-                  >
-                    {item.label}
-                  </a>
-                ))}
+                {rootItems.map((item) => {
+                  const childItems = (item as any).childrenRecursive || item.children_recursive || item.children || [];
+                  return (
+                    <div key={item.id} style={{ width: '100%', textAlign: 'center' }}>
+                      <a
+                        href={item.computed_url || '#'}
+                        onClick={(e) => e.preventDefault()}
+                        style={{
+                          fontSize: '24px',
+                          fontWeight: '600',
+                          color: settings?.colors?.link_color || '#fff',
+                          textDecoration: 'none',
+                        }}
+                      >
+                        {item.label}
+                      </a>
+                      {childItems.length > 0 && (
+                        <div style={{ marginTop: '8px' }}>
+                          {childItems.map((child: MenuItemNav) => (
+                            <a
+                              key={child.id}
+                              href={child.computed_url || '#'}
+                              onClick={(e) => e.preventDefault()}
+                              style={{
+                                display: 'block',
+                                fontSize: '16px',
+                                color: settings?.colors?.link_color || '#fff',
+                                textDecoration: 'none',
+                                opacity: 0.7,
+                                marginTop: '4px',
+                              }}
+                            >
+                              {child.label}
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
