@@ -300,6 +300,8 @@ export const Canvas: React.FC = () => {
   const [globalMenu, setGlobalMenu] = useState<MenuNav | null>(null);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [menuHeight, setMenuHeight] = useState(80); // Default height
+  const menuRef = React.useRef<HTMLDivElement>(null);
 
   // Scroll detection for transparent on top feature
   useEffect(() => {
@@ -311,6 +313,29 @@ export const Canvas: React.FC = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Measure menu height dynamically
+  useEffect(() => {
+    if (menuRef.current && (globalMenu?.design_settings?.features?.transparent_on_top || globalMenu?.design_settings?.features?.sticky_header)) {
+      const updateHeight = () => {
+        const height = menuRef.current?.offsetHeight || 80;
+        setMenuHeight(height);
+      };
+
+      updateHeight();
+
+      // Re-measure on window resize or menu changes
+      window.addEventListener('resize', updateHeight);
+
+      // Also re-measure after a short delay to account for logo/image loading
+      const timer = setTimeout(updateHeight, 100);
+
+      return () => {
+        window.removeEventListener('resize', updateHeight);
+        clearTimeout(timer);
+      };
+    }
+  }, [globalMenu]);
 
   // Load global menu on mount
   useEffect(() => {
@@ -845,6 +870,7 @@ export const Canvas: React.FC = () => {
 
     return (
       <div
+        ref={menuRef}
         style={{
           backgroundColor: settings?.features?.transparent_on_top && !isScrolled
             ? hexToRgba(settings?.colors?.background || '#1a1a1a', 0.3)
@@ -900,7 +926,7 @@ export const Canvas: React.FC = () => {
         <div
           style={{
             marginTop: (globalMenu?.design_settings?.features?.transparent_on_top || globalMenu?.design_settings?.features?.sticky_header)
-              ? '-80px'
+              ? `-${menuHeight}px`
               : '0',
           }}
         >
