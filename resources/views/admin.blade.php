@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Montserrat:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Lato:ital,wght@0,400;0,700;1,400;1,700&family=Poppins:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap" rel="stylesheet">
-    <script type="module" crossorigin src="/public/admin/assets/index-J8kc5rtX.js"></script>
-    <link rel="stylesheet" crossorigin href="/public/admin/assets/index-ByGSf5Dg.css">
+    <script type="module" crossorigin src="/public/admin/assets/index-CmUzxVk9.js"></script>
+    <link rel="stylesheet" crossorigin href="/public/admin/assets/index-Qg15XM10.css">
   </head>
   <body>
     <div id="root"></div>
