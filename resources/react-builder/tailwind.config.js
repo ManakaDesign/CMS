@@ -9,7 +9,7 @@ export default {
       colors: {
         // Brand colors
         brand: {
-          primary: '#246dff',  // Blue
+          primary: '#ef4444',  // Red (TEST)
         },
         // Dark mode UI colors
         dark: {
