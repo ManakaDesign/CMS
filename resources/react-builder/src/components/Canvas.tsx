@@ -302,16 +302,22 @@ export const Canvas: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuHeight, setMenuHeight] = useState(80); // Default height
   const menuRef = React.useRef<HTMLDivElement>(null);
+  const canvasRef = React.useRef<HTMLDivElement>(null);
 
   // Scroll detection for transparent on top feature
   useEffect(() => {
-    const handleScroll = () => {
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const handleScroll = (e: Event) => {
+      const target = e.target as HTMLElement;
+      const scrollTop = target.scrollTop || 0;
       setIsScrolled(scrollTop > 50);
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    // Listen for scroll on the canvas container
+    const canvasElement = canvasRef.current;
+    if (canvasElement) {
+      canvasElement.addEventListener('scroll', handleScroll);
+      return () => canvasElement.removeEventListener('scroll', handleScroll);
+    }
   }, []);
 
   // Measure menu height dynamically
@@ -875,7 +881,6 @@ export const Canvas: React.FC = () => {
           backgroundColor: settings?.features?.transparent_on_top && !isScrolled
             ? hexToRgba(settings?.colors?.background || '#1a1a1a', 0.3)
             : settings?.colors?.background || '#1a1a1a',
-          borderBottom: '1px solid #e5e7eb',
           position: (settings?.features?.transparent_on_top || settings?.features?.sticky_header) ? 'sticky' : 'relative',
           top: '0',
           zIndex: (settings?.features?.transparent_on_top || settings?.features?.sticky_header) ? 50 : 'auto',
@@ -911,7 +916,8 @@ export const Canvas: React.FC = () => {
       )}
 
       <div
-        className="builder-canvas bg-white min-h-full w-full relative"
+        ref={canvasRef}
+        className="builder-canvas bg-white min-h-full w-full relative overflow-auto"
         onClick={(e) => {
           // Click on canvas background deselects all
           if (e.target === e.currentTarget) {
