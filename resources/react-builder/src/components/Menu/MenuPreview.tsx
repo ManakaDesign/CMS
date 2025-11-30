@@ -553,14 +553,23 @@ export const MenuPreview: React.FC<MenuPreviewProps> = ({ menu: initialMenu }) =
             <div className="text-xs font-semibold text-light-muted mb-2 uppercase tracking-wide">
               Submenü Vorschau: {itemWithChildren?.label}
             </div>
-            <div className="bg-dark-surface border border-dark-border rounded-lg p-3 max-w-[200px]">
+            <div
+              className="border rounded-lg p-3 max-w-[200px]"
+              style={{
+                backgroundColor: settings.submenu_config?.styling?.background || settings.colors?.background,
+                borderColor: '#374151',
+                borderRadius: settings.submenu_config?.styling?.border_radius || '8px',
+              }}
+            >
               {childItems.map((item: MenuItemNav) => (
                 <div
                   key={item.id}
-                  className="px-3 py-2 rounded text-xs transition-colors cursor-pointer mb-1 last:mb-0"
+                  className="rounded text-xs transition-colors cursor-pointer mb-1 last:mb-0"
                   style={{
-                    color: settings.colors?.link_color,
+                    color: settings.submenu_config?.styling?.text_color || settings.colors?.link_color,
                     backgroundColor: 'transparent',
+                    padding: settings.submenu_config?.styling?.padding || '8px 12px',
+                    borderRadius: settings.submenu_config?.styling?.border_radius || '4px',
                   }}
                 >
                   {item.label}
@@ -571,26 +580,70 @@ export const MenuPreview: React.FC<MenuPreviewProps> = ({ menu: initialMenu }) =
         );
 
       case 'mega_menu':
+        const categories = settings.submenu_config?.mega_menu?.categories || [];
+        const columns = settings.submenu_config?.mega_menu?.columns || 3;
+        const displayCategories = categories.length > 0
+          ? categories
+          : Array.from({ length: columns }, (_, i) => ({
+              id: `placeholder-${i}`,
+              name: `Kategorie ${i + 1}`,
+              menu_item_ids: [],
+            }));
+
         return (
           <div className="mt-4">
             <div className="text-xs font-semibold text-light-muted mb-2 uppercase tracking-wide">
-              Submenü Vorschau: Mega Menu
+              Submenü Vorschau: Mega Menu ({columns} Spalten)
             </div>
-            <div className="bg-dark-surface border border-dark-border rounded-lg p-4 grid grid-cols-3 gap-4">
-              {[1, 2, 3].map((col) => (
-                <div key={col}>
+            <div
+              className="border rounded-lg p-4"
+              style={{
+                backgroundColor: settings.submenu_config?.styling?.background || settings.colors?.background,
+                borderColor: '#374151',
+                borderRadius: settings.submenu_config?.styling?.border_radius || '8px',
+                display: 'grid',
+                gridTemplateColumns: `repeat(${columns}, 1fr)`,
+                gap: '16px',
+              }}
+            >
+              {displayCategories.slice(0, columns).map((category, index) => (
+                <div key={category.id}>
                   <div className="text-xs font-semibold mb-2" style={{ color: settings.colors?.active_text }}>
-                    Kategorie {col}
+                    {category.name}
                   </div>
-                  {childItems.slice((col - 1) * 2, col * 2).map((item: MenuItemNav) => (
-                    <div
-                      key={item.id}
-                      className="text-xs py-1"
-                      style={{ color: settings.colors?.link_color }}
-                    >
-                      {item.label}
-                    </div>
-                  ))}
+                  {categories.length > 0 ? (
+                    category.menu_item_ids.length > 0 ? (
+                      childItems
+                        .filter((item: MenuItemNav) => category.menu_item_ids.includes(item.id))
+                        .map((item: MenuItemNav) => (
+                          <div
+                            key={item.id}
+                            className="text-xs py-1"
+                            style={{
+                              color: settings.submenu_config?.styling?.text_color || settings.colors?.link_color,
+                              padding: settings.submenu_config?.styling?.padding || '4px 0',
+                            }}
+                          >
+                            {item.label}
+                          </div>
+                        ))
+                    ) : (
+                      <div className="text-xs text-light-muted italic">Keine Menüpunkte zugewiesen</div>
+                    )
+                  ) : (
+                    childItems.slice(index * 2, (index + 1) * 2).map((item: MenuItemNav) => (
+                      <div
+                        key={item.id}
+                        className="text-xs py-1"
+                        style={{
+                          color: settings.submenu_config?.styling?.text_color || settings.colors?.link_color,
+                          padding: settings.submenu_config?.styling?.padding || '4px 0',
+                        }}
+                      >
+                        {item.label}
+                      </div>
+                    ))
+                  )}
                 </div>
               ))}
             </div>
@@ -603,15 +656,26 @@ export const MenuPreview: React.FC<MenuPreviewProps> = ({ menu: initialMenu }) =
             <div className="text-xs font-semibold text-light-muted mb-2 uppercase tracking-wide">
               Submenü Vorschau: Sidebar Flyout
             </div>
-            <div className="bg-dark-surface border border-dark-border rounded-lg p-3 max-w-[180px]">
+            <div
+              className="border rounded-lg p-3 max-w-[180px]"
+              style={{
+                backgroundColor: settings.submenu_config?.styling?.background || settings.colors?.background,
+                borderColor: '#374151',
+                borderRadius: settings.submenu_config?.styling?.border_radius || '8px',
+              }}
+            >
               <div className="text-xs font-semibold mb-2" style={{ color: settings.colors?.active_text }}>
                 {itemWithChildren?.label}
               </div>
               {childItems.map((item: MenuItemNav) => (
                 <div
                   key={item.id}
-                  className="px-2 py-1.5 rounded text-xs mb-1 last:mb-0"
-                  style={{ color: settings.colors?.link_color }}
+                  className="rounded text-xs mb-1 last:mb-0"
+                  style={{
+                    color: settings.submenu_config?.styling?.text_color || settings.colors?.link_color,
+                    padding: settings.submenu_config?.styling?.padding || '8px 12px',
+                    borderRadius: settings.submenu_config?.styling?.border_radius || '4px',
+                  }}
                 >
                   {item.label}
                 </div>
