@@ -9,7 +9,7 @@ export default {
       colors: {
         // Brand colors
         brand: {
-          primary: '#ef4444',  // Red (TEST)
+          primary: '#246dff',  // Blue (Note: In Tailwind v4, colors are defined in @theme in index.css)
         },
         // Dark mode UI colors
         dark: {
