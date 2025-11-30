@@ -1,60 +1,76 @@
 # Deployment Guide
 
-Da Node.js nicht auf dem Webserver verfügbar ist, bauen wir das React-Frontend **lokal** und committen die fertigen Build-Files zu Git.
+Das CMS nutzt **GitHub Actions** für automatischen Build und **Plesk Git** für automatisches Deployment.
 
-## Wie funktioniert Deployment?
+## Wie funktioniert es?
 
-### **Option A: Automatisches Deploy-Script** ⭐ EMPFOHLEN
-
-Nutze das `deploy.sh` Script, das alles automatisch macht:
-
-```bash
-./deploy.sh
+```
+1. Code ändern in Claude Code
+2. git push zu GitHub
+   ↓
+3. GitHub Actions: Baut React-Frontend automatisch
+4. GitHub Actions: Committed Build-Files zurück ins Repo
+   ↓
+5. Plesk: Pullt automatisch via Webhook
+6. Plesk: Führt Migrations & Cache-Clear aus
+   ↓
+7. ✅ Änderungen sind live!
 ```
 
-**Was das Script macht:**
-1. ✅ Baut das React-Frontend lokal (`npm run build:prod`)
-2. ✅ Aktualisiert `admin.blade.php` automatisch mit neuen Asset-Pfaden
-3. ✅ Added Build-Files zu Git (`public/admin/`)
-4. ✅ Committed die Änderungen
-5. ✅ Pusht zu GitHub
-6. ✅ Plesk pullt automatisch via Webhook
-
-**Ein Befehl - alles erledigt!** 🚀
-
----
-
-### **Option B: Manuell** (falls Deploy-Script nicht funktioniert)
-
-```bash
-# 1. Frontend bauen
-cd resources/react-builder
-npm run build:prod
-cd ../..
-
-# 2. Build-Files zu Git hinzufügen
-git add public/admin/
-git add resources/views/admin.blade.php
-
-# 3. Committen
-git commit -m "Update frontend build"
-
-# 4. Pushen
-git push
-```
+**Du musst nur noch:** `git push` 🚀
 
 ---
 
 ## Plesk Git Konfiguration
 
-### **Repository Settings:**
-- **Repository URL**: `https://github.com/ManakaDesign/CMS.git`
-- **Branch**: `claude/continue-chat-session-01JqEHcEDY5rtDtwGHkQsJBK`
-- **Bereitstellungsmodus**: Automatisch
+### **1. Repository in Plesk hinzufügen**
 
-### **Deployment-Script** (in Plesk):
+```
+Plesk → Git → "Repository hinzufügen"
+```
+
+**Felder ausfüllen:**
+
+| Feld | Wert |
+|------|------|
+| **Repository Name** | `CMS` |
+| **Repository URL** | `https://github.com/ManakaDesign/CMS.git` |
+| **Bereitstellungsmodus** | Automatisch |
+
+**Speichern**
+
+---
+
+### **2. Branch auswählen**
+
+Nach dem Speichern:
+
+```
+Plesk → Git → CMS → Git-Repository öffnen
+```
+
+Dort findest du die Option:
+```
+"Verzweigung claude/continue-chat-session-01JqEHcEDY5rtDtwGHkQsJBK automatisch bereitstellen"
+```
+
+**Aktiviere diese Option!** ✅
+
+---
+
+### **3. Deployment-Script konfigurieren**
+
+```
+Plesk → Git → CMS → Zusätzliche Bereitstellungsaktionen
+```
+
+**Aktivieren:** ☑ Zusätzliche Bereitstellungsaktionen aktivieren
+
+**Script-Inhalt:**
 
 ```bash
+echo "🚀 Deployment gestartet"
+
 # Database Migrations
 php artisan migrate --force
 
@@ -63,85 +79,213 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:clear
 
-echo "✅ Deployment completed!"
+echo "✅ Deployment abgeschlossen"
 ```
 
-### **GitHub Webhook:**
+**Falls das Script Fehler wirft**, probiere dieses minimale Script:
 
-Nach dem Setup in Plesk wird eine Webhook-URL angezeigt (z.B. `https://cms.manaka-design.de:8443/modules/git/webhook/xxx`).
-
-Diese URL muss in GitHub eingetragen werden:
+```bash
+php artisan cache:clear
+php artisan config:cache
+echo "Deployment abgeschlossen"
 ```
-GitHub → Settings → Webhooks → Add webhook
-→ Payload URL: [Plesk Webhook-URL]
-→ Content type: application/json
-→ Events: Just the push event
+
+Oder deaktiviere die Bereitstellungsaktionen komplett und führe Cache-Befehle manuell per SSH aus.
+
+---
+
+### **4. GitHub Webhook einrichten**
+
+Nach dem Setup zeigt Plesk eine **Webhook-URL** an:
+
+```
+Plesk → Git → CMS → [Webhook-URL wird angezeigt]
+```
+
+Kopiere diese URL (z.B. `https://cms.manaka-design.de:8443/modules/git/webhook/xxx`)
+
+**In GitHub eintragen:**
+
+```
+1. Gehe zu: https://github.com/ManakaDesign/CMS/settings/hooks
+2. Klicke: "Add webhook"
+3. Fülle aus:
+   - Payload URL: [Plesk Webhook-URL]
+   - Content type: application/json
+   - Which events: Just the push event
+   - ☑ Active
+4. Klicke: "Add webhook"
 ```
 
 ---
 
-## Workflow
+## GitHub Actions
 
-### **Entwicklung:**
+Der Workflow läuft automatisch bei jedem Push zu `claude/**` Branches.
+
+### **Was der Workflow macht:**
+
+1. ✅ Checkt Code aus GitHub aus
+2. ✅ Installiert Node.js 20
+3. ✅ Führt `npm ci` aus (installiert Dependencies)
+4. ✅ Führt `npm run build:prod` aus (baut React-Frontend)
+5. ✅ Committed Build-Files zurück (`public/admin/`, `admin.blade.php`)
+6. ✅ Pusht zum Branch
+
+### **Workflow-Status ansehen:**
+
 ```
-1. Code ändern (React, PHP, etc.)
-2. ./deploy.sh ausführen
-3. ✅ Automatisch auf Server deployed
-4. Im Browser testen
+GitHub → Actions Tab → "Build Frontend Assets"
 ```
 
-### **Was wird deployed:**
-- ✅ PHP-Dateien (Backend)
-- ✅ React-Dateien (kompiliert als public/admin/)
-- ✅ Datenbank-Migrations
+Dort siehst du alle Builds und eventuelle Fehler.
+
+---
+
+## Workflow für Entwicklung
+
+### **Normal entwickeln:**
+
+```bash
+# 1. Code ändern (React, PHP, etc.)
+# 2. Committen
+git add .
+git commit -m "Beschreibung"
+
+# 3. Pushen
+git push
+
+# 4. ✅ Fertig! GitHub baut, Plesk deployt
+```
+
+### **Was passiert automatisch:**
+
+```
+→ GitHub Actions baut Frontend (~2-3 Minuten)
+→ Committed Build-Files zurück
+→ Plesk Webhook triggered
+→ Plesk pullt Code + Build-Files
+→ Plesk führt Migrations & Cache aus
+→ ✅ Live!
+```
+
+---
+
+## Was wird deployed?
+
+### **Automatisch deployed:**
+- ✅ PHP-Dateien (Backend, Controller, Models)
+- ✅ React-Dateien (kompiliert als `public/admin/`)
+- ✅ CSS/JS Assets
+- ✅ Datenbank-Migrations (neue Spalten/Tabellen)
 - ✅ Config-Änderungen
 
-### **Was bleibt unverändert:**
-- 🔒 `.env` (Kunden-Konfiguration)
-- 🔒 `storage/` (Uploads, Logs)
-- 🔒 Datenbank-Daten (nur Struktur wird updated)
+### **Bleibt unverändert:**
+- 🔒 `.env` (Server-spezifische Konfiguration)
+- 🔒 `storage/` (Uploads, Logs, Cache)
+- 🔒 Datenbank-Daten (nur Struktur wird updated, keine Daten gelöscht)
 
 ---
 
 ## Troubleshooting
 
-### Deploy-Script funktioniert nicht
+### GitHub Actions schlägt fehl
 
-**Fehler**: `permission denied: ./deploy.sh`
-```bash
-chmod +x deploy.sh
+**Fehler ansehen:**
+```
+GitHub → Actions → [Fehlgeschlagener Workflow] → Logs
 ```
 
-**Fehler**: `npm: command not found`
-→ Stelle sicher, dass du im `/home/user/CMS` Verzeichnis bist und Node.js lokal installiert ist
+**Häufige Fehler:**
+
+1. **`npm ci` schlägt fehl**
+   - Lösung: `package-lock.json` ist out-of-sync
+   - Fix: Lokal `npm install` und `package-lock.json` committen
+
+2. **Build schlägt fehl**
+   - Lösung: TypeScript-Fehler im Code
+   - Fix: Lokal `npm run build:prod` ausführen, Fehler beheben
+
+3. **Push schlägt fehl (Permission denied)**
+   - Das sollte nicht passieren, da `GITHUB_TOKEN` automatisch gesetzt ist
+   - Falls doch: Überprüfe Repository → Settings → Actions → Workflow permissions
 
 ### Plesk Deployment schlägt fehl
 
-**Überprüfe in Plesk:**
+**Logs ansehen:**
 ```
-Git → CMS → Bereitstellungsverlauf
+Plesk → Git → CMS → Bereitstellungsverlauf → [Letzter Eintrag]
 ```
-
-Dort siehst du die Logs und eventuelle Fehlermeldungen.
 
 **Häufige Fehler:**
-- `php artisan: command not found` → PHP-Pfad in Plesk prüfen
-- `Permission denied` → Dateiberechtigungen auf Server prüfen
+
+1. **`php artisan: command not found`**
+   - Lösung: PHP-Pfad in Plesk prüfen
+   - Eventuell vollen Pfad nutzen: `/usr/bin/php artisan ...`
+
+2. **`Permission denied`**
+   - Lösung: Dateiberechtigungen auf Server prüfen
+   - Per SSH: `chmod -R 755 /pfad/zum/cms`
+
+3. **Webhook wird nicht getriggert**
+   - Lösung: Webhook-URL in GitHub überprüfen
+   - Test: GitHub → Webhooks → [Webhook] → "Recent Deliveries"
+
+### Frontend-Änderungen nicht sichtbar
+
+1. **GitHub Actions Workflow abwarten** (~2-3 Min)
+   - Check: GitHub → Actions → Workflow sollte ✅ grün sein
+
+2. **Plesk Deployment abwarten** (~30 Sek)
+   - Check: Plesk → Git → Bereitstellungsverlauf
+
+3. **Browser Hard-Refresh**
+   - Windows/Linux: `Ctrl + Shift + R`
+   - Mac: `Cmd + Shift + R`
+
+4. **Falls immer noch alte Version:**
+   - Check: Sind Build-Files im Repo?
+   - GitHub → `public/admin/` sollte aktualisiert sein
 
 ---
 
-## Wichtig
+## SSH-Zugang (für manuelle Befehle)
 
-⚠️ **Immer das Deploy-Script nutzen** - nicht nur `git push`!
+Falls du manuell Befehle ausführen musst:
 
-Wenn du nur `git push` machst **ohne vorher zu bauen**, werden alte Frontend-Assets deployed und deine React-Änderungen sind nicht sichtbar.
-
-**Richtig:**
 ```bash
-./deploy.sh  # ✅ Baut + Committed + Pusht
+# Verbinden
+ssh -p 2121 benutzername@80.74.149.78
+
+# Zum CMS-Verzeichnis
+cd /pfad/zum/cms
+
+# Cache löschen
+php artisan cache:clear
+
+# Config neu laden
+php artisan config:cache
+
+# Migrations ausführen
+php artisan migrate
 ```
 
-**Falsch:**
-```bash
-git push     # ❌ Pusht ohne zu bauen
-```
+---
+
+## Wichtige Hinweise
+
+⚠️ **Warte auf GitHub Actions**: Nach `git push` dauert es 2-3 Minuten bis der Build fertig ist. Erst dann pullt Plesk die fertigen Assets.
+
+⚠️ **Kein manuelles Bauen mehr nötig**: Führe NICHT mehr `npm run build:prod` lokal aus - das macht GitHub Actions automatisch.
+
+⚠️ **Branch-Naming**: Nur `claude/**` Branches lösen den Auto-Build aus. Andere Branches (z.B. `main`) werden nicht automatisch gebaut.
+
+---
+
+## Support
+
+Bei Problemen:
+
+1. **GitHub Actions Logs** checken (GitHub → Actions)
+2. **Plesk Deployment Logs** checken (Plesk → Git → Bereitstellungsverlauf)
+3. **Browser Console** checken (F12 → Console für Frontend-Fehler)
