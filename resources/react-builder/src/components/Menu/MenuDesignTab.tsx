@@ -10,7 +10,7 @@ import type {
   SocialIconsConfig,
   Page,
 } from '../../types';
-import { FiCheck, FiImage, FiTrash2, FiChevronRight } from 'react-icons/fi';
+import { FiCheck, FiImage, FiTrash2, FiChevronRight, FiChevronDown } from 'react-icons/fi';
 import { HexColorPicker } from 'react-colorful';
 import MediaPicker from '../admin/media/MediaPicker';
 import api from '../../services/api';
@@ -27,6 +27,7 @@ export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) 
   const [showCTAModal, setShowCTAModal] = useState(false);
   const [showSocialModal, setShowSocialModal] = useState(false);
   const [pages, setPages] = useState<Page[]>([]);
+  const [menuItems, setMenuItems] = useState<any[]>([]);
 
   // Load pages for CTA button page selector
   React.useEffect(() => {
@@ -40,6 +41,19 @@ export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) 
     };
     loadPages();
   }, []);
+
+  // Load menu items for category assignment
+  React.useEffect(() => {
+    const loadMenuItems = async () => {
+      try {
+        const response = await api.get(`/menu-items?menu_id=${menu.id}`);
+        setMenuItems(response.data);
+      } catch (error) {
+        console.error('Failed to load menu items:', error);
+      }
+    };
+    loadMenuItems();
+  }, [menu.id]);
 
   const handleLayoutTypeChange = (layoutType: MenuLayoutType) => {
     onUpdate({ layout_type: layoutType });
@@ -213,55 +227,48 @@ export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) 
               </div>
 
               <div className="space-y-3">
-                {(settings.submenu_config?.mega_menu?.categories || []).map((category, index) => (
-                  <div key={category.id} className="bg-dark-surface border border-dark-border rounded-lg p-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <input
-                        type="text"
-                        value={category.name}
-                        onChange={(e) => {
-                          const categories = [...(settings.submenu_config?.mega_menu?.categories || [])];
-                          categories[index] = { ...category, name: e.target.value };
-                          onUpdate({
-                            submenu_config: {
-                              ...settings.submenu_config,
-                              mega_menu: {
-                                ...settings.submenu_config?.mega_menu,
-                                columns: settings.submenu_config?.mega_menu?.columns || 3,
-                                categories,
-                              },
+                {(settings.submenu_config?.mega_menu?.categories || []).map((category, index) => {
+                  // Get all child menu items (items with parent_id)
+                  const childMenuItems = menuItems.filter(item => item.parent_id !== null);
+
+                  return (
+                    <CategoryAssignment
+                      key={category.id}
+                      category={category}
+                      index={index}
+                      childMenuItems={childMenuItems}
+                      allMenuItems={menuItems}
+                      onUpdateCategory={(updatedCategory) => {
+                        const categories = [...(settings.submenu_config?.mega_menu?.categories || [])];
+                        categories[index] = updatedCategory;
+                        onUpdate({
+                          submenu_config: {
+                            ...settings.submenu_config,
+                            mega_menu: {
+                              ...settings.submenu_config?.mega_menu,
+                              columns: settings.submenu_config?.mega_menu?.columns || 3,
+                              categories,
                             },
-                          });
-                        }}
-                        className="flex-1 px-2 py-1 text-sm bg-dark-bg border border-dark-border rounded text-light-text focus:outline-none focus:border-brand-primary"
-                        placeholder="Kategoriename"
-                      />
-                      <button
-                        onClick={() => {
-                          const categories = (settings.submenu_config?.mega_menu?.categories || []).filter((_, i) => i !== index);
-                          // Auto-adjust columns based on remaining categories
-                          const newColumnCount = Math.min(Math.max(categories.length, 2), 5);
-                          onUpdate({
-                            submenu_config: {
-                              ...settings.submenu_config,
-                              mega_menu: {
-                                columns: newColumnCount,
-                                categories,
-                              },
+                          },
+                        });
+                      }}
+                      onDelete={() => {
+                        const categories = (settings.submenu_config?.mega_menu?.categories || []).filter((_, i) => i !== index);
+                        // Auto-adjust columns based on remaining categories
+                        const newColumnCount = Math.min(Math.max(categories.length, 2), 5);
+                        onUpdate({
+                          submenu_config: {
+                            ...settings.submenu_config,
+                            mega_menu: {
+                              columns: newColumnCount,
+                              categories,
                             },
-                          });
-                        }}
-                        className="p-1.5 text-red-400 hover:bg-red-400/10 rounded transition-colors"
-                        title="Kategorie löschen"
-                      >
-                        <FiTrash2 size={14} />
-                      </button>
-                    </div>
-                    <div className="text-xs text-light-muted mb-2">
-                      {category.menu_item_ids.length} Menüpunkt(e) zugeordnet
-                    </div>
-                  </div>
-                ))}
+                          },
+                        });
+                      }}
+                    />
+                  );
+                })}
 
                 {(!settings.submenu_config?.mega_menu?.categories || settings.submenu_config.mega_menu.categories.length === 0) && (
                   <div className="text-sm text-light-muted text-center py-4 border border-dashed border-dark-border rounded-lg">
@@ -794,6 +801,124 @@ export const MenuDesignTab: React.FC<MenuDesignTabProps> = ({ menu, onUpdate }) 
           onSave={handleSocialConfigUpdate}
           onClose={() => setShowSocialModal(false)}
         />
+      )}
+    </div>
+  );
+};
+
+// Category Assignment Component
+const CategoryAssignment: React.FC<{
+  category: { id: string; name: string; menu_item_ids: number[] };
+  index: number;
+  childMenuItems: any[];
+  allMenuItems: any[];
+  onUpdateCategory: (category: { id: string; name: string; menu_item_ids: number[] }) => void;
+  onDelete: () => void;
+}> = ({ category, childMenuItems, allMenuItems, onUpdateCategory, onDelete }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const handleNameChange = (name: string) => {
+    onUpdateCategory({ ...category, name });
+  };
+
+  const toggleMenuItem = (menuItemId: number) => {
+    const newMenuItemIds = category.menu_item_ids.includes(menuItemId)
+      ? category.menu_item_ids.filter(id => id !== menuItemId)
+      : [...category.menu_item_ids, menuItemId];
+
+    onUpdateCategory({ ...category, menu_item_ids: newMenuItemIds });
+  };
+
+  return (
+    <div className="bg-dark-surface border border-dark-border rounded-lg overflow-hidden">
+      <div className="p-3">
+        <div className="flex items-center gap-2 mb-2">
+          <input
+            type="text"
+            value={category.name}
+            onChange={(e) => handleNameChange(e.target.value)}
+            className="flex-1 px-2 py-1 text-sm bg-dark-bg border border-dark-border rounded text-light-text focus:outline-none focus:border-brand-primary"
+            placeholder="Kategoriename"
+          />
+          <button
+            onClick={onDelete}
+            className="p-1.5 text-red-400 hover:bg-red-400/10 rounded transition-colors"
+            title="Kategorie löschen"
+          >
+            <FiTrash2 size={14} />
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="text-xs text-light-muted">
+            {category.menu_item_ids.length} Menüpunkt(e) zugeordnet
+          </div>
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="flex items-center gap-1 px-2 py-1 text-xs text-brand-primary hover:bg-brand-primary/10 rounded transition-colors"
+          >
+            {isExpanded ? (
+              <>
+                <FiChevronDown size={14} />
+                Zuweisen ausblenden
+              </>
+            ) : (
+              <>
+                <FiChevronRight size={14} />
+                Menüpunkte zuweisen
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {isExpanded && (
+        <div className="border-t border-dark-border bg-dark-bg p-3">
+          <div className="text-xs font-medium text-light-text mb-2">
+            Verfügbare Untermenüpunkte:
+          </div>
+          {childMenuItems.length === 0 ? (
+            <div className="text-xs text-light-muted italic py-2">
+              Keine Untermenüpunkte vorhanden. Erstellen Sie zuerst Menüpunkte mit Unterpunkten in der Menü-Struktur.
+            </div>
+          ) : (
+            <div className="space-y-1.5 max-h-60 overflow-y-auto">
+              {childMenuItems.map((item) => {
+                const isAssigned = category.menu_item_ids.includes(item.id);
+                const parentItem = allMenuItems.find(p => p.id === item.parent_id) ||
+                  { label: 'Hauptmenü' };
+
+                return (
+                  <label
+                    key={item.id}
+                    className={`
+                      flex items-start gap-2 p-2 rounded cursor-pointer transition-colors
+                      ${isAssigned ? 'bg-brand-primary/10 border border-brand-primary/30' : 'hover:bg-dark-surface border border-transparent'}
+                    `}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isAssigned}
+                      onChange={() => toggleMenuItem(item.id)}
+                      className="mt-0.5 w-4 h-4 rounded border-dark-border"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs text-light-text truncate">
+                        {item.label}
+                      </div>
+                      <div className="text-xs text-light-muted truncate">
+                        Unter: {parentItem.label}
+                      </div>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          )}
+          <div className="text-xs text-light-muted mt-3 p-2 bg-dark-surface border border-dark-border rounded">
+            <strong>Hinweis:</strong> Wählen Sie die Untermenüpunkte aus, die in dieser Kategorie-Spalte des Mega Menüs erscheinen sollen.
+          </div>
+        </div>
       )}
     </div>
   );
