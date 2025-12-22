@@ -157,8 +157,9 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, depth, sett
           <div style={{
             position: 'absolute',
             top: '100%',
-            left: '50%',
-            transform: 'translateX(-50%)',
+            left: settings?.submenu_config?.position === 'left' ? '0' : settings?.submenu_config?.position === 'center' ? '50%' : 'auto',
+            right: settings?.submenu_config?.position === 'right' ? '0' : 'auto',
+            transform: settings?.submenu_config?.position === 'center' ? 'translateX(-50%)' : 'none',
             backgroundColor: settings?.submenu_config?.background_color || settings?.colors?.background || '#fff',
             border: settings?.submenu_config?.border_radius ? '1px solid #e5e7eb' : 'none',
             borderRadius: settings?.submenu_config?.border_radius || '4px',
