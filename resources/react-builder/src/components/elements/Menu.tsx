@@ -235,11 +235,16 @@ export const Menu: React.FC<MenuProps> = (props) => {
     };
 
     loadMenu();
+  }, []); // Run only once on mount
+
+  // Separate effect for event listeners that depend on menu
+  useEffect(() => {
+    if (!menu) return;
 
     // Listen for menu updates
     const handleMenuUpdate = async (event: Event) => {
       const updatedMenu = (event as CustomEvent).detail;
-      if (menu && updatedMenu.id === menu.id) {
+      if (updatedMenu.id === menu.id) {
         try {
           const menuResponse = await api.get(`/menus/${updatedMenu.id}`);
           setMenu(menuResponse.data);
@@ -252,7 +257,7 @@ export const Menu: React.FC<MenuProps> = (props) => {
     // Listen for menu items updates
     const handleMenuItemsUpdate = async (event: Event) => {
       const { menuId } = (event as CustomEvent).detail;
-      if (menu && menuId === menu.id) {
+      if (menuId === menu.id) {
         try {
           const menuResponse = await api.get(`/menus/${menuId}`);
           setMenu(menuResponse.data);
@@ -268,7 +273,7 @@ export const Menu: React.FC<MenuProps> = (props) => {
       window.removeEventListener('menuUpdated', handleMenuUpdate);
       window.removeEventListener('menuItemsUpdated', handleMenuItemsUpdate);
     };
-  }, [menu]);
+  }, [menu?.id]); // Only re-register listeners when menu ID changes
 
   const handleMenuClick = (e: React.MouseEvent) => {
     e.preventDefault();
