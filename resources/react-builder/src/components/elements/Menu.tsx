@@ -215,65 +215,42 @@ export const Menu: React.FC<MenuProps> = (props) => {
   const [isLoading, setIsLoading] = useState(true);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
-  // Load active menu from backend
+  // Load active menu from backend - ONLY ONCE
   useEffect(() => {
+    console.log("=== MENU COMPONENT MOUNTED ===");
+    let isMounted = true;
+
     const loadMenu = async () => {
       try {
+        console.log("Loading menus...");
         setIsLoading(true);
-        const response = await api.get('/menus');
+        const response = await api.get("/menus");
         const menus = Array.isArray(response.data) ? response.data : (response.data.data || []);
         const activeMenu = menus.find((m: MenuNav) => m.is_active) || menus[0];
-        if (activeMenu) {
+        if (activeMenu && isMounted) {
+          console.log("Loading menu:", activeMenu.id);
           const menuResponse = await api.get(`/menus/${activeMenu.id}`);
-          setMenu(menuResponse.data);
+          if (isMounted) {
+            setMenu(menuResponse.data);
+          }
         }
       } catch (error) {
-        console.error('Failed to load menu:', error);
+        console.error("Failed to load menu:", error);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     loadMenu();
-  }, []); // Run only once on mount
 
-  // Separate effect for event listeners that depend on menu
-  useEffect(() => {
-    if (!menu) return;
-
-    // Listen for menu updates
-    const handleMenuUpdate = async (event: Event) => {
-      const updatedMenu = (event as CustomEvent).detail;
-      if (updatedMenu.id === menu.id) {
-        try {
-          const menuResponse = await api.get(`/menus/${updatedMenu.id}`);
-          setMenu(menuResponse.data);
-        } catch (error) {
-          console.error('Failed to reload menu:', error);
-        }
-      }
-    };
-
-    // Listen for menu items updates
-    const handleMenuItemsUpdate = async (event: Event) => {
-      const { menuId } = (event as CustomEvent).detail;
-      if (menuId === menu.id) {
-        try {
-          const menuResponse = await api.get(`/menus/${menuId}`);
-          setMenu(menuResponse.data);
-        } catch (error) {
-          console.error('Failed to reload menu items:', error);
-        }
-      }
-    };
-
-    window.addEventListener('menuUpdated', handleMenuUpdate);
-    window.addEventListener('menuItemsUpdated', handleMenuItemsUpdate);
     return () => {
-      window.removeEventListener('menuUpdated', handleMenuUpdate);
-      window.removeEventListener('menuItemsUpdated', handleMenuItemsUpdate);
+      console.log("=== MENU COMPONENT UNMOUNTING ===");
+      isMounted = false;
     };
-  }, [menu?.id]); // Only re-register listeners when menu ID changes
+  }, []);
+
 
   const handleMenuClick = (e: React.MouseEvent) => {
     e.preventDefault();
