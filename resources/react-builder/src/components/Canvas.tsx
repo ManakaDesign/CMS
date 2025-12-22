@@ -372,7 +372,10 @@ export const Canvas: React.FC = () => {
     };
 
     loadGlobalMenu();
+  }, []); // FIX: Run only once on mount, not on every globalMenu change
 
+  // Separate effect for event listeners
+  useEffect(() => {
     // Listen for menu updates
     const handleMenuUpdate = async (event: Event) => {
       const updatedMenu = (event as CustomEvent).detail;
@@ -390,7 +393,15 @@ export const Canvas: React.FC = () => {
 
       // If is_global changed, reload all menus to find new global
       if ('is_global' in updatedMenu) {
-        loadGlobalMenu();
+        const response = await api.get('/menus');
+        const menus = Array.isArray(response.data) ? response.data : (response.data.data || []);
+        const globalMenuData = menus.find((m: MenuNav) => m.is_global && m.is_active);
+        if (globalMenuData) {
+          const menuResponse = await api.get(`/menus/${globalMenuData.id}`);
+          setGlobalMenu(menuResponse.data);
+        } else {
+          setGlobalMenu(null);
+        }
       }
     };
 
@@ -415,7 +426,7 @@ export const Canvas: React.FC = () => {
       window.removeEventListener('menuUpdated', handleMenuUpdate);
       window.removeEventListener('menuItemsUpdated', handleMenuItemsUpdate);
     };
-  }, [globalMenu]);
+  }, [globalMenu?.id]); // Only re-register when globalMenu ID changes
 
   const renderElement = (element: Element): React.ReactNode => {
     const Component = getElementComponent(element.type);
