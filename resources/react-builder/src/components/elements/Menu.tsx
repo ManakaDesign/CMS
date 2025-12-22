@@ -29,6 +29,18 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, depth, sett
   const isMegaMenu = depth === 0 && hasChildren && settings?.submenu_style === 'mega_menu';
   const megaMenuCategories = settings?.submenu_config?.mega_menu?.categories || [];
 
+  // Debug logging
+  if (isMegaMenu && depth === 0) {
+    console.log('=== MEGA MENU DEBUG ===');
+    console.log('Item:', item.label);
+    console.log('submenu_style:', settings?.submenu_style);
+    console.log('mega_menu config:', settings?.submenu_config?.mega_menu);
+    console.log('categories:', megaMenuCategories);
+    console.log('categories length:', megaMenuCategories.length);
+    console.log('Full settings:', settings);
+    console.log('======================');
+  }
+
   // Render mega menu with categories
   const renderMegaMenu = () => {
     if (megaMenuCategories.length === 0) {
