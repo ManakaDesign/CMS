@@ -122,67 +122,136 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, depth, sett
           )}
 
           {/* Mega Menu Style */}
-          {settings?.submenu_style === 'mega_menu' && (
-            <div style={{
-              position: 'absolute',
-              top: '100%',
-              paddingTop: '8px',
-              marginTop: '-4px',
-              backgroundColor: submenuStyling?.background || settings?.colors?.background || '#fff',
-              border: '1px solid #e5e7eb',
-              borderRadius: submenuStyling?.border_radius || '4px',
-              minWidth: settings?.submenu_config?.width || '600px',
-              width: settings?.submenu_config?.width === 'full' ? '100%' : settings?.submenu_config?.width || 'auto',
-              left: settings?.submenu_config?.position === 'left' ? '0' :
-                    settings?.submenu_config?.position === 'center' ? '50%' : 'auto',
-              right: settings?.submenu_config?.position === 'right' ? '0' : 'auto',
-              transform: settings?.submenu_config?.position === 'center' ? 'translateX(-50%)' : 'none',
-              padding: '24px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-              zIndex: 1000,
-              transition: settings?.submenu_config?.animation === 'none' ? 'none' :
-                settings?.submenu_config?.animation === 'fade' ? `opacity ${settings?.submenu_config?.delay || 200}ms ease-in-out` :
-                settings?.submenu_config?.animation === 'slide' ? `transform ${settings?.submenu_config?.delay || 200}ms ease-in-out, opacity ${settings?.submenu_config?.delay || 200}ms ease-in-out` :
-                `opacity ${settings?.submenu_config?.delay || 200}ms ease-in-out`,
-            }}>
+          {settings?.submenu_style === 'mega_menu' && (() => {
+            const categories = settings?.submenu_config?.mega_menu?.categories || [];
+            const hasCategories = categories.length > 0;
+
+            return (
               <div style={{
-                display: 'grid',
-                gridTemplateColumns: `repeat(${settings?.submenu_config?.mega_menu?.columns || 3}, 1fr)`,
-                gap: '24px',
+                position: 'absolute',
+                top: '100%',
+                paddingTop: '8px',
+                marginTop: '-4px',
+                backgroundColor: submenuStyling?.background || settings?.colors?.background || '#fff',
+                border: '1px solid #e5e7eb',
+                borderRadius: submenuStyling?.border_radius || '4px',
+                minWidth: settings?.submenu_config?.width || '600px',
+                width: settings?.submenu_config?.width === 'full' ? '100%' : settings?.submenu_config?.width || 'auto',
+                maxWidth: 'calc(100vw - 48px)',
+                left: settings?.submenu_config?.position === 'left' ? '0' :
+                      settings?.submenu_config?.position === 'center' ? '50%' : 'auto',
+                right: settings?.submenu_config?.position === 'right' ? '0' : 'auto',
+                transform: settings?.submenu_config?.position === 'center' ? 'translateX(-50%)' : 'none',
+                padding: '24px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                zIndex: 1000,
+                transition: settings?.submenu_config?.animation === 'none' ? 'none' :
+                  settings?.submenu_config?.animation === 'fade' ? `opacity ${settings?.submenu_config?.delay || 200}ms ease-in-out` :
+                  settings?.submenu_config?.animation === 'slide' ? `transform ${settings?.submenu_config?.delay || 200}ms ease-in-out, opacity ${settings?.submenu_config?.delay || 200}ms ease-in-out` :
+                  `opacity ${settings?.submenu_config?.delay || 200}ms ease-in-out`,
               }}>
-                {childItems.map((child: MenuItemNav) => (
-                  <div key={child.id}>
-                    <a
-                      href={child.computed_url || '#'}
-                      onClick={(e) => e.preventDefault()}
-                      style={{
-                        display: 'block',
-                        padding: submenuStyling?.padding || '8px 0',
-                        color: submenuStyling?.text_color || settings?.colors?.link_color || '#333',
-                        fontWeight: '600',
-                        textDecoration: 'none',
-                        borderRadius: submenuStyling?.border_radius || '0',
-                      }}
-                      onMouseEnter={(e) => {
-                        if (submenuStyling?.hover_background) {
-                          e.currentTarget.style.backgroundColor = submenuStyling.hover_background;
-                        }
-                        if (submenuStyling?.hover_text) {
-                          e.currentTarget.style.color = submenuStyling.hover_text;
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent';
-                        e.currentTarget.style.color = submenuStyling?.text_color || settings?.colors?.link_color || '#333';
-                      }}
-                    >
-                      {child.label}
-                    </a>
+                {hasCategories ? (
+                  // Render with categories
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: `repeat(${categories.length}, 1fr)`,
+                    gap: '32px',
+                  }}>
+                    {categories.map((category: any) => {
+                      const categoryItems = childItems.filter((child: MenuItemNav) =>
+                        category.menu_item_ids.includes(child.id)
+                      );
+
+                      return (
+                        <div key={category.id}>
+                          <h4 style={{
+                            margin: '0 0 12px 0',
+                            fontSize: '14px',
+                            fontWeight: '600',
+                            color: submenuStyling?.text_color || settings?.colors?.link_color || '#333',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px',
+                          }}>
+                            {category.name}
+                          </h4>
+                          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                            {categoryItems.map((child: MenuItemNav) => (
+                              <li key={child.id} style={{ marginBottom: '8px' }}>
+                                <a
+                                  href={child.computed_url || '#'}
+                                  onClick={(e) => e.preventDefault()}
+                                  style={{
+                                    display: 'block',
+                                    padding: submenuStyling?.padding || '4px 0',
+                                    color: submenuStyling?.text_color || settings?.colors?.link_color || '#333',
+                                    textDecoration: 'none',
+                                    fontSize: '14px',
+                                    borderRadius: submenuStyling?.border_radius || '0',
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    if (submenuStyling?.hover_background) {
+                                      e.currentTarget.style.backgroundColor = submenuStyling.hover_background;
+                                    }
+                                    if (submenuStyling?.hover_text) {
+                                      e.currentTarget.style.color = submenuStyling.hover_text;
+                                    }
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.backgroundColor = 'transparent';
+                                    e.currentTarget.style.color = submenuStyling?.text_color || settings?.colors?.link_color || '#333';
+                                  }}
+                                >
+                                  {child.label}
+                                </a>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
+                ) : (
+                  // Fallback without categories
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: `repeat(${settings?.submenu_config?.mega_menu?.columns || 3}, 1fr)`,
+                    gap: '24px',
+                  }}>
+                    {childItems.map((child: MenuItemNav) => (
+                      <div key={child.id}>
+                        <a
+                          href={child.computed_url || '#'}
+                          onClick={(e) => e.preventDefault()}
+                          style={{
+                            display: 'block',
+                            padding: submenuStyling?.padding || '8px 0',
+                            color: submenuStyling?.text_color || settings?.colors?.link_color || '#333',
+                            fontWeight: '600',
+                            textDecoration: 'none',
+                            borderRadius: submenuStyling?.border_radius || '0',
+                          }}
+                          onMouseEnter={(e) => {
+                            if (submenuStyling?.hover_background) {
+                              e.currentTarget.style.backgroundColor = submenuStyling.hover_background;
+                            }
+                            if (submenuStyling?.hover_text) {
+                              e.currentTarget.style.color = submenuStyling.hover_text;
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                            e.currentTarget.style.color = submenuStyling?.text_color || settings?.colors?.link_color || '#333';
+                          }}
+                        >
+                          {child.label}
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Sidebar Flyout Style */}
           {settings?.submenu_style === 'sidebar_flyout' && (
