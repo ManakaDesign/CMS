@@ -26,7 +26,7 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, depth, sett
   const hasChildren = childItems.length > 0;
 
   // Check if this is a mega menu
-  const isMegaMenu = depth === 0 && hasChildren && settings?.submenu_config?.submenu_style === 'mega_menu';
+  const isMegaMenu = depth === 0 && hasChildren && settings?.submenu_style === 'mega_menu';
   const megaMenuCategories = settings?.submenu_config?.mega_menu?.categories || [];
 
   // Render mega menu with categories
