@@ -25,6 +25,104 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, depth, sett
   const childItems = (item as any).childrenRecursive || item.children_recursive || item.children || [];
   const hasChildren = childItems.length > 0;
 
+  // Check if this is a mega menu
+  const isMegaMenu = depth === 0 && hasChildren && settings?.submenu_config?.submenu_style === 'mega_menu';
+  const megaMenuCategories = settings?.submenu_config?.mega_menu?.categories || [];
+
+  // Render mega menu with categories
+  const renderMegaMenu = () => {
+    if (megaMenuCategories.length === 0) {
+      // Fallback to regular submenu if no categories
+      return (
+        <ul style={{
+          listStyle: 'none',
+          padding: '16px',
+          margin: 0,
+          display: 'grid',
+          gridTemplateColumns: `repeat(${settings?.submenu_config?.mega_menu?.columns || 3}, 1fr)`,
+          gap: '24px',
+        }}>
+          {childItems.map((child: MenuItemNav) => (
+            <li key={child.id}>
+              <a
+                href={child.computed_url || '#'}
+                onClick={(e) => e.preventDefault()}
+                style={{
+                  display: 'block',
+                  padding: '8px 0',
+                  color: settings?.submenu_config?.text_color || settings?.colors?.link_color || '#333',
+                  textDecoration: 'none',
+                }}
+              >
+                {child.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      );
+    }
+
+    // Render with categories
+    return (
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: `repeat(${megaMenuCategories.length}, 1fr)`,
+        gap: '32px',
+        padding: '24px',
+      }}>
+        {megaMenuCategories.map((category: any) => {
+          const categoryItems = childItems.filter((child: MenuItemNav) =>
+            category.menu_item_ids.includes(child.id)
+          );
+
+          return (
+            <div key={category.id}>
+              <h4 style={{
+                margin: '0 0 12px 0',
+                fontSize: '14px',
+                fontWeight: '600',
+                color: settings?.submenu_config?.text_color || settings?.colors?.link_color || '#333',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+              }}>
+                {category.name}
+              </h4>
+              <ul style={{
+                listStyle: 'none',
+                padding: 0,
+                margin: 0,
+              }}>
+                {categoryItems.map((child: MenuItemNav) => (
+                  <li key={child.id} style={{ marginBottom: '8px' }}>
+                    <a
+                      href={child.computed_url || '#'}
+                      onClick={(e) => e.preventDefault()}
+                      style={{
+                        display: 'block',
+                        padding: '6px 0',
+                        color: settings?.submenu_config?.text_color || settings?.colors?.link_color || '#333',
+                        textDecoration: 'none',
+                        fontSize: '14px',
+                      }}
+                    >
+                      {child.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // Get submenu width with max constraint
+  const getSubmenuWidth = () => {
+    const configuredWidth = settings?.submenu_config?.width || '600px';
+    return isMegaMenu ? configuredWidth : '200px';
+  };
+
   return (
     <li
       style={{
@@ -55,24 +153,43 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({ item, depth, sett
         {item.label} {hasChildren && <span className="ml-1">▾</span>}
       </a>
       {hasChildren && showSubmenu && (
-        <ul style={{
-          listStyle: 'none',
-          padding: '8px 0',
-          margin: 0,
-          position: 'absolute',
-          top: '100%',
-          left: 0,
-          backgroundColor: settings?.colors?.background || '#fff',
-          border: '1px solid #e5e7eb',
-          borderRadius: '4px',
-          minWidth: '200px',
-          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-          zIndex: 1000,
-        }}>
-          {childItems.map((child: MenuItemNav) => (
-            <MenuItemComponent key={child.id} item={child} depth={depth + 1} settings={settings} />
-          ))}
-        </ul>
+        isMegaMenu ? (
+          <div style={{
+            position: 'absolute',
+            top: '100%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: settings?.submenu_config?.background_color || settings?.colors?.background || '#fff',
+            border: settings?.submenu_config?.border_radius ? '1px solid #e5e7eb' : 'none',
+            borderRadius: settings?.submenu_config?.border_radius || '4px',
+            width: getSubmenuWidth(),
+            maxWidth: 'calc(100vw - 48px)',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+            zIndex: 1000,
+          }}>
+            {renderMegaMenu()}
+          </div>
+        ) : (
+          <ul style={{
+            listStyle: 'none',
+            padding: settings?.submenu_config?.padding || '8px 0',
+            margin: 0,
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            backgroundColor: settings?.submenu_config?.background_color || settings?.colors?.background || '#fff',
+            border: '1px solid #e5e7eb',
+            borderRadius: settings?.submenu_config?.border_radius || '4px',
+            minWidth: '200px',
+            maxWidth: 'calc(100vw - 48px)',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+            zIndex: 1000,
+          }}>
+            {childItems.map((child: MenuItemNav) => (
+              <MenuItemComponent key={child.id} item={child} depth={depth + 1} settings={settings} />
+            ))}
+          </ul>
+        )
       )}
     </li>
   );
